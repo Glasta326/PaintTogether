@@ -1,55 +1,107 @@
-﻿using Microsoft.Xna.Framework;
+﻿using System;
+using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
+using PaintTogether.Common.DataTypes;
+using PaintTogether.Common.Utilities;
+using PaintTogether.Core;
 
-namespace PaintTogether;
-
-public class Main : Game
+namespace PaintTogether
 {
-    private GraphicsDeviceManager _graphics;
-    private SpriteBatch _spriteBatch;
-
-    public Main()
+    public class Main : Game
     {
-        _graphics = new GraphicsDeviceManager(this);
-        Content.RootDirectory = "Assets"; // im so stupid
-        IsMouseVisible = true;
-    }
+        private GraphicsDeviceManager _graphics;
+        private SpriteBatch _spriteBatch;
 
-    protected override void Initialize()
-    {
-        // TODO: Add your initialization logic here
+        [ThreadStatic] private static Random _rand;
 
-        base.Initialize();
-    }
+        public static Random rand
+        {
+            get { return _rand ??= new Random(); }
+            set { _rand = value; }
+        }
 
-    private Texture2D t;
-    protected override void LoadContent()
-    {
-        _spriteBatch = new SpriteBatch(GraphicsDevice);
-        t = Content.Load<Texture2D>("Textures/logo");
-        // TODO: use this.Content to load your game content here
-    }
+        public static CanvasData Canvas;
 
-    protected override void Update(GameTime gameTime)
-    {
-        if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed ||
-            Keyboard.GetState().IsKeyDown(Keys.Escape))
-            Exit();
+        public Main()
+        {
+            _graphics = new GraphicsDeviceManager(this);
+            Content.RootDirectory = "Content";
+            IsMouseVisible = true;
+        }
 
-        // TODO: Add your update logic here
+        protected override void Initialize()
+        {
+            // TODO: Add your initialization logic here
 
-        base.Update(gameTime);
-    }
+            base.Initialize();
+        }
 
-    protected override void Draw(GameTime gameTime)
-    {
-        GraphicsDevice.Clear(Color.CornflowerBlue);
-        _spriteBatch.Begin();
-        _spriteBatch.Draw(t, Vector2.Zero, t.Bounds, Color.White);
-        _spriteBatch.End();
-        // TODO: Add your drawing code here
 
-        base.Draw(gameTime);
+        private Texture2D output;
+        private ShiftRegister<Point> reg;
+
+        protected override void LoadContent()
+        {
+            _spriteBatch = new SpriteBatch(GraphicsDevice);
+            Canvas = new CanvasData(800, 800);
+            output = new Texture2D(GraphicsDevice, (int)Canvas.Width, (int)Canvas.Height);
+            reg = new ShiftRegister<Point>(3);
+        }
+
+
+        protected override void Update(GameTime gameTime)
+        {
+            if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed ||
+                Keyboard.GetState().IsKeyDown(Keys.Escape))
+                Exit();
+
+
+            // Ok lets make a seperate project and port this all over
+            // Namely one where sln contains many csproj because i want the server and client in the same solution dammit
+            // FUCK i might have to do that shared library thing
+
+
+
+            reg.Add(MouseUtils.MousePosPoint());
+
+            if (Mouse.GetState().LeftButton == ButtonState.Pressed)
+            {
+                Vector2 mousepos = MouseUtils.MousePosVector();
+
+                //DrawUtils.DrawLine(oldMousePos, oldMousePos, out _, out _);
+                DrawUtils.DrawLine(reg[0], reg[1], out _, out _);
+                // Maybe draw line between old mouse pos and new?
+
+            }
+
+
+
+
+            if (Keyboard.GetState().IsKeyDown(Keys.R))
+            {
+                Canvas.ClearCanvas();
+            }
+
+            output.SetData(Canvas.Data);
+
+
+            base.Update(gameTime);
+        }
+
+        protected override void Draw(GameTime gameTime)
+        {
+            GraphicsDevice.Clear(Color.Black);
+
+            _spriteBatch.Begin();
+
+            _spriteBatch.Draw(output, Vector2.Zero, Color.White);
+
+
+            _spriteBatch.End();
+
+
+            base.Draw(gameTime);
+        }
     }
 }
