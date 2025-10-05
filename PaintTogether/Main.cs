@@ -12,7 +12,7 @@ public class Main : Game
     public Main()
     {
         _graphics = new GraphicsDeviceManager(this);
-        Content.RootDirectory = "Content";
+        Content.RootDirectory = "Assets"; // im so stupid
         IsMouseVisible = true;
     }
 
@@ -27,7 +27,7 @@ public class Main : Game
     protected override void LoadContent()
     {
         _spriteBatch = new SpriteBatch(GraphicsDevice);
-        t = Content.Load<Texture2D>("Textures/grid");
+        t = Content.Load<Texture2D>("Textures/logo");
         // TODO: use this.Content to load your game content here
     }
 
