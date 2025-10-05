@@ -26,7 +26,7 @@ namespace PaintTogether
         public Main()
         {
             _graphics = new GraphicsDeviceManager(this);
-            Content.RootDirectory = "Content";
+            Content.RootDirectory = "Assets";
             IsMouseVisible = true;
         }
 
@@ -40,6 +40,9 @@ namespace PaintTogether
 
         private Texture2D output;
         private ShiftRegister<Point> reg;
+        private Effect shader;
+        private Texture2D logo;
+        private SpriteFont font;
 
         protected override void LoadContent()
         {
@@ -47,9 +50,13 @@ namespace PaintTogether
             Canvas = new CanvasData(800, 800);
             output = new Texture2D(GraphicsDevice, (int)Canvas.Width, (int)Canvas.Height);
             reg = new ShiftRegister<Point>(3);
+            
+            shader = Content.Load<Effect>("Shaders/test2");
+            logo = Content.Load<Texture2D>("Textures/Logo");
+            font = Content.Load<SpriteFont>("Fonts/TestFont");
         }
 
-
+        private float timer = 0f;
         protected override void Update(GameTime gameTime)
         {
             if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed ||
@@ -85,21 +92,27 @@ namespace PaintTogether
 
             output.SetData(Canvas.Data);
 
-
+            timer += 0.0166666667f;
             base.Update(gameTime);
         }
 
         protected override void Draw(GameTime gameTime)
         {
             GraphicsDevice.Clear(Color.Black);
-
+            
             _spriteBatch.Begin();
-
+            
             _spriteBatch.Draw(output, Vector2.Zero, Color.White);
-
-
             _spriteBatch.End();
+            
 
+            _spriteBatch.Begin(effect: shader);
+
+            float opacity = (MathF.Sin(timer) + 1f) / 2f;
+            shader.Parameters["Saturation"].SetValue(0.1f + opacity * 0.9f);
+            _spriteBatch.DrawString(font, "Press R to reset canvas", Vector2.Zero, Color.White);
+            
+            _spriteBatch.End();
 
             base.Draw(gameTime);
         }
