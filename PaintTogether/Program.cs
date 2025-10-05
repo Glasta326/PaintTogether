@@ -1,2 +1,2 @@
-﻿using var game = new PaintTogether.Game1();
+﻿using var game = new PaintTogether.Main();
 game.Run();
