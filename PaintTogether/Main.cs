@@ -23,10 +23,11 @@ public class Main : Game
         base.Initialize();
     }
 
+    private Texture2D t;
     protected override void LoadContent()
     {
         _spriteBatch = new SpriteBatch(GraphicsDevice);
-
+        t = Content.Load<Texture2D>("Textures/logo");
         // TODO: use this.Content to load your game content here
     }
 
@@ -44,7 +45,9 @@ public class Main : Game
     protected override void Draw(GameTime gameTime)
     {
         GraphicsDevice.Clear(Color.CornflowerBlue);
-
+        _spriteBatch.Begin();
+        _spriteBatch.Draw(t, Vector2.Zero, t.Bounds, Color.White);
+        _spriteBatch.End();
         // TODO: Add your drawing code here
 
         base.Draw(gameTime);
