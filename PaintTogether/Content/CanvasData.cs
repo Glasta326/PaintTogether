@@ -3,7 +3,7 @@ using System.Runtime.CompilerServices;
 using Microsoft.Xna.Framework;
 using PaintTogether.Common.Utilities;
 
-namespace PaintTogether.Core
+namespace PaintTogether.Content
 {
     public class CanvasData
     {

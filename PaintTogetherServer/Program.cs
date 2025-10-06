@@ -1,9 +1,24 @@
-﻿namespace PaintTogetherServer;
+﻿using System.Diagnostics;
+
+namespace PaintTogetherServer;
 
 class Program
 {
-    static void Main(string[] args)
+    static unsafe void Main(string[] args)
     {
-        Console.WriteLine("Hello, World!");
+
+
+
+        16.isEven();
+    }
+
+
+}
+
+public static class math
+{
+    public static unsafe bool isEven(this int x)
+    {
+        return (x & 0b_1) == 0;
     }
 }

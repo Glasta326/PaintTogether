@@ -20,6 +20,12 @@
 /processorParam:TextureFormat=Compressed
 /build:Fonts/TestFont.spritefont
 
+#begin Shaders/File.fx
+/importer:EffectImporter
+/processor:EffectProcessor
+/processorParam:DebugMode=Auto
+/build:Shaders/File.fx
+
 #begin Shaders/test2.fx
 /importer:EffectImporter
 /processor:EffectProcessor

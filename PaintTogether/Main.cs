@@ -5,11 +5,14 @@ using Microsoft.Xna.Framework.Input;
 using PaintTogether.Common.DataTypes;
 using PaintTogether.Common.Utilities;
 using PaintTogether.Core;
+using PaintTogether.Core.LoadSystem;
 
 namespace PaintTogether
 {
     public class Main : Game
     {
+        public static Main instance;
+        
         private GraphicsDeviceManager _graphics;
         private SpriteBatch _spriteBatch;
 
@@ -21,7 +24,7 @@ namespace PaintTogether
             set { _rand = value; }
         }
 
-        public static CanvasData Canvas;
+        public static float GlobalTimeWrappedHourly;
 
         public Main()
         {
@@ -32,68 +35,47 @@ namespace PaintTogether
 
         protected override void Initialize()
         {
-            // TODO: Add your initialization logic here
+            Element.InitaliseRegistry();
+            
+            Element.LoadAll();
 
             base.Initialize();
         }
 
 
-        private Texture2D output;
-        private ShiftRegister<Point> reg;
-        private Effect shader;
-        private Texture2D logo;
-        private SpriteFont font;
+        public static RenderTarget2D Canvas;
 
         protected override void LoadContent()
         {
             _spriteBatch = new SpriteBatch(GraphicsDevice);
-            Canvas = new CanvasData(800, 800);
-            output = new Texture2D(GraphicsDevice, (int)Canvas.Width, (int)Canvas.Height);
-            reg = new ShiftRegister<Point>(3);
             
-            shader = Content.Load<Effect>("Shaders/test2");
-            logo = Content.Load<Texture2D>("Textures/Logo");
-            font = Content.Load<SpriteFont>("Fonts/TestFont");
+            Element.LoadAssetsAll(GraphicsDevice, Content);
+
+            Canvas = new RenderTarget2D(GraphicsDevice, 800, 600);
         }
 
-        private float timer = 0f;
         protected override void Update(GameTime gameTime)
         {
+            Update_Inner(gameTime);
+            
             if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed ||
                 Keyboard.GetState().IsKeyDown(Keys.Escape))
                 Exit();
-
-
-            // Ok lets make a seperate project and port this all over
-            // Namely one where sln contains many csproj because i want the server and client in the same solution dammit
-            // FUCK i might have to do that shared library thing
-
-
-
-            reg.Add(MouseUtils.MousePosPoint());
-
-            if (Mouse.GetState().LeftButton == ButtonState.Pressed)
-            {
-                Vector2 mousepos = MouseUtils.MousePosVector();
-
-                //DrawUtils.DrawLine(oldMousePos, oldMousePos, out _, out _);
-                DrawUtils.DrawLine(reg[0], reg[1], out _, out _);
-                // Maybe draw line between old mouse pos and new?
-
-            }
-
-
-
-
-            if (Keyboard.GetState().IsKeyDown(Keys.R))
-            {
-                Canvas.ClearCanvas();
-            }
-
-            output.SetData(Canvas.Data);
-
-            timer += 0.0166666667f;
+            
+            Element.PreUpdateAll();
+            
+            
+            
+            Element.UpdateAll();
             base.Update(gameTime);
+        }
+
+        private void Update_Inner(GameTime gameTime)
+        {
+            MouseUtils.State = Mouse.GetState(); // We do this and just read from state when getting mouse info so we arent requesting to get the state a zillion times
+            MouseUtils.MoveHistory.Add(MouseUtils.State.Position);
+            MouseUtils.ScrollHistory.Add(MouseUtils.State.ScrollWheelValue); // Push the new scroll value to the scroll history so scrollDelta is accurate
+            GlobalTimeWrappedHourly = (float)(gameTime.TotalGameTime.TotalSeconds % 3600.0);
         }
 
         protected override void Draw(GameTime gameTime)
@@ -101,19 +83,16 @@ namespace PaintTogether
             GraphicsDevice.Clear(Color.Black);
             
             _spriteBatch.Begin();
-            
-            _spriteBatch.Draw(output, Vector2.Zero, Color.White);
-            _spriteBatch.End();
-            
 
-            _spriteBatch.Begin(effect: shader);
+            Element.PreDrawAll(_spriteBatch, GraphicsDevice);
 
-            float opacity = (MathF.Sin(timer) + 1f) / 2f;
-            shader.Parameters["Saturation"].SetValue(0.1f + opacity * 0.9f);
-            _spriteBatch.DrawString(font, "Press R to reset canvas", Vector2.Zero, Color.White);
+
+            _spriteBatch.Draw(Canvas, new Rectangle(0, 0, 800, 600), Color.White);
+
+            Element.PostDrawAll(_spriteBatch, GraphicsDevice);
             
             _spriteBatch.End();
-
+            
             base.Draw(gameTime);
         }
     }

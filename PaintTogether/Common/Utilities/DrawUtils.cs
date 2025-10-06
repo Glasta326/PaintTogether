@@ -37,7 +37,7 @@ namespace PaintTogether.Common.Utilities
             {
                 if (CanvasUtils.InCanvas(new Vector2(x0,y0)))
                 {
-                    Main.Canvas[x0,y0] = Color.White;
+                    //Main.Canvas[x0,y0] = Color.White;
                 }
                 
                 

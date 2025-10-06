@@ -117,7 +117,7 @@ namespace PaintTogether.Common.Utilities
         #endregion
         
         #region Arithmetic
-
+        
         /// <summary>
         /// Remaps a value in a range into a different value in a range
         /// for example : reMap(25,0,100,0,200) returns 50.
@@ -653,6 +653,16 @@ namespace PaintTogether.Common.Utilities
         public static Vector2 RandomPointOnRectangle(this Rectangle rectangle)
         {
             return new Vector2(Main.rand.Next(0, rectangle.Width + 1), Main.rand.Next(0, rectangle.Height + 1));
+        }
+
+        #endregion
+
+        #region Geometry
+
+        public static Rectangle SimpleSquare(Point center, int sideLength)
+        {
+            int halfSide = sideLength >> 1;
+            return new Rectangle(center.X - halfSide, center.Y - halfSide, center.X + halfSide, center.Y + halfSide);
         }
 
         #endregion
