@@ -27,7 +27,7 @@ struct VertexShaderOutput
 
 float4 MainPS(VertexShaderOutput input) : COLOR
 {
-    float4 canvasColor = tex2D(SpriteTextureSampler, input.TextureCoordinates);
+    float4 canvasColor = tex2D(SpriteTextureSampler,input.TextureCoordinates) * input.Color;
 
     // Compute distance from pixel to brush center
     float2 diff = input.TextureCoordinates - BrushCenter;
@@ -40,7 +40,7 @@ float4 MainPS(VertexShaderOutput input) : COLOR
         canvasColor = BrushColor;
     }
 
-    return canvasColor * input.Color; // still multiply by vertex color
+    return tex2D(SpriteTextureSampler,input.TextureCoordinates) * input.Color; // still multiply by vertex color
 }
 
 technique SpriteDrawing

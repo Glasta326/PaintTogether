@@ -44,6 +44,7 @@ namespace PaintTogether
 
 
         public static RenderTarget2D Canvas;
+        public static Texture2D logo;
 
         protected override void LoadContent()
         {
@@ -52,6 +53,7 @@ namespace PaintTogether
             Element.LoadAssetsAll(GraphicsDevice, Content);
 
             Canvas = new RenderTarget2D(GraphicsDevice, 800, 600);
+            logo = Content.Load<Texture2D>("Textures/Logo");
         }
 
         protected override void Update(GameTime gameTime)
@@ -80,17 +82,21 @@ namespace PaintTogether
 
         protected override void Draw(GameTime gameTime)
         {
-            GraphicsDevice.Clear(Color.Black);
+            
+            GraphicsDevice.SetRenderTarget(Canvas);
+            _spriteBatch.Begin();
+            _spriteBatch.Draw(logo, MouseUtils.MousePosVector(), Color.White);
+            _spriteBatch.Draw(logo, MouseUtils.MousePosVector() + new Vector2(0, 100f * MathF.Sin(GlobalTimeWrappedHourly)), Color.Red);
+            _spriteBatch.End();
+            GraphicsDevice.SetRenderTarget(null);
+            
+            
+            
+            
             
             _spriteBatch.Begin();
-
-            Element.PreDrawAll(_spriteBatch, GraphicsDevice);
-
-
-            _spriteBatch.Draw(Canvas, new Rectangle(0, 0, 800, 600), Color.White);
-
-            Element.PostDrawAll(_spriteBatch, GraphicsDevice);
-            
+            _spriteBatch.Draw(Canvas, Vector2.Zero, null, Color.White, MathF.Sin(GlobalTimeWrappedHourly) * 0.2f, Vector2.Zero, 1f, SpriteEffects.None, 0f);
+            _spriteBatch.Draw(logo, Vector2.Zero, null, Color.White, 0f, Vector2.Zero, 1f, SpriteEffects.None, 0f);
             _spriteBatch.End();
             
             base.Draw(gameTime);

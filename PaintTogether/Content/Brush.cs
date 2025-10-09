@@ -50,20 +50,8 @@ namespace PaintTogether.Content
             {
                 return true;
             }
-            graphicsDevice.SetRenderTarget(Main.Canvas);
-
-            BrushShader.Parameters["BrushCenter"].SetValue(MouseUtils.MousePosNormalised());
-            //BrushShader.Parameters["BrushRadius"].SetValue(BrushSize);
-            BrushShader.Parameters["BrushColor"].SetValue(Color.Red.ToVector4());
             
-            spriteBatch.End();
-            spriteBatch.Begin(SpriteSortMode.Immediate, BlendState.AlphaBlend, null, null, null, BrushShader);
-            spriteBatch.Draw(Main.Canvas, new Rectangle(0, 0, Main.Canvas.Width, Main.Canvas.Height), Color.White);
             
-            spriteBatch.End();
-            spriteBatch.Begin();
-
-            graphicsDevice.SetRenderTarget(null);
 
             
             return false;
