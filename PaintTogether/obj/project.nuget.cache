@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "83Z0PU1pBTerWxiljKfj1N7l+njHDdBGvM9XhdsdJ0v1gSZHMNmycc+cTPRm1ZxMwN/xJ69FsbtF4nkfh/o03w==",
+  "dgSpecHash": "55R7SmJYZI0QffJ4aIu/A7O/bIEQr9J36FrrQzr3DEaaT9/bLH64o9oCZZiAlh6i1hCZrm6g+9J4nI0IJWTgxQ==",
   "success": true,
-  "projectFilePath": "/home/Glasta/Documents/test3/PaintTogether/PaintTogether/PaintTogether.csproj",
+  "projectFilePath": "/home/Glasta/Projects/PaintTogether/PaintTogether/PaintTogether.csproj",
   "expectedPackageFiles": [
     "/home/Glasta/.nuget/packages/monogame.content.builder.task/3.8.4/monogame.content.builder.task.3.8.4.nupkg.sha512",
     "/home/Glasta/.nuget/packages/monogame.framework.desktopgl/3.8.4/monogame.framework.desktopgl.3.8.4.nupkg.sha512",

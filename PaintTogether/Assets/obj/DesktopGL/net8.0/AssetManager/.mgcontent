@@ -4,11 +4,11 @@
   <Platform>DesktopGL</Platform>
   <Config />
   <SourceFiles>
-    <File>/home/Glasta/Documents/test3/PaintTogether/PaintTogether/Assets/Fonts/TestFont.spritefont</File>
-    <File>/home/Glasta/Documents/test3/PaintTogether/PaintTogether/Assets/Shaders/test2.fx</File>
-    <File>/home/Glasta/Documents/test3/PaintTogether/PaintTogether/Assets/Shaders/TestBrushEffect.fx</File>
-    <File>/home/Glasta/Documents/test3/PaintTogether/PaintTogether/Assets/Sounds/MenuClick.wav</File>
-    <File>/home/Glasta/Documents/test3/PaintTogether/PaintTogether/Assets/Textures/logo.png</File>
+    <File>/home/Glasta/Projects/PaintTogether/PaintTogether/Assets/Fonts/TestFont.spritefont</File>
+    <File>/home/Glasta/Projects/PaintTogether/PaintTogether/Assets/Shaders/test2.fx</File>
+    <File>/home/Glasta/Projects/PaintTogether/PaintTogether/Assets/Shaders/TestBrushEffect.fx</File>
+    <File>/home/Glasta/Projects/PaintTogether/PaintTogether/Assets/Sounds/MenuClick.wav</File>
+    <File>/home/Glasta/Projects/PaintTogether/PaintTogether/Assets/Textures/logo.png</File>
   </SourceFiles>
   <DestFiles>
     <File xsi:nil="true" />

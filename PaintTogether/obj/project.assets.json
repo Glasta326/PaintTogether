@@ -355,11 +355,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "/home/Glasta/Documents/test3/PaintTogether/PaintTogether/PaintTogether.csproj",
+      "projectUniqueName": "/home/Glasta/Projects/PaintTogether/PaintTogether/PaintTogether.csproj",
       "projectName": "PaintTogether",
-      "projectPath": "/home/Glasta/Documents/test3/PaintTogether/PaintTogether/PaintTogether.csproj",
+      "projectPath": "/home/Glasta/Projects/PaintTogether/PaintTogether/PaintTogether.csproj",
       "packagesPath": "/home/Glasta/.nuget/packages/",
-      "outputPath": "/home/Glasta/Documents/test3/PaintTogether/PaintTogether/obj/",
+      "outputPath": "/home/Glasta/Projects/PaintTogether/PaintTogether/obj/",
       "projectStyle": "PackageReference",
       "configFilePaths": [
         "/home/Glasta/.nuget/NuGet/NuGet.Config"

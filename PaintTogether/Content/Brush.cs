@@ -41,7 +41,7 @@ namespace PaintTogether.Content
             }
             Position = MouseUtils.MousePosPoint();
             BrushSize += MouseUtils.ScrollDelta; // Scroll to change brush size
-            Console.WriteLine(BrushSize);
+            //Console.WriteLine(BrushSize);
         }
 
         public override bool PreDraw(SpriteBatch spriteBatch, GraphicsDevice graphicsDevice)

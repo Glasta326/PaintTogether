@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "TXLYQlfz4iIEOn2YSxhCjCt5i6CCRv4UZ+N3Yq5OyCAinGxhT+T5p394pSjgGFUaOMMxats1PKxmquNZSjtrMA==",
+  "dgSpecHash": "l0i3jHWLIbvPKU2buK0fZa/2B6o2ZZXXWX1m93IVwChUNMcL5QSgfsGlcTL0CwXDZjcgZocjTk12SQOaTwIL3Q==",
   "success": true,
-  "projectFilePath": "/home/Glasta/Documents/test3/PaintTogether/PaintTogetherServer/PaintTogetherServer.csproj",
+  "projectFilePath": "/home/Glasta/Projects/PaintTogether/PaintTogetherServer/PaintTogetherServer.csproj",
   "expectedPackageFiles": [],
   "logs": []
 }

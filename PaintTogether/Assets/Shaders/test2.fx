@@ -34,7 +34,7 @@ float4 MainPS(VertexShaderOutput input) : COLOR
     float dist = length(diff);
 
     // If inside brush radius, apply brush color
-    if (dist < 0.1)
+    if (dist < 0.11)
     {
         // simple overwrite; could do alpha blending here
         canvasColor = BrushColor;
