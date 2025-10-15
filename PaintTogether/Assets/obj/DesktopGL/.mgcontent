@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<SourceFileCollection xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <Profile>Reach</Profile>
+  <Platform>DesktopGL</Platform>
+  <Config />
+  <SourceFiles>
+    <File>/home/Glasta/Documents/test3/PaintTogether/PaintTogether/Assets/Fonts/TestFont.spritefont</File>
+    <File>/home/Glasta/Documents/test3/PaintTogether/PaintTogether/Assets/Shaders/test2.fx</File>
+    <File>/home/Glasta/Documents/test3/PaintTogether/PaintTogether/Assets/Shaders/TestBrushEffect.fx</File>
+    <File>/home/Glasta/Documents/test3/PaintTogether/PaintTogether/Assets/Sounds/MenuClick.wav</File>
+    <File>/home/Glasta/Documents/test3/PaintTogether/PaintTogether/Assets/Textures/logo.png</File>
+  </SourceFiles>
+  <DestFiles>
+    <File xsi:nil="true" />
+    <File xsi:nil="true" />
+    <File xsi:nil="true" />
+    <File xsi:nil="true" />
+    <File xsi:nil="true" />
+  </DestFiles>
+</SourceFileCollection>

@@ -1,27 +1,25 @@
 {
   "format": 1,
   "restore": {
-    "D:\\PROGRAMS\\Developments\\PaintTogether\\PaintTogether\\PaintTogether.csproj": {}
+    "/home/Glasta/Documents/test3/PaintTogether/PaintTogether/PaintTogether.csproj": {}
   },
   "projects": {
-    "D:\\PROGRAMS\\Developments\\PaintTogether\\PaintTogether\\PaintTogether.csproj": {
+    "/home/Glasta/Documents/test3/PaintTogether/PaintTogether/PaintTogether.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "D:\\PROGRAMS\\Developments\\PaintTogether\\PaintTogether\\PaintTogether.csproj",
+        "projectUniqueName": "/home/Glasta/Documents/test3/PaintTogether/PaintTogether/PaintTogether.csproj",
         "projectName": "PaintTogether",
-        "projectPath": "D:\\PROGRAMS\\Developments\\PaintTogether\\PaintTogether\\PaintTogether.csproj",
-        "packagesPath": "C:\\Users\\ethan\\.nuget\\packages\\",
-        "outputPath": "D:\\PROGRAMS\\Developments\\PaintTogether\\PaintTogether\\obj\\",
+        "projectPath": "/home/Glasta/Documents/test3/PaintTogether/PaintTogether/PaintTogether.csproj",
+        "packagesPath": "/home/Glasta/.nuget/packages/",
+        "outputPath": "/home/Glasta/Documents/test3/PaintTogether/PaintTogether/obj/",
         "projectStyle": "PackageReference",
         "configFilePaths": [
-          "C:\\Users\\ethan\\AppData\\Roaming\\NuGet\\NuGet.Config",
-          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
+          "/home/Glasta/.nuget/NuGet/NuGet.Config"
         ],
         "originalTargetFrameworks": [
           "net8.0"
         ],
         "sources": {
-          "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
           "https://api.nuget.org/v3/index.json": {}
         },
         "frameworks": {
@@ -34,11 +32,6 @@
           "warnAsError": [
             "NU1605"
           ]
-        },
-        "restoreAuditProperties": {
-          "enableAudit": "true",
-          "auditLevel": "low",
-          "auditMode": "direct"
         }
       },
       "frameworks": {
@@ -70,7 +63,7 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\8.0.414/PortableRuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "/usr/lib64/dotnet/sdk/8.0.120/PortableRuntimeIdentifierGraph.json"
         }
       }
     }
