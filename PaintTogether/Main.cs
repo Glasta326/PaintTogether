@@ -44,16 +44,20 @@ namespace PaintTogether
 
 
         public static RenderTarget2D Canvas;
+        public static RenderTarget2D logoTarget;
         public static Texture2D logo;
+
+        
 
         protected override void LoadContent()
         {
             _spriteBatch = new SpriteBatch(GraphicsDevice);
             
             Element.LoadAssetsAll(GraphicsDevice, Content);
-
-            Canvas = new RenderTarget2D(GraphicsDevice, 800, 600);
-            logo = Content.Load<Texture2D>("Textures/Logo");
+            logoTarget = new RenderTarget2D(GraphicsDevice, 800, 600);
+            Canvas = new RenderTarget2D(GraphicsDevice, 800, 600, false, SurfaceFormat.Color, DepthFormat.None, 0, RenderTargetUsage.PreserveContents);
+            logo = Content.Load<Texture2D>("Textures/proxy-image");
+            
         }
 
         protected override void Update(GameTime gameTime)
@@ -82,22 +86,23 @@ namespace PaintTogether
 
         protected override void Draw(GameTime gameTime)
         {
-            
+            GraphicsDevice.Clear(Color.Black);
+
+            GraphicsDevice.SetRenderTarget(logoTarget);
+
+            Element.PreDrawAll(_spriteBatch, GraphicsDevice);
+
             GraphicsDevice.SetRenderTarget(Canvas);
-            _spriteBatch.Begin();
-            _spriteBatch.Draw(logo, MouseUtils.MousePosVector(), Color.White);
-            _spriteBatch.Draw(logo, MouseUtils.MousePosVector() + new Vector2(0, 100f * MathF.Sin(GlobalTimeWrappedHourly)), Color.Red);
-            _spriteBatch.End();
+            //GraphicsDevice.Clear(Color.Transparent);
+
+            Element.PostDrawAll(_spriteBatch, GraphicsDevice);
+
             GraphicsDevice.SetRenderTarget(null);
-            
-            
-            
-            
-            
-            _spriteBatch.Begin();
-            _spriteBatch.Draw(Canvas, Vector2.Zero, null, Color.White, MathF.Sin(GlobalTimeWrappedHourly) * 0.2f, Vector2.Zero, 1f, SpriteEffects.None, 0f);
-            _spriteBatch.Draw(logo, Vector2.Zero, null, Color.White, 0f, Vector2.Zero, 1f, SpriteEffects.None, 0f);
+            _spriteBatch.Begin(SpriteSortMode.Immediate, BlendState.AlphaBlend);
+            _spriteBatch.Draw(logoTarget, Vector2.Zero, Color.White);
+            _spriteBatch.Draw(Canvas, Vector2.Zero, Color.White);
             _spriteBatch.End();
+
             
             base.Draw(gameTime);
         }

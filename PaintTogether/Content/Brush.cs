@@ -25,7 +25,7 @@ namespace PaintTogether.Content
                 _brushSize = MathHelper.Clamp(value, 0, int.MaxValue);
             }
         }
-        
+        public static RenderTarget2D storage;
         public override void LoadAssets(GraphicsDevice graphicsDevice, ContentManager contentManager)
         {
             BrushShader = contentManager.Load<Effect>("Shaders/test2");
@@ -44,17 +44,20 @@ namespace PaintTogether.Content
             //Console.WriteLine(BrushSize);
         }
 
-        public override bool PreDraw(SpriteBatch spriteBatch, GraphicsDevice graphicsDevice)
+        public override void PostDraw(SpriteBatch spriteBatch, GraphicsDevice graphicsDevice)
         {
             if (!draw)
             {
-                return true;
+                return;
             }
-            
-            
 
-            
-            return false;
+            graphicsDevice.SetRenderTarget(Main.Canvas);
+
+            spriteBatch.Begin();
+            spriteBatch.Draw(Main.logo, MouseUtils.MousePosVector(), null, Color.White, 0f, Main.logo.Size() * 0.5f, 0.1f, SpriteEffects.None, 0f);
+            spriteBatch.End();
+
+            return;
         }
     }
 }
