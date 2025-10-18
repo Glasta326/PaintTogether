@@ -34,13 +34,13 @@ float4 MainPS(VertexShaderOutput input) : COLOR
     float dist = length(diff);
 
     // If inside brush radius, apply brush color
-    if (dist < 0.11)
+    if (dist < 0.01)
     {
         // simple overwrite; could do alpha blending here
         canvasColor = BrushColor;
     }
 
-    return tex2D(SpriteTextureSampler,input.TextureCoordinates) * input.Color; // still multiply by vertex color
+    return canvasColor; // still multiply by vertex color
 }
 
 technique SpriteDrawing

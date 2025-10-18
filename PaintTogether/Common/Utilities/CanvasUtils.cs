@@ -8,7 +8,7 @@ namespace PaintTogether.Common.Utilities
         {
             //if (pos.X < 0 || pos.Y < 0 || pos.X > Main.Canvas.Width || pos.Y > Main.Canvas.Height)
             {
-                return false;
+                return true;
             }
 
             return true;

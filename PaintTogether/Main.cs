@@ -52,10 +52,11 @@ namespace PaintTogether
         protected override void LoadContent()
         {
             _spriteBatch = new SpriteBatch(GraphicsDevice);
-            
+        
+
             Element.LoadAssetsAll(GraphicsDevice, Content);
-            logoTarget = new RenderTarget2D(GraphicsDevice, 800, 600);
-            Canvas = new RenderTarget2D(GraphicsDevice, 800, 600, false, SurfaceFormat.Color, DepthFormat.None, 0, RenderTargetUsage.PreserveContents);
+            logoTarget = new RenderTarget2D(GraphicsDevice, Window.ClientBounds.Width, Window.ClientBounds.Height);
+            Canvas = new RenderTarget2D(GraphicsDevice,  Window.ClientBounds.Width, Window.ClientBounds.Height, false, SurfaceFormat.Color, DepthFormat.None, 0, RenderTargetUsage.PreserveContents);
             logo = Content.Load<Texture2D>("Textures/proxy-image");
             
         }

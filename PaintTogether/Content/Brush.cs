@@ -53,11 +53,16 @@ namespace PaintTogether.Content
 
             graphicsDevice.SetRenderTarget(Main.Canvas);
 
-            spriteBatch.Begin();
-            spriteBatch.Draw(Main.logo, MouseUtils.MousePosVector(), null, Color.White, 0f, Main.logo.Size() * 0.5f, 0.1f, SpriteEffects.None, 0f);
+
+
+            BrushShader.Parameters["BrushColor"].SetValue(Color.Red.ToVector4());
+
+            spriteBatch.Begin(effect: BrushShader);
+            DrawUtils.DrawLine(MouseUtils.MoveHistory[0], MouseUtils.MoveHistory[1], BrushShader, spriteBatch, out _, out _);
             spriteBatch.End();
 
             return;
         }
+        
     }
 }

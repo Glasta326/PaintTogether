@@ -1,11 +1,12 @@
 using System;
 using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Graphics;
 
 namespace PaintTogether.Common.Utilities
 {
     public static class DrawUtils
     {
-        public static bool DrawLine(Point startPos, Point endPos, out Point hit, out int iters)
+        public static bool DrawLine(Point startPos, Point endPos, Effect shader, SpriteBatch _spriteBatch , out Point hit, out int iters)
         {
             // This is essentially just Bresenham's line algorithm with some tweaks
             // https://en.wikipedia.org/wiki/Bresenham%27s_line_algorithm
@@ -37,7 +38,9 @@ namespace PaintTogether.Common.Utilities
             {
                 if (CanvasUtils.InCanvas(new Vector2(x0,y0)))
                 {
-                    //Main.Canvas[x0,y0] = Color.White;
+                    shader.Parameters["BrushCenter"].SetValue(new Vector2(x0 / 800f, y0 / 500f));
+                    shader.CurrentTechnique.Passes[0].Apply();
+                    _spriteBatch.Draw(Main.Canvas, Vector2.Zero, Color.White);
                 }
                 
                 
