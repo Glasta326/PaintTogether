@@ -12,18 +12,18 @@ using Microsoft.Xna.Framework.Graphics;
 
 namespace PaintTogether.Core.LoadSystem
 {
-    public abstract class Element
+    public abstract class ElementLoader
     {
-        public static List<Element> ProgramElements = new List<Element>();
+        public static List<ElementLoader> ProgramElements = new List<ElementLoader>();
 
         public static void InitaliseRegistry()
         {
-            var elementTypes = typeof(Element).Assembly.GetTypes()
-                .Where(t => t.IsSubclassOf(typeof(Element)) && !t.IsAbstract);
+            var elementTypes = typeof(ElementLoader).Assembly.GetTypes()
+                .Where(t => t.IsSubclassOf(typeof(ElementLoader)) && !t.IsAbstract);
 
             foreach (var type in elementTypes)
             {
-                if (Activator.CreateInstance(type) is Element instance)
+                if (Activator.CreateInstance(type) is ElementLoader instance)
                 {
                     ProgramElements.Add(instance);
                 }

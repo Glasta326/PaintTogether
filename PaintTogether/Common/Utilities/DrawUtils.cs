@@ -6,7 +6,7 @@ namespace PaintTogether.Common.Utilities
 {
     public static class DrawUtils
     {
-        public static bool DrawLine(Point startPos, Point endPos, Effect shader, SpriteBatch _spriteBatch , out Point hit, out int iters)
+        public static bool DrawLine(Point startPos, Point endPos, Effect shader, SpriteBatch _spriteBatch ,Texture2D t, out Point hit, out int iters, int rad = 5)
         {
             // This is essentially just Bresenham's line algorithm with some tweaks
             // https://en.wikipedia.org/wiki/Bresenham%27s_line_algorithm
@@ -26,21 +26,21 @@ namespace PaintTogether.Common.Utilities
 
             hit = endPos;
             iters = 0;
-            
+
             // please
             if (!CanvasUtils.InCanvas(startPos.ToVector2()) && !CanvasUtils.InCanvas(endPos.ToVector2()))
             {
                 return true;
             }
 
-            
+
             while (true)
             {
                 if (CanvasUtils.InCanvas(new Vector2(x0,y0)))
                 {
-                    shader.Parameters["BrushCenter"].SetValue(new Vector2(x0 / 800f, y0 / 500f));
+                    Rectangle r = MathUtils.SimpleSquare(new Point(x0, y0), rad);
                     shader.CurrentTechnique.Passes[0].Apply();
-                    _spriteBatch.Draw(Main.Canvas, Vector2.Zero, Color.White);
+                    _spriteBatch.Draw(t, r, Color.White);
                 }
                 
                 

@@ -8,9 +8,10 @@
 #endif
 
 Texture2D SpriteTexture;
-float2 BrushCenter;
+
 float BrushRadius;
 float4 BrushColor;
+
 
 
 sampler2D SpriteTextureSampler = sampler_state
@@ -30,12 +31,12 @@ float4 MainPS(VertexShaderOutput input) : COLOR
     float4 canvasColor = tex2D(SpriteTextureSampler,input.TextureCoordinates) * input.Color;
 
     // Compute distance from pixel to brush center
-    float2 diff = input.TextureCoordinates - BrushCenter;
+    float2 diff = input.TextureCoordinates - float2(0.5,0.5);
     float dist = length(diff);
 
     // If inside brush radius, apply brush color
-    if (dist < 0.01)
-    {
+    if (dist < 0.41421356) // Magic number is 1-sqrt2. Essentially means the corners of the square are sqrt 2 away, and the sides are 1 away from the center
+	{			   
         // simple overwrite; could do alpha blending here
         canvasColor = BrushColor;
     }

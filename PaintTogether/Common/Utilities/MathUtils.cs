@@ -662,7 +662,7 @@ namespace PaintTogether.Common.Utilities
         public static Rectangle SimpleSquare(Point center, int sideLength)
         {
             int halfSide = sideLength >> 1;
-            return new Rectangle(center.X - halfSide, center.Y - halfSide, center.X + halfSide, center.Y + halfSide);
+            return new Rectangle(center.X - halfSide, center.Y - halfSide, sideLength, sideLength);
         }
 
         #endregion

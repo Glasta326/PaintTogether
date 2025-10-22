@@ -73,3 +73,4 @@
 /home/Glasta/Projects/PaintTogether/PaintTogether/obj/Debug/net8.0/PaintTogether.genruntimeconfig.cache
 /home/Glasta/Projects/PaintTogether/PaintTogether/obj/Debug/net8.0/ref/PaintTogether.dll
 /home/Glasta/Projects/PaintTogether/PaintTogether/bin/Debug/net8.0/Assets/Textures/proxy-image.xnb
+/home/Glasta/Projects/PaintTogether/PaintTogether/bin/Debug/net8.0/Assets/Shaders/Eraser.xnb

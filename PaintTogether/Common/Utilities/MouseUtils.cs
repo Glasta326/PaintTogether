@@ -42,6 +42,6 @@ namespace PaintTogether.Common.Utilities
         /// Positive values mean scrolled UP. <br/>
         /// Negative values mean scrolled DOWN.
         /// </summary>
-        public static int ScrollDelta => ScrollHistory[1] - ScrollHistory[0];
+        public static int ScrollDelta => -(ScrollHistory[1] - ScrollHistory[0]);
     }
 }

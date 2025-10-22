@@ -7,7 +7,7 @@ using PaintTogether.Core.LoadSystem;
 
 namespace PaintTogether.Content
 {
-    public class TestElement : Element
+    public class TestElement : ElementLoader
     {
         private Texture2D texture;
         private Vector2 offset;
@@ -25,7 +25,7 @@ namespace PaintTogether.Content
         {
             spriteBatch.Begin();
             Color c = Color.White;
-            spriteBatch.Draw(texture, Vector2.Zero + offset, c);
+            //spriteBatch.Draw(texture, Vector2.Zero + offset, c);
             spriteBatch.End();
             return false;
         }

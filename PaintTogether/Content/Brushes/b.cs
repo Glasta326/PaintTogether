@@ -6,9 +6,9 @@ using Microsoft.Xna.Framework.Input;
 using PaintTogether.Common.Utilities;
 using PaintTogether.Core.LoadSystem;
 
-namespace PaintTogether.Content
+namespace PaintTogether.Content.Brushes
 {
-    public class Brush : Element
+    public class b : ElementLoader
     {
         private Point Position;
         private Effect BrushShader;
@@ -46,6 +46,7 @@ namespace PaintTogether.Content
 
         public override void PostDraw(SpriteBatch spriteBatch, GraphicsDevice graphicsDevice)
         {
+            return;
             if (!draw)
             {
                 return;
@@ -57,8 +58,8 @@ namespace PaintTogether.Content
 
             BrushShader.Parameters["BrushColor"].SetValue(Color.Red.ToVector4());
 
-            spriteBatch.Begin(effect: BrushShader);
-            DrawUtils.DrawLine(MouseUtils.MoveHistory[0], MouseUtils.MoveHistory[1], BrushShader, spriteBatch, out _, out _);
+            spriteBatch.Begin(SpriteSortMode.Immediate, effect: BrushShader);
+            //DrawUtils.DrawLine(MouseUtils.MoveHistory[0], MouseUtils.MoveHistory[1], BrushShader, spriteBatch, out _, out _);
             spriteBatch.End();
 
             return;

@@ -1,6 +1,7 @@
 using System;
 using System.Runtime.CompilerServices;
 using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Graphics;
 using PaintTogether.Common.Utilities;
 
 namespace PaintTogether.Content
@@ -60,6 +61,8 @@ namespace PaintTogether.Content
             Height = height;
             Data = new Color[height * width];
         }
+
+
 
     }
 }
