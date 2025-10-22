@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("PaintTogetherServer")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+e985c8abf313c1ca516697814f681e834b801d0b")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+c80b319355b03b252067e0dbd2767a1cf826c2c5")]
 [assembly: System.Reflection.AssemblyProductAttribute("PaintTogetherServer")]
 [assembly: System.Reflection.AssemblyTitleAttribute("PaintTogetherServer")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
