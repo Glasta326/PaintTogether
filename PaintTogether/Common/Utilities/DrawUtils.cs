@@ -1,12 +1,24 @@
 using System;
+using System.Net.NetworkInformation;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using PaintTogether.Content.Brushes;
 
 namespace PaintTogether.Common.Utilities
 {
     public static class DrawUtils
     {
-        public static bool DrawLine(Point startPos, Point endPos, Effect shader, SpriteBatch _spriteBatch ,Texture2D t, out Point hit, out int iters, int rad = 5)
+
+        /// <summary>
+        /// Draws a given brush shader over a line between two points
+        /// </summary>
+        /// <param name="_spriteBatch"></param>
+        /// <param name="startPos"></param>
+        /// <param name="endPos"></param>
+        /// <param name="shader"></param>
+        /// <param name="r">Radius of the square region the shader is drawn with. Essentially brush thickness</param>
+        /// <returns></returns>
+        public static bool DrawLine(this SpriteBatch _spriteBatch, Point startPos, Point endPos, Effect shader, int r)
         {
             // This is essentially just Bresenham's line algorithm with some tweaks
             // https://en.wikipedia.org/wiki/Bresenham%27s_line_algorithm
@@ -24,8 +36,6 @@ namespace PaintTogether.Common.Utilities
 
             int err = dx - dy;
 
-            hit = endPos;
-            iters = 0;
 
             // please
             if (!CanvasUtils.InCanvas(startPos.ToVector2()) && !CanvasUtils.InCanvas(endPos.ToVector2()))
@@ -36,20 +46,11 @@ namespace PaintTogether.Common.Utilities
 
             while (true)
             {
-                if (CanvasUtils.InCanvas(new Vector2(x0,y0)))
+                if (CanvasUtils.InCanvas(new Vector2(x0, y0)))
                 {
-                    Rectangle r = MathUtils.SimpleSquare(new Point(x0, y0), rad);
+                    Rectangle region = MathUtils.SimpleSquare(new Point(x0, y0), r);
                     shader.CurrentTechnique.Passes[0].Apply();
-                    _spriteBatch.Draw(t, r, Color.White);
-                }
-                
-                
-                
-
-                iters += 1;
-                if (iters == 1)
-                {
-                    continue;
+                    _spriteBatch.Draw(CommonKeys.DummyTexture, region, Color.White);
                 }
 
                 if (x0 == x1 && y0 == y1)
@@ -73,5 +74,14 @@ namespace PaintTogether.Common.Utilities
             }
             return false;
         }
+
+        /// <summary>
+        /// Simplified <see cref="DrawLine"/> that assumes brush using <see cref="Brush.BrushSize"/> and <see cref="MouseUtils.MoveHistory"/>
+        /// </summary>
+        public static bool DrawLine(this SpriteBatch _spriteBatch, Effect shader)
+        {
+            return _spriteBatch.DrawLine(MouseUtils.MoveHistory[0], MouseUtils.MoveHistory[1], shader, Brush.BrushSize);
+        }
+
     }
 }

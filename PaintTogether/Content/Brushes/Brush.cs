@@ -106,27 +106,29 @@ namespace PaintTogether.Content.Brushes
                 return;
             }
             // Prevent normal drawing if specified
-            if (!Draw(spriteBatch, graphicsDevice)) 
+            Color? res = Draw(spriteBatch, graphicsDevice);
+            if (res is null)
             {
                 return;
             }
-            DefaultDraw(spriteBatch, graphicsDevice);
+            DefaultDraw(spriteBatch, graphicsDevice, res.Value);
         }
 
         /// <summary>
-        /// Allows you to write custom draw logic for this brush. <br/>
-        /// Return false to prevent default draw logic from running <br/>
-        /// Returns true by default.
+        /// Allows you to write custom draw logic for this brush or modify the color the default draw call is drawn with <br/>
+        /// Return a color to allow default draw logic <br/>
+        /// Return null to cancel this. <br/>
+        /// Returns <see cref="Color.White"/> by default.
         /// </summary>
-        protected virtual bool Draw(SpriteBatch spriteBatch, GraphicsDevice graphicsDevice) { return true; }
+        protected virtual Color? Draw(SpriteBatch spriteBatch, GraphicsDevice graphicsDevice) { return Color.White; }
 
-        private void DefaultDraw(SpriteBatch spriteBatch, GraphicsDevice graphicsDevice)
+        private void DefaultDraw(SpriteBatch spriteBatch, GraphicsDevice graphicsDevice, Color drawColor)
         {
             graphicsDevice.SetRenderTarget(Main.Canvas);
-            BrushShader.Parameters["BrushColor"].SetValue(Color.Red.ToVector4());
+            BrushShader.Parameters["BrushColor"].SetValue(drawColor.ToVector4());
 
             spriteBatch.Begin(SpriteSortMode.Immediate, effect: BrushShader);
-            DrawUtils.DrawLine(MouseUtils.MoveHistory[0], MouseUtils.MoveHistory[1], BrushShader, spriteBatch,null, out _, out _);
+            spriteBatch.DrawLine(MouseUtils.MoveHistory[0], MouseUtils.MoveHistory[1], BrushShader, BrushSize);
             spriteBatch.End();
         }
     }

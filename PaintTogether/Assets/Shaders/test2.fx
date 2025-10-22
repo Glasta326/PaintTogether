@@ -8,7 +8,6 @@
 #endif
 
 Texture2D SpriteTexture;
-
 float BrushRadius;
 float4 BrushColor;
 

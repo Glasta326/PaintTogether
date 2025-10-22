@@ -1,8 +1,12 @@
 ﻿using System;
+using System.IO;
 using System.Linq;
+using System.Text.Json;
+using System.Text.RegularExpressions;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
+using PaintTogether.Common;
 using PaintTogether.Common.DataTypes;
 using PaintTogether.Common.Utilities;
 using PaintTogether.Content.Brushes;
@@ -39,10 +43,16 @@ namespace PaintTogether
         /// </summary>
         public static Brush ActiveBrush;
 
+        /// <summary>
+        /// Defaults to 1200x720
+        /// </summary>
+        public static Point Resolution;
+
         #endregion
 
         public Main()
         {
+            instance = this;
             _graphics = new GraphicsDeviceManager(this);
             Content.RootDirectory = "Assets";
             IsMouseVisible = true;
@@ -50,12 +60,15 @@ namespace PaintTogether
 
         protected override void Initialize()
         {
+            LaunchSettings.Load();
+
+
             ILoadableRegistry.Initialize();
             ILoadableRegistry.LoadAll();
             ElementLoader.InitaliseRegistry();
             ElementLoader.LoadAll();
 
-
+            
             base.Initialize();
         }
 
@@ -76,7 +89,7 @@ namespace PaintTogether
             ElementLoader.LoadAssetsAll(GraphicsDevice, Content);
 
             logoTarget = new RenderTarget2D(GraphicsDevice, Window.ClientBounds.Width, Window.ClientBounds.Height);
-            Canvas = new RenderTarget2D(GraphicsDevice,  Window.ClientBounds.Width, Window.ClientBounds.Height, false, SurfaceFormat.Color, DepthFormat.None, 0, RenderTargetUsage.PreserveContents);
+            Canvas = new RenderTarget2D(GraphicsDevice, Window.ClientBounds.Width, Window.ClientBounds.Height, false, SurfaceFormat.Color, DepthFormat.None, 0, RenderTargetUsage.PreserveContents);
             logo = Content.Load<Texture2D>("Textures/proxy-image");
             font = Content.Load<SpriteFont>("Fonts/TestFont");
             
@@ -93,10 +106,15 @@ namespace PaintTogether
             {
                 ActiveBrush = ILoadableRegistry.Get<TestBrush>();
             }
-            
+
             if (Keyboard.GetState().IsKeyDown(Keys.W))
             {
                 ActiveBrush = ILoadableRegistry.Get<Test2Brush>();
+            }
+            
+            if (Keyboard.GetState().IsKeyDown(Keys.E))
+            {
+                ActiveBrush = ILoadableRegistry.Get<TestBrush3>();
             }
 
             Update_Inner(gameTime);
@@ -139,7 +157,7 @@ namespace PaintTogether
             _spriteBatch.Begin(SpriteSortMode.Immediate, BlendState.AlphaBlend);
             _spriteBatch.DrawString(font, $"Brush size : {Brush.BrushSize}", Vector2.Zero, Color.White);
             _spriteBatch.DrawString(font, $"Brush : {brush}", new Vector2(0, 30), Color.White);
-            _spriteBatch.DrawString(font, $"Q : Red pen \nW : Eraser", new Vector2(0, 60), Color.White);
+            _spriteBatch.DrawString(font, $"Q : Red pen \nW : Eraser\nE : Big square", new Vector2(0, 60), Color.White);
             _spriteBatch.End();
 
             GraphicsDevice.SetRenderTarget(Canvas);

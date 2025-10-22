@@ -10,11 +10,11 @@ using PaintTogether.Common.Utilities;
 
 namespace PaintTogether.Content.Brushes
 {
-    public class TestBrush : Brush
+    public class TestBrush3 : Brush
     {
         protected override void LoadAssets(GraphicsDevice graphicsDevice, ContentManager contentManager)
         {
-            BrushShader = contentManager.Load<Effect>("Shaders/test2");
+            BrushShader = contentManager.Load<Effect>("Shaders/Eraser");
             t = new Texture2D(graphicsDevice, 1, 1);
         }
 
@@ -25,10 +25,9 @@ namespace PaintTogether.Content.Brushes
 
         Texture2D t;
 
-
         protected override Color? Draw(SpriteBatch spriteBatch, GraphicsDevice graphicsDevice)
         {
-            return Color.Aqua;
+            return Color.Pink;
         }
 
 
