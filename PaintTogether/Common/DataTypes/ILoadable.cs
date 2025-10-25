@@ -10,7 +10,9 @@ namespace PaintTogether.Common.DataTypes
     public interface ILoadable
     {
         /// <summary>
-        /// Can be used to sort loadable types to be loaded before others if it is needed.
+        /// Can be used to sort loadable types to be loaded before others if it is needed. <br/>
+        /// Higher values mean higher priority. Priority 10 is loaded before priority 5. <br/>
+        /// Defaults to 0.
         /// </summary>
         int LoadPriority => 0;
 

@@ -16,46 +16,15 @@ using PaintTogether.Core.LoadSystem;
 
 namespace PaintTogether
 {
-    public class Main : Game
+    public partial class Main : Game
     {
-        #region Properties
-
-        public static Main instance;
-        
-        private GraphicsDeviceManager _graphics;
-        private SpriteBatch _spriteBatch;
-
-        [ThreadStatic] private static Random _rand;
-
-        public static Random rand
-        {
-            get { return _rand ??= new Random(); }
-            set { _rand = value; }
-        }
-
-        /// <summary>
-        /// Counts up once every second and wraps ever 3600 seconds
-        /// </summary>
-        public static float GlobalTimeWrappedHourly;
-
-        /// <summary>
-        /// Current brush type being held by the user
-        /// </summary>
-        public static Brush ActiveBrush;
-
-        /// <summary>
-        /// Defaults to 1200x720
-        /// </summary>
-        public static Point Resolution;
-
-        #endregion
-
         public Main()
         {
             instance = this;
             _graphics = new GraphicsDeviceManager(this);
             Content.RootDirectory = "Assets";
             IsMouseVisible = true;
+            Window.AllowUserResizing = false;
         }
 
         protected override void Initialize()
@@ -72,14 +41,15 @@ namespace PaintTogether
             base.Initialize();
         }
 
-
         public static RenderTarget2D Canvas;
         public static RenderTarget2D logoTarget;
+
+        public static RenderTarget2D final;
         public static Texture2D logo;
 
         public static SpriteFont font;
 
-        
+
 
         protected override void LoadContent()
         {
@@ -90,9 +60,15 @@ namespace PaintTogether
 
             logoTarget = new RenderTarget2D(GraphicsDevice, Window.ClientBounds.Width, Window.ClientBounds.Height);
             Canvas = new RenderTarget2D(GraphicsDevice, Window.ClientBounds.Width, Window.ClientBounds.Height, false, SurfaceFormat.Color, DepthFormat.None, 0, RenderTargetUsage.PreserveContents);
+            final = new RenderTarget2D(GraphicsDevice, Window.ClientBounds.Width, Window.ClientBounds.Height);
             logo = Content.Load<Texture2D>("Textures/proxy-image");
             font = Content.Load<SpriteFont>("Fonts/TestFont");
-            
+
+        }
+
+        protected override void OnExiting(object sender, ExitingEventArgs args)
+        {
+            ILoadableRegistry.UnLoadAll();
         }
 
         protected override void Update(GameTime gameTime)
@@ -111,20 +87,23 @@ namespace PaintTogether
             {
                 ActiveBrush = ILoadableRegistry.Get<Test2Brush>();
             }
-            
+
             if (Keyboard.GetState().IsKeyDown(Keys.E))
             {
                 ActiveBrush = ILoadableRegistry.Get<TestBrush3>();
             }
 
+
+
+
             Update_Inner(gameTime);
-            
+
             ElementLoader.PreUpdateAll();
 
             UpdateBrush();
 
             ElementLoader.UpdateAll();
-            
+
             base.Update(gameTime);
         }
 
@@ -165,12 +144,16 @@ namespace PaintTogether
             ActiveBrush.MainDraw(_spriteBatch, GraphicsDevice);
             ElementLoader.PostDrawAll(_spriteBatch, GraphicsDevice);
 
-            GraphicsDevice.SetRenderTarget(null);
+            GraphicsDevice.SetRenderTarget(final);
             _spriteBatch.Begin(SpriteSortMode.Immediate, BlendState.AlphaBlend);
             _spriteBatch.Draw(logoTarget, Vector2.Zero, Color.White);
             _spriteBatch.Draw(Canvas, Vector2.Zero, Color.White);
             _spriteBatch.End();
 
+            GraphicsDevice.SetRenderTarget(null);
+            _spriteBatch.Begin(SpriteSortMode.Immediate, BlendState.AlphaBlend);
+            _spriteBatch.Draw(final, Vector2.Zero, Color.White);
+            _spriteBatch.End();
             
             base.Draw(gameTime);
         }

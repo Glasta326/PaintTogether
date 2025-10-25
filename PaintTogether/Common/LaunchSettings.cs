@@ -28,16 +28,30 @@ namespace PaintTogether.Common
             using JsonDocument doc = JsonDocument.Parse(json);
             JsonElement root = doc.RootElement;
 
-
             SetResolution(root);
+            SetSavePath(root);
         }
-        
+
         private static void SetResolution(JsonElement root)
         {
             string x = root.GetProperty("Resolution").GetString();
 
-            string[] strings = Regex.Split(x, @"[xX:|,\*\-]"); // Regex fucking sucks
-            Main.Resolution = new Point(int.Parse(strings[0]), int.Parse(strings[1]));
+            // Look for any common seperators: [10x10] [10X10] [10:10] [10|10] [10,10] [10\10] [10*10] [10-10]
+            string[] strings = Regex.Split(x, @"[xX:|,\*\-]"); 
+
+            if (int.TryParse(strings[0], out int r1) && int.TryParse(strings[1], out int r2))
+            {
+                Main.Resolution = new Point(r1, r2);
+            }
+            else
+            {
+                throw new Exception("Could not parse user specified resolution");
+            }
+        }
+        
+        private static void SetSavePath(JsonElement root)
+        {
+            Main.SaveFolderPath = root.GetProperty("SaveFolderPath").GetString();
         }
     }
 }

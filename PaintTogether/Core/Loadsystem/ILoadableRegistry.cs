@@ -14,10 +14,10 @@ namespace PaintTogether.Core.Loadsystem
 
         public static void Initialize()
         {
-            var loadableTypes = typeof(ILoadable).Assembly.GetTypes()
+            var _loadableTypes = typeof(ILoadable).Assembly.GetTypes()
                 .Where(t => typeof(ILoadable).IsAssignableFrom(t) && !t.IsAbstract && !t.IsInterface);
 
-            foreach (var type in loadableTypes)
+            foreach (var type in _loadableTypes)
             {
                 if (Activator.CreateInstance(type) is ILoadable instance)
                 {
@@ -34,9 +34,12 @@ namespace PaintTogether.Core.Loadsystem
             return LoadableTypes.OfType<T>().FirstOrDefault();
         }
 
+        /// <summary>
+        /// Loads all <see cref="ILoadable"/> instances based on priority
+        /// </summary>
         public static void LoadAll()
         {
-            foreach (var t in LoadableTypes)
+            foreach (var t in LoadableTypes.OrderByDescending(l => l.LoadPriority))
                 t.Load();
         }
 

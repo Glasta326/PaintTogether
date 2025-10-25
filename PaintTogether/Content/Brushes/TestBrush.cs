@@ -6,6 +6,7 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
 using PaintTogether.Common.DataTypes;
+using PaintTogether.Common.PaintLogger;
 using PaintTogether.Common.Utilities;
 
 namespace PaintTogether.Content.Brushes
@@ -28,6 +29,9 @@ namespace PaintTogether.Content.Brushes
 
         protected override Color? Draw(SpriteBatch spriteBatch, GraphicsDevice graphicsDevice)
         {
+            Paintlogger.LogInfo("Selected testbrush2");
+            int x = 0;
+            Console.WriteLine($"{1 / x}");
             return Color.Aqua;
         }
 

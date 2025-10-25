@@ -13,6 +13,12 @@ namespace PaintTogether.Common.Utilities
     {
         public const string LaunchSettingsFile = "LaunchConfig.json";
 
+        /// <summary>
+        /// Directory most files will go to. Log files, ect
+        /// </summary>
+        public static readonly String MainDirectory = "/home/Glasta/Projects/PaintTogether/PaintTogether";
+        //public static readonly String UseDirectory = Directory.GetCurrentDirectory();
+
         // Uncomment this for release builds
         //public static readonly string LaunchSettingsFilePath = Path.Combine(Directory.GetCurrentDirectory(), LaunchSettingsFile);
 
