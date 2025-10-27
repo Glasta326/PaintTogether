@@ -11,12 +11,12 @@ using PaintTogether.Common.Utilities;
 namespace PaintTogether.Common
 {
     /// <summary>
-    /// Initalises Main.cs launch properties such as <see cref="Main.Resolution"/>
+    /// Initalises Main.cs launch properties such as <see cref="Main.CanvasResolution"/>
     /// </summary>
     public static class LaunchSettings
     {
         /// <summary>
-        /// Initalises Main.cs launch properties such as <see cref="Main.Resolution"/>
+        /// Initalises Main.cs launch properties such as <see cref="Main.CanvasResolution"/>
         /// </summary>
         public static void Load()
         {
@@ -41,7 +41,7 @@ namespace PaintTogether.Common
 
             if (int.TryParse(strings[0], out int r1) && int.TryParse(strings[1], out int r2))
             {
-                Main.Resolution = new Point(r1, r2);
+                Main.CanvasResolution = new Point(r1, r2);
             }
             else
             {

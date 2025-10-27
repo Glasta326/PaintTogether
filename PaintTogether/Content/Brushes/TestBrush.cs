@@ -27,11 +27,8 @@ namespace PaintTogether.Content.Brushes
         Texture2D t;
 
 
-        protected override Color? Draw(SpriteBatch spriteBatch, GraphicsDevice graphicsDevice)
+        protected override Color? BrushDraw(SpriteBatch spriteBatch, GraphicsDevice graphicsDevice)
         {
-            Paintlogger.LogInfo("Selected testbrush2");
-            int x = 0;
-            Console.WriteLine($"{1 / x}");
             return Color.Aqua;
         }
 

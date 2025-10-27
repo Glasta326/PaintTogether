@@ -3,11 +3,13 @@ using System.IO;
 using System.Linq;
 using System.Text.Json;
 using System.Text.RegularExpressions;
+using System.Threading;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using PaintTogether.Common;
 using PaintTogether.Common.DataTypes;
+using PaintTogether.Common.PaintLogger;
 using PaintTogether.Common.Utilities;
 using PaintTogether.Content.Brushes;
 using PaintTogether.Core;
@@ -24,7 +26,7 @@ namespace PaintTogether
             _graphics = new GraphicsDeviceManager(this);
             Content.RootDirectory = "Assets";
             IsMouseVisible = true;
-            Window.AllowUserResizing = false;
+            Window.AllowUserResizing = true;
         }
 
         protected override void Initialize()
@@ -44,11 +46,13 @@ namespace PaintTogether
         public static RenderTarget2D Canvas;
         public static RenderTarget2D logoTarget;
 
+        public static RenderTarget2D UITarget;
+
+
         public static RenderTarget2D final;
         public static Texture2D logo;
 
         public static SpriteFont font;
-
 
 
         protected override void LoadContent()
@@ -58,12 +62,14 @@ namespace PaintTogether
             ILoadableRegistry.LoadAllAssets(GraphicsDevice, Content);
             ElementLoader.LoadAssetsAll(GraphicsDevice, Content);
 
-            logoTarget = new RenderTarget2D(GraphicsDevice, Window.ClientBounds.Width, Window.ClientBounds.Height);
-            Canvas = new RenderTarget2D(GraphicsDevice, Window.ClientBounds.Width, Window.ClientBounds.Height, false, SurfaceFormat.Color, DepthFormat.None, 0, RenderTargetUsage.PreserveContents);
-            final = new RenderTarget2D(GraphicsDevice, Window.ClientBounds.Width, Window.ClientBounds.Height);
+
+
+            logoTarget = new RenderTarget2D(GraphicsDevice, CanvasResolution.X, CanvasResolution.Y, false, SurfaceFormat.Color, DepthFormat.None, 0, RenderTargetUsage.DiscardContents);
+            Canvas = new RenderTarget2D(GraphicsDevice, CanvasResolution.X, CanvasResolution.Y, false, SurfaceFormat.Color, DepthFormat.None, 0, RenderTargetUsage.PreserveContents);
+            UITarget = new RenderTarget2D(GraphicsDevice, CanvasResolution.X, CanvasResolution.Y, false, SurfaceFormat.Color, DepthFormat.None, 0, RenderTargetUsage.DiscardContents);
+            final = new RenderTarget2D(GraphicsDevice, CanvasResolution.X, CanvasResolution.Y);
             logo = Content.Load<Texture2D>("Textures/proxy-image");
             font = Content.Load<SpriteFont>("Fonts/TestFont");
-
         }
 
         protected override void OnExiting(object sender, ExitingEventArgs args)
@@ -75,12 +81,12 @@ namespace PaintTogether
         {
             if (ActiveBrush is null)
             {
-                ActiveBrush = ILoadableRegistry.Get<TestBrush>();
+                ActiveBrush = ILoadableRegistry.Get<PenBrush>();
             }
 
             if (Keyboard.GetState().IsKeyDown(Keys.Q))
             {
-                ActiveBrush = ILoadableRegistry.Get<TestBrush>();
+                ActiveBrush = ILoadableRegistry.Get<PenBrush>();
             }
 
             if (Keyboard.GetState().IsKeyDown(Keys.W))
@@ -92,9 +98,6 @@ namespace PaintTogether
             {
                 ActiveBrush = ILoadableRegistry.Get<TestBrush3>();
             }
-
-
-
 
             Update_Inner(gameTime);
 
@@ -109,9 +112,9 @@ namespace PaintTogether
 
         private void Update_Inner(GameTime gameTime)
         {
-            MouseUtils.State = Mouse.GetState(); // We do this and just read from state when getting mouse info so we arent requesting to get the state a zillion times
-            MouseUtils.MoveHistory.Add(MouseUtils.State.Position);
-            MouseUtils.ScrollHistory.Add(MouseUtils.State.ScrollWheelValue); // Push the new scroll value to the scroll history so scrollDelta is accurate
+            MouseData.State = Mouse.GetState(); // We do this and just read from state when getting mouse info so we arent requesting to get the state a zillion times
+            MouseData.MoveHistory.Add(MouseData.MousePosPoint());
+            MouseData.ScrollHistory.Add(MouseData.State.ScrollWheelValue); // Push the new scroll value to the scroll history so scrollDelta is accurate
             GlobalTimeWrappedHourly = (float)(gameTime.TotalGameTime.TotalSeconds % 3600.0);
         }
 
@@ -125,14 +128,10 @@ namespace PaintTogether
 
         protected override void Draw(GameTime gameTime)
         {
-            GraphicsDevice.Clear(Color.Black);
-
             GraphicsDevice.SetRenderTarget(logoTarget);
-
+            GraphicsDevice.Clear(Color.Black);
             ElementLoader.PreDrawAll(_spriteBatch, GraphicsDevice);
-
             string brush = ActiveBrush is TestBrush ? "Red pen" : "Eraser";
-            
             _spriteBatch.Begin(SpriteSortMode.Immediate, BlendState.AlphaBlend);
             _spriteBatch.DrawString(font, $"Brush size : {Brush.BrushSize}", Vector2.Zero, Color.White);
             _spriteBatch.DrawString(font, $"Brush : {brush}", new Vector2(0, 30), Color.White);
@@ -140,19 +139,25 @@ namespace PaintTogether
             _spriteBatch.End();
 
             GraphicsDevice.SetRenderTarget(Canvas);
-            //GraphicsDevice.Clear(Color.Transparent);
+            //GraphicsDevice.Clear(Color.Transparent); no!
             ActiveBrush.MainDraw(_spriteBatch, GraphicsDevice);
             ElementLoader.PostDrawAll(_spriteBatch, GraphicsDevice);
+
+            GraphicsDevice.SetRenderTarget(UITarget);
+            GraphicsDevice.Clear(Color.Transparent);
+            ActiveBrush.UiDraw(_spriteBatch, GraphicsDevice);
 
             GraphicsDevice.SetRenderTarget(final);
             _spriteBatch.Begin(SpriteSortMode.Immediate, BlendState.AlphaBlend);
             _spriteBatch.Draw(logoTarget, Vector2.Zero, Color.White);
             _spriteBatch.Draw(Canvas, Vector2.Zero, Color.White);
+            _spriteBatch.Draw(UITarget, Vector2.Zero, Color.White);
             _spriteBatch.End();
 
             GraphicsDevice.SetRenderTarget(null);
+            GraphicsDevice.Clear(Color.Black);
             _spriteBatch.Begin(SpriteSortMode.Immediate, BlendState.AlphaBlend);
-            _spriteBatch.Draw(final, Vector2.Zero, Color.White);
+            _spriteBatch.Draw(final, new Rectangle(0, 0, Window.ClientBounds.Width, Window.ClientBounds.Height), Color.White);
             _spriteBatch.End();
             
             base.Draw(gameTime);

@@ -49,7 +49,7 @@ namespace PaintTogether
         /// <summary>
         /// Defaults to 1200x720
         /// </summary>
-        public static Point Resolution;
+        public static Point CanvasResolution;
 
         #endregion
     }

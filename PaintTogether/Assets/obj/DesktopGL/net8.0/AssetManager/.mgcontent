@@ -6,6 +6,7 @@
   <SourceFiles>
     <File>/home/Glasta/Projects/PaintTogether/PaintTogether/Assets/Fonts/TestFont.spritefont</File>
     <File>/home/Glasta/Projects/PaintTogether/PaintTogether/Assets/Shaders/Eraser.fx</File>
+    <File>/home/Glasta/Projects/PaintTogether/PaintTogether/Assets/Shaders/PenBrushShader.fx</File>
     <File>/home/Glasta/Projects/PaintTogether/PaintTogether/Assets/Shaders/test2.fx</File>
     <File>/home/Glasta/Projects/PaintTogether/PaintTogether/Assets/Shaders/TestBrushEffect.fx</File>
     <File>/home/Glasta/Projects/PaintTogether/PaintTogether/Assets/Sounds/MenuClick.wav</File>
@@ -13,6 +14,7 @@
     <File>/home/Glasta/Projects/PaintTogether/PaintTogether/Assets/Textures/proxy-image.jpg</File>
   </SourceFiles>
   <DestFiles>
+    <File xsi:nil="true" />
     <File xsi:nil="true" />
     <File xsi:nil="true" />
     <File xsi:nil="true" />

@@ -6,6 +6,7 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
+using PaintTogether.Common;
 using PaintTogether.Common.DataTypes;
 using PaintTogether.Common.Utilities;
 using PaintTogether.Core.LoadSystem;
@@ -55,11 +56,6 @@ namespace PaintTogether.Content.Brushes
             LoadAssets(graphicsDevice, contentManager);
         }
 
-        void ILoadable.Unload()
-        {
-            Console.WriteLine($"Unloading content for {this.ToString()}");
-        }
-
         /// <summary>
         /// Load any non-asset content here
         /// </summary>
@@ -77,20 +73,20 @@ namespace PaintTogether.Content.Brushes
 
         #endregion
 
-        private bool DoDraw = false;
+        protected bool BrushShouldDraw { get; private set; }
 
         /// <summary>
         /// Update logic for the selected brush. Should always be run from Main's Update()
         /// </summary>
         public void MainUpdate()
         {
-            DoDraw = false;
-            if (MouseUtils.LeftClick == ButtonState.Pressed)
+            BrushShouldDraw = false;
+            if (MouseData.LeftClick == ButtonState.Pressed)
             {
-                DoDraw = true;
+                BrushShouldDraw = true;
             }
 
-            BrushSize += (int)(MouseUtils.ScrollDelta * 0.00833333333333f); // divide by 120
+            BrushSize += (int)(MouseData.ScrollDelta * 0.00833333333333f); // divide by 120
             Update();
         }
 
@@ -101,12 +97,12 @@ namespace PaintTogether.Content.Brushes
         /// </summary>
         public void MainDraw(SpriteBatch spriteBatch, GraphicsDevice graphicsDevice)
         {
-            if (!DoDraw)
+            if (!BrushShouldDraw)
             {
                 return;
             }
             // Prevent normal drawing if specified
-            Color? res = Draw(spriteBatch, graphicsDevice);
+            Color? res = BrushDraw(spriteBatch, graphicsDevice);
             if (res is null)
             {
                 return;
@@ -120,7 +116,12 @@ namespace PaintTogether.Content.Brushes
         /// Return null to cancel this. <br/>
         /// Returns <see cref="Color.White"/> by default.
         /// </summary>
-        protected virtual Color? Draw(SpriteBatch spriteBatch, GraphicsDevice graphicsDevice) { return Color.White; }
+        protected virtual Color? BrushDraw(SpriteBatch spriteBatch, GraphicsDevice graphicsDevice) { return Color.White; }
+
+        /// <summary>
+        /// For drawing anything outside of the brush's functionality. Such as a draw region indicator
+        /// </summary>
+        public virtual void UiDraw(SpriteBatch spriteBatch, GraphicsDevice graphicsDevice) { }
 
         private void DefaultDraw(SpriteBatch spriteBatch, GraphicsDevice graphicsDevice, Color drawColor)
         {
@@ -128,7 +129,7 @@ namespace PaintTogether.Content.Brushes
             BrushShader.Parameters["BrushColor"].SetValue(drawColor.ToVector4());
 
             spriteBatch.Begin(SpriteSortMode.Immediate, effect: BrushShader);
-            spriteBatch.DrawLine(MouseUtils.MoveHistory[0], MouseUtils.MoveHistory[1], BrushShader, BrushSize);
+            spriteBatch.DrawLine(MouseData.MoveHistory[0], MouseData.MoveHistory[1], BrushShader, BrushSize);
             spriteBatch.End();
         }
     }

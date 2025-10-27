@@ -76,11 +76,11 @@ namespace PaintTogether.Common.Utilities
         }
 
         /// <summary>
-        /// Simplified <see cref="DrawLine"/> that assumes brush using <see cref="Brush.BrushSize"/> and <see cref="MouseUtils.MoveHistory"/>
+        /// Simplified <see cref="DrawLine"/> that assumes brush using <see cref="Brush.BrushSize"/> and <see cref="MouseData.MoveHistory"/>
         /// </summary>
         public static bool DrawLine(this SpriteBatch _spriteBatch, Effect shader)
         {
-            return _spriteBatch.DrawLine(MouseUtils.MoveHistory[0], MouseUtils.MoveHistory[1], shader, Brush.BrushSize);
+            return _spriteBatch.DrawLine(MouseData.MoveHistory[0], MouseData.MoveHistory[1], shader, Brush.BrushSize);
         }
 
     }

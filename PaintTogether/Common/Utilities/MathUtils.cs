@@ -178,13 +178,22 @@ namespace PaintTogether.Common.Utilities
         /// <param name="XOffset">shifts the graph this far in the x direction</param>
         /// <param name="YOffset">shifts the graph this far in the y direction</param>
         /// <returns></returns>
-        public static float CustomSine(float x, float interval = MathHelper.PiOver2, float amplitude = 1, float XOffset = 0, float YOffset = 0)
+        public static float CustomSine(this float x, float interval = MathHelper.PiOver2, float amplitude = 1, float XOffset = 0, float YOffset = 0)
         {
             if (interval == 0)
             {
                 return 0;
             }
             return (float)((Math.Sin(Math.PI * x * 2 / interval - XOffset) + YOffset) * amplitude);
+        }
+        
+        /// <summary>
+        /// see https://www.desmos.com/calculator/d90xkv3omo for info <br/>
+        /// Returns sin(x) but mapped to the range [0 - 1]
+        /// </summary>
+        public static float UnitSine(this float x)
+        {
+            return (MathF.Sin(x) + 1) * 0.5f; // I mean float multiplication is faster than doing /2 so might aswell
         }
 
         /// <summary>
@@ -205,6 +214,11 @@ namespace PaintTogether.Common.Utilities
             float error = MathF.Sqrt(1f + (smoothness * smoothness));
 
             return main * error * amplitude * YOffset;
+        }
+
+        public static float OneSin(this float x)
+        {
+            return MathF.Sin(x);
         }
 
         /// <summary>

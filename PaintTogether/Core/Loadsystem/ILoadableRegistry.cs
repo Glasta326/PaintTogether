@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
 using PaintTogether.Common.DataTypes;
+using PaintTogether.Common.PaintLogger;
 
 namespace PaintTogether.Core.Loadsystem
 {
@@ -52,7 +53,10 @@ namespace PaintTogether.Core.Loadsystem
         public static void UnLoadAll()
         {
             foreach (var t in LoadableTypes)
+            {
+                Paintlogger.LogInfo($"Unloading {t}");
                 t.Unload();
+            }
         }
     }
 }
