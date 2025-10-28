@@ -23,6 +23,8 @@ bld/
 [Oo]bj/
 [Ll]og/
 PaintTogether/obj/
+PaintTogether/Assets/[Bb]in/
+PaintTogether/Assets/[Oo]bj/
 PaintTogetherServer/obj/
 
 # Visual Studio 2015 cache/options directory
