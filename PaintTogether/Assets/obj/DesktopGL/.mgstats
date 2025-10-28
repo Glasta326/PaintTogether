@@ -1,6 +1,0 @@
-Source File,Dest File,Processor Type,Content Type,Source File Size,Dest File Size,Build Seconds
-"/home/Glasta/Documents/test3/PaintTogether/PaintTogether/Assets/Fonts/TestFont.spritefont","/home/Glasta/Documents/test3/PaintTogether/PaintTogether/Assets/bin/DesktopGL/Fonts/TestFont.xnb","FontDescriptionProcessor","SpriteFontContent",2012,37913,0.1894631
-"/home/Glasta/Documents/test3/PaintTogether/PaintTogether/Assets/Shaders/test2.fx","/home/Glasta/Documents/test3/PaintTogether/PaintTogether/Assets/bin/DesktopGL/Shaders/test2.xnb","EffectProcessor","CompiledEffectContent",1163,596,5.018763
-"/home/Glasta/Documents/test3/PaintTogether/PaintTogether/Assets/Shaders/TestBrushEffect.fx","/home/Glasta/Documents/test3/PaintTogether/PaintTogether/Assets/bin/DesktopGL/Shaders/TestBrushEffect.xnb","EffectProcessor","CompiledEffectContent",843,1293,4.983221
-"/home/Glasta/Documents/test3/PaintTogether/PaintTogether/Assets/Sounds/MenuClick.wav","/home/Glasta/Documents/test3/PaintTogether/PaintTogether/Assets/bin/DesktopGL/Sounds/MenuClick.xnb","SoundEffectProcessor","SoundEffectContent",1556,1207,0.126967
-"/home/Glasta/Documents/test3/PaintTogether/PaintTogether/Assets/Textures/logo.png","/home/Glasta/Documents/test3/PaintTogether/PaintTogether/Assets/bin/DesktopGL/Textures/logo.xnb","TextureProcessor","Texture2DContent",16734,311381,0.063797
