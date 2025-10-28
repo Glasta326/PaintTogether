@@ -154,6 +154,14 @@ namespace PaintTogether
             _spriteBatch.Draw(UITarget, Vector2.Zero, Color.White);
             _spriteBatch.End();
 
+            
+
+
+            // TODO:
+            // Ok so just "scale the whole canvas to the screen" isnt really good enough
+            // you can see in the pain that the canvas always stays the same size, making the window smaller just makes you see less of the canvas,
+            // and you use bars to move around when zoomed in
+            // also the UI always stays the same size
             GraphicsDevice.SetRenderTarget(null);
             GraphicsDevice.Clear(Color.Black);
             _spriteBatch.Begin(SpriteSortMode.Immediate, BlendState.AlphaBlend);
