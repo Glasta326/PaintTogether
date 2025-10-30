@@ -6,6 +6,7 @@ using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Microsoft.Xna.Framework;
+using PaintTogether.Common.PaintLogger;
 using PaintTogether.Common.Utilities;
 
 namespace PaintTogether.Common
@@ -24,6 +25,8 @@ namespace PaintTogether.Common
             {
                 throw new FileNotFoundException($"Could not find {CommonKeys.LaunchSettingsFilePath}");
             }
+            clLogger.LogInfo($"Reading launch settings file from {CommonKeys.LaunchSettingsFilePath}");
+
             string json = File.ReadAllText(CommonKeys.LaunchSettingsFilePath);
             using JsonDocument doc = JsonDocument.Parse(json);
             JsonElement root = doc.RootElement;
@@ -42,6 +45,7 @@ namespace PaintTogether.Common
             if (int.TryParse(strings[0], out int r1) && int.TryParse(strings[1], out int r2))
             {
                 Main.CanvasResolution = new Point(r1, r2);
+                clLogger.LogInfo($"Set canvas resolution to {r1} x {r2}");
             }
             else
             {
@@ -52,6 +56,7 @@ namespace PaintTogether.Common
         private static void SetSavePath(JsonElement root)
         {
             Main.SaveFolderPath = root.GetProperty("SaveFolderPath").GetString();
+            clLogger.LogInfo($"Set saved files output file path to {Main.SaveFolderPath}");
         }
     }
 }

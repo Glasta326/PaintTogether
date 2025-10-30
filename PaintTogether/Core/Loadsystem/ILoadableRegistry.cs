@@ -54,7 +54,7 @@ namespace PaintTogether.Core.Loadsystem
         {
             foreach (var t in LoadableTypes)
             {
-                Paintlogger.LogInfo($"Unloading {t}");
+                clLogger.LogInfo($"Unloading {t}");
                 t.Unload();
             }
         }

@@ -1,17 +1,22 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Reflection;
+using System.Runtime.InteropServices;
+using System.Threading;
 using System.Threading.Tasks;
 using PaintTogether.Common.DataTypes;
 using PaintTogether.Common.Utilities;
 
 namespace PaintTogether.Common.PaintLogger
 {
-    public class Paintlogger : ILoadable
+    /// <summary>
+    /// Logging utility for PaintTogether.
+    /// </summary>
+    public static class clLogger // named "clLogger" purely because it is easy to type from my hand's resting position and sounds like "ClientLogger"
     {
-        int ILoadable.LoadPriority => 10;
-
         /// <summary>
         /// Path to the folder for log files
         /// </summary>
@@ -31,9 +36,9 @@ namespace PaintTogether.Common.PaintLogger
         /// <summary>
         /// Time formatted for log entries
         /// </summary>
-        public static string LogTime => $"{DateTime.Now:hh:mm:ss.ffff}";
+        public static string LogTime => $"{DateTime.Now:HH:mm:ss.fff}";
 
-        void ILoadable.Load()
+        public static void Init()
         {
             // Set path strings
             LogDirectory = Path.Combine(CommonKeys.MainDirectory, "Logs");
@@ -46,9 +51,24 @@ namespace PaintTogether.Common.PaintLogger
 
             // Automatically log any errors before crashing
             AppDomain.CurrentDomain.UnhandledException += LogError;
+
+            LogStartupInfo();
         }
 
-        void ILoadable.Unload()
+        private static void LogStartupInfo()
+        {
+            LogInfo($"Starting PaintTogether Client v{LoggableData.ClientVersionInfo()}");
+            LogInfo($"Log date : {DateTime.Now:dd/MM/yyyy}");
+            LogInfo(LoggableData.RuntimeInfo());
+            LogInfo($"CPU : {Environment.ProcessorCount} processors");
+            LogInfo($"Executable : {Environment.ProcessPath}");
+            LogInfo($"Working directory : {Path.GetFullPath(Directory.GetCurrentDirectory())}");
+            LogInfo($"Process ID : {Environment.ProcessId}, Process memory usage : {(Process.GetCurrentProcess().PrivateMemorySize64 / 1048576d):f2}MB, Process priority : {Process.GetCurrentProcess().PriorityClass}");
+
+        }
+
+
+        public static void Unload()
         {
             LogFile.Close();
             LogFile.Dispose();

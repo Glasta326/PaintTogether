@@ -1,6 +1,7 @@
 ﻿using System;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Threading;
@@ -31,6 +32,8 @@ namespace PaintTogether
 
         protected override void Initialize()
         {
+            clLogger.Init();
+
             LaunchSettings.Load();
 
 
@@ -75,6 +78,8 @@ namespace PaintTogether
         protected override void OnExiting(object sender, ExitingEventArgs args)
         {
             ILoadableRegistry.UnLoadAll();
+
+            clLogger.Unload();
         }
 
         protected override void Update(GameTime gameTime)

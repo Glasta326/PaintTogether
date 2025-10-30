@@ -43,6 +43,7 @@ namespace PaintTogether.Content.Brushes
         void ILoadable.Load()
         {
             Console.WriteLine($"Loading content for {this.ToString()}");
+            
             Load();
         }
 
