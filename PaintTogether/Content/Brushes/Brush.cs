@@ -9,11 +9,11 @@ using Microsoft.Xna.Framework.Input;
 using PaintTogether.Common;
 using PaintTogether.Common.DataTypes;
 using PaintTogether.Common.Utilities;
-using PaintTogether.Core.LoadSystem;
+using PaintTogether.Core;
 
 namespace PaintTogether.Content.Brushes
 {
-    public abstract class Brush : ILoadable
+    public abstract class Brush : Element
     {
         private static int _brushSize;
 
@@ -39,38 +39,33 @@ namespace PaintTogether.Content.Brushes
 
         #region Loading
 
-        // I'm fairly sure what im doing here is terrible and awful, but i'm not actually sure
-        void ILoadable.Load()
+        public sealed override void Load()
         {
-            Console.WriteLine($"Loading content for {this.ToString()}");
-            
-            Load();
+            LoadBrush();
         }
 
-        void ILoadable.LoadAssets(GraphicsDevice graphicsDevice, ContentManager contentManager)
+        public sealed override void LoadAssets(GraphicsDevice graphicsDevice, ContentManager contentManager)
         {
-            Console.WriteLine($"Loading assets for {this.ToString()}");
+            // Emergency fallback but this should be overriden
+            BrushShader = contentManager.Load<Effect>("Shaders/PenBrushShader");
 
-            // Emergency fallback but this should be overriden almost immediatly
-            BrushShader = contentManager.Load<Effect>("Shaders/test2");
-
-            LoadAssets(graphicsDevice, contentManager);
+            LoadBrushAssets(graphicsDevice, contentManager);
         }
 
         /// <summary>
         /// Load any non-asset content here
         /// </summary>
-        protected virtual void Load() { }
+        protected virtual void LoadBrush() { }
 
         /// <summary>
         /// Load asset-related content here
         /// </summary>
-        protected virtual void LoadAssets(GraphicsDevice graphicsDevice, ContentManager contentManager) { }
+        protected virtual void LoadBrushAssets(GraphicsDevice graphicsDevice, ContentManager contentManager) { }
 
         /// <summary>
-        /// Unloads anything loaded in <see cref="Load"/>
+        /// Unloads anything loaded in <see cref="LoadBrush"/>
         /// </summary>
-        protected virtual void Unload() { }
+        protected virtual void UnloadBrush() { }
 
         #endregion
 
@@ -88,10 +83,10 @@ namespace PaintTogether.Content.Brushes
             }
 
             BrushSize += (int)(MouseData.ScrollDelta * 0.00833333333333f); // divide by 120
-            Update();
+            UpdateBrush();
         }
 
-        protected virtual void Update() { }
+        protected virtual void UpdateBrush() { }
 
         /// <summary>
         /// Draw logic for the selected brush. Should always be run from Main's Draw()
@@ -120,10 +115,8 @@ namespace PaintTogether.Content.Brushes
         protected virtual Color? BrushDraw(SpriteBatch spriteBatch, GraphicsDevice graphicsDevice) { return Color.White; }
 
         /// <summary>
-        /// For drawing anything outside of the brush's functionality. Such as a draw region indicator
+        /// Fallback draw logic. Draws a full circle of brushSize width at the cursor. Like a pen tool
         /// </summary>
-        public virtual void UiDraw(SpriteBatch spriteBatch, GraphicsDevice graphicsDevice) { }
-
         private void DefaultDraw(SpriteBatch spriteBatch, GraphicsDevice graphicsDevice, Color drawColor)
         {
             graphicsDevice.SetRenderTarget(Main.Canvas);
@@ -133,5 +126,10 @@ namespace PaintTogether.Content.Brushes
             spriteBatch.DrawLine(MouseData.MoveHistory[0], MouseData.MoveHistory[1], BrushShader, BrushSize);
             spriteBatch.End();
         }
+
+        /// <summary>
+        /// For drawing anything outside of the brush's functionality on the UI layer. Such as a draw region indicator
+        /// </summary>
+        public virtual void UiDraw(SpriteBatch spriteBatch, GraphicsDevice graphicsDevice) { }
     }
 }

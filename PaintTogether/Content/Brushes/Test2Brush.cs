@@ -12,16 +12,16 @@ namespace PaintTogether.Content.Brushes
 {
     public class Test2Brush : Brush
     {
-        protected override void LoadAssets(GraphicsDevice graphicsDevice, ContentManager contentManager)
+        protected override void LoadBrushAssets(GraphicsDevice graphicsDevice, ContentManager contentManager)
         {
             BrushShader = contentManager.Load<Effect>("Shaders/test2");
             t = new Texture2D(graphicsDevice, 1, 1);
         }
 
-        protected override void Update()
+        protected override void UpdateBrush()
         {
             var x = typeof(Test2Brush);
-            base.Update();
+            base.UpdateBrush();
         }
         Texture2D t;
         protected override Color? BrushDraw(SpriteBatch spriteBatch, GraphicsDevice graphicsDevice)

@@ -16,11 +16,8 @@ namespace PaintTogether.Common.Utilities
         /// <summary>
         /// Directory most files will go to. Log files, ect
         /// </summary>
-        public static readonly String MainDirectory = "/home/glasta/Documents/Projects/PaintTogether/PaintTogether";
-        //public static readonly String UseDirectory = Directory.GetCurrentDirectory();
-
-        // Uncomment this for release builds
-        //public static readonly string LaunchSettingsFilePath = Path.Combine(Directory.GetCurrentDirectory(), LaunchSettingsFile);
+        //public static readonly String MainDirectory = "/home/glasta/Documents/Projects/PaintTogether/PaintTogether";
+        public static readonly String MainDirectory = Directory.GetCurrentDirectory();
 
         public static readonly string LaunchSettingsFilePath = Path.Combine(MainDirectory, LaunchSettingsFile);
         
@@ -36,6 +33,20 @@ namespace PaintTogether.Common.Utilities
                     _dummyTexture.SetData([Color.Transparent]);
                 }
                 return _dummyTexture;
+            }
+        }
+
+        private static Texture2D _whitePixel;
+        public static Texture2D WhitePixel
+        {
+            get
+            {
+                if (_whitePixel == null)
+                {
+                    _whitePixel = new Texture2D(Main.instance.GraphicsDevice, 1, 1);
+                    _whitePixel.SetData([Color.White]);
+                }
+                return _whitePixel;
             }
         }
 

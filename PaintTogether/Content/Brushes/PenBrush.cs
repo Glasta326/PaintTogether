@@ -7,6 +7,7 @@ using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
 using PaintTogether.Common;
 using PaintTogether.Common.Utilities;
+using PaintTogether.Content.UI;
 
 namespace PaintTogether.Content.Brushes
 {
@@ -14,7 +15,7 @@ namespace PaintTogether.Content.Brushes
     {
         Effect UI;
 
-        protected override void LoadAssets(GraphicsDevice graphicsDevice, ContentManager contentManager)
+        protected override void LoadBrushAssets(GraphicsDevice graphicsDevice, ContentManager contentManager)
         {
             BrushShader = contentManager.Load<Effect>("Shaders/PenBrushShader");
             UI = contentManager.Load<Effect>("Shaders/Eraser");
@@ -40,7 +41,7 @@ namespace PaintTogether.Content.Brushes
 
         protected override Color? BrushDraw(SpriteBatch spriteBatch, GraphicsDevice graphicsDevice)
         {
-            return Color.Aqua;
+            return ColorSelector.GetColor();
         }
     }
 }

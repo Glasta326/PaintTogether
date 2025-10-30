@@ -13,9 +13,8 @@ using PaintTogether.Common.DataTypes;
 using PaintTogether.Common.PaintLogger;
 using PaintTogether.Common.Utilities;
 using PaintTogether.Content.Brushes;
+using PaintTogether.Content.UI;
 using PaintTogether.Core;
-using PaintTogether.Core.Loadsystem;
-using PaintTogether.Core.LoadSystem;
 
 namespace PaintTogether
 {
@@ -36,11 +35,8 @@ namespace PaintTogether
 
             LaunchSettings.Load();
 
-
-            ILoadableRegistry.Initialize();
-            ILoadableRegistry.LoadAll();
-            ElementLoader.InitaliseRegistry();
-            ElementLoader.LoadAll();
+            Element.InitaliseRegistry();
+            Element.LoadAll();
 
             
             base.Initialize();
@@ -61,11 +57,7 @@ namespace PaintTogether
         protected override void LoadContent()
         {
             _spriteBatch = new SpriteBatch(GraphicsDevice);
-
-            ILoadableRegistry.LoadAllAssets(GraphicsDevice, Content);
-            ElementLoader.LoadAssetsAll(GraphicsDevice, Content);
-
-
+            Element.LoadAssetsAll(GraphicsDevice, Content);
 
             logoTarget = new RenderTarget2D(GraphicsDevice, CanvasResolution.X, CanvasResolution.Y, false, SurfaceFormat.Color, DepthFormat.None, 0, RenderTargetUsage.DiscardContents);
             Canvas = new RenderTarget2D(GraphicsDevice, CanvasResolution.X, CanvasResolution.Y, false, SurfaceFormat.Color, DepthFormat.None, 0, RenderTargetUsage.PreserveContents);
@@ -77,8 +69,7 @@ namespace PaintTogether
 
         protected override void OnExiting(object sender, ExitingEventArgs args)
         {
-            ILoadableRegistry.UnLoadAll();
-
+            Element.UnLoadAll();
             clLogger.Unload();
         }
 
@@ -86,31 +77,34 @@ namespace PaintTogether
         {
             if (ActiveBrush is null)
             {
-                ActiveBrush = ILoadableRegistry.Get<PenBrush>();
+                ActiveBrush = Element.Get<PenBrush>();
             }
 
-            if (Keyboard.GetState().IsKeyDown(Keys.Q))
+            if (!ColorSelector.isFocused)
             {
-                ActiveBrush = ILoadableRegistry.Get<PenBrush>();
-            }
+                if (Keyboard.GetState().IsKeyDown(Keys.Q))
+                {
+                    ActiveBrush = Element.Get<PenBrush>();
+                }
 
-            if (Keyboard.GetState().IsKeyDown(Keys.W))
-            {
-                ActiveBrush = ILoadableRegistry.Get<Test2Brush>();
-            }
+                if (Keyboard.GetState().IsKeyDown(Keys.W))
+                {
+                    ActiveBrush = Element.Get<Test2Brush>();
+                }
 
-            if (Keyboard.GetState().IsKeyDown(Keys.E))
-            {
-                ActiveBrush = ILoadableRegistry.Get<TestBrush3>();
+                if (Keyboard.GetState().IsKeyDown(Keys.E))
+                {
+                    ActiveBrush = Element.Get<TestBrush3>();
+                }
             }
 
             Update_Inner(gameTime);
 
-            ElementLoader.PreUpdateAll();
+            Element.PreUpdateAll();
 
             UpdateBrush();
 
-            ElementLoader.UpdateAll();
+            Element.UpdateAll();
 
             base.Update(gameTime);
         }
@@ -135,7 +129,7 @@ namespace PaintTogether
         {
             GraphicsDevice.SetRenderTarget(logoTarget);
             GraphicsDevice.Clear(Color.Black);
-            ElementLoader.PreDrawAll(_spriteBatch, GraphicsDevice);
+            Element.PreDrawAll(_spriteBatch, GraphicsDevice);
             string brush = ActiveBrush is TestBrush ? "Red pen" : "Eraser";
             _spriteBatch.Begin(SpriteSortMode.Immediate, BlendState.AlphaBlend);
             _spriteBatch.DrawString(font, $"Brush size : {Brush.BrushSize}", Vector2.Zero, Color.White);
@@ -146,10 +140,10 @@ namespace PaintTogether
             GraphicsDevice.SetRenderTarget(Canvas);
             //GraphicsDevice.Clear(Color.Transparent); no!
             ActiveBrush.MainDraw(_spriteBatch, GraphicsDevice);
-            ElementLoader.PostDrawAll(_spriteBatch, GraphicsDevice);
-
+            
             GraphicsDevice.SetRenderTarget(UITarget);
             GraphicsDevice.Clear(Color.Transparent);
+            Element.PostDrawAll(_spriteBatch, GraphicsDevice);
             ActiveBrush.UiDraw(_spriteBatch, GraphicsDevice);
 
             GraphicsDevice.SetRenderTarget(final);

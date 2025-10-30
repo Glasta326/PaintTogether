@@ -3,11 +3,11 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
 using PaintTogether.Common.Utilities;
-using PaintTogether.Core.LoadSystem;
+using PaintTogether.Core;
 
 namespace PaintTogether.Content
 {
-    public class TestElement : ElementLoader
+    public class TestElement : Element
     {
         private Texture2D texture;
         private Vector2 offset;
@@ -20,6 +20,7 @@ namespace PaintTogether.Content
         {
             offset = MathUtils.RandomVector(0f, 3f);
         }
+
 
         public override bool PreDraw(SpriteBatch spriteBatch, GraphicsDevice graphicsDevice)
         {

@@ -13,15 +13,15 @@ namespace PaintTogether.Content.Brushes
 {
     public class TestBrush : Brush
     {
-        protected override void LoadAssets(GraphicsDevice graphicsDevice, ContentManager contentManager)
+        protected override void LoadBrushAssets(GraphicsDevice graphicsDevice, ContentManager contentManager)
         {
             BrushShader = contentManager.Load<Effect>("Shaders/test2");
             t = new Texture2D(graphicsDevice, 1, 1);
         }
 
-        protected override void Update()
+        protected override void UpdateBrush()
         {
-            base.Update();
+            base.UpdateBrush();
         }
 
         Texture2D t;
