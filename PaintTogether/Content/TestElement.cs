@@ -26,7 +26,7 @@ namespace PaintTogether.Content
         {
             spriteBatch.Begin();
             Color c = Color.White;
-            //spriteBatch.Draw(texture, Vector2.Zero + offset, c);
+            spriteBatch.Draw(texture, Vector2.Zero + offset, c);
             spriteBatch.End();
             return false;
         }

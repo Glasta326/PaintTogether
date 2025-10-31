@@ -25,7 +25,7 @@ namespace PaintTogether.Content.Brushes
 
         Texture2D t;
 
-        protected override Color? BrushDraw(SpriteBatch spriteBatch, GraphicsDevice graphicsDevice)
+        protected override Color? BrushDraw(SpriteBatch spriteBatch, GraphicsDevice graphicsDevice, Point offset)
         {
             return Color.Pink;
         }

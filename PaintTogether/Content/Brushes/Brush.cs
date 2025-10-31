@@ -71,6 +71,9 @@ namespace PaintTogether.Content.Brushes
 
         protected bool BrushShouldDraw { get; private set; }
 
+        // When the canvas is moved around we offset brush drawing position to match whereever the canvas was moved to
+        public static Point Offset { get; private set; } = Point.Zero;
+
         /// <summary>
         /// Update logic for the selected brush. Should always be run from Main's Update()
         /// </summary>
@@ -80,6 +83,10 @@ namespace PaintTogether.Content.Brushes
             if (MouseData.LeftClick == ButtonState.Pressed)
             {
                 BrushShouldDraw = true;
+            }
+            if (MouseData.RightClick == ButtonState.Pressed)
+            {
+                Offset += MouseData.MoveDelta;
             }
 
             BrushSize += (int)(MouseData.ScrollDelta * 0.00833333333333f); // divide by 120
@@ -97,13 +104,18 @@ namespace PaintTogether.Content.Brushes
             {
                 return;
             }
+            // it would be a good idea to change code here so we pre-process a cursor position value first and then feed that into the BrushDraw()
+            // that way we can apply zoom and position changes here and custom brush draw logic doesnt need to think about it and MouseData can still be unchanged
+            //Point mousePos = MouseData.MousePosPoint() + Main.canvasOffset.ToPoint();
+            // ^ this is a shitty implenetation for now just to prove a point we need to do this properly
+            
             // Prevent normal drawing if specified
-            Color? res = BrushDraw(spriteBatch, graphicsDevice);
+            Color? res = BrushDraw(spriteBatch, graphicsDevice, (Offset.ToVector2() / 2f).ToPoint()); // ok this doesnt work im too tired rn
             if (res is null)
             {
                 return;
             }
-            DefaultDraw(spriteBatch, graphicsDevice, res.Value);
+            DefaultDraw(spriteBatch, graphicsDevice, res.Value, (Offset.ToVector2() * 2f).ToPoint());
         }
 
         /// <summary>
@@ -112,18 +124,18 @@ namespace PaintTogether.Content.Brushes
         /// Return null to cancel this. <br/>
         /// Returns <see cref="Color.White"/> by default.
         /// </summary>
-        protected virtual Color? BrushDraw(SpriteBatch spriteBatch, GraphicsDevice graphicsDevice) { return Color.White; }
+        protected virtual Color? BrushDraw(SpriteBatch spriteBatch, GraphicsDevice graphicsDevice, Point offset) { return Color.White; }
 
         /// <summary>
         /// Fallback draw logic. Draws a full circle of brushSize width at the cursor. Like a pen tool
         /// </summary>
-        private void DefaultDraw(SpriteBatch spriteBatch, GraphicsDevice graphicsDevice, Color drawColor)
+        private void DefaultDraw(SpriteBatch spriteBatch, GraphicsDevice graphicsDevice, Color drawColor, Point offset)
         {
             graphicsDevice.SetRenderTarget(Main.Canvas);
             BrushShader.Parameters["BrushColor"].SetValue(drawColor.ToVector4());
 
             spriteBatch.Begin(SpriteSortMode.Immediate, effect: BrushShader);
-            spriteBatch.DrawLine(MouseData.MoveHistory[0], MouseData.MoveHistory[1], BrushShader, BrushSize);
+            spriteBatch.DrawLine(MouseData.MoveHistory[0] + offset, MouseData.MoveHistory[1] + offset, BrushShader, BrushSize);
             spriteBatch.End();
         }
 

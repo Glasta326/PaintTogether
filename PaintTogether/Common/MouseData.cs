@@ -43,12 +43,14 @@ namespace PaintTogether.Common
         public static readonly ShiftRegister<Point> MoveHistory = new ShiftRegister<Point>(2);
 
         public static readonly ShiftRegister<int> ScrollHistory = new ShiftRegister<int>(2);
-        
+
         /// <summary>
         /// How far the scroll wheel has been scrolled this frame. <br/>
         /// Positive values mean scrolled UP. <br/>
         /// Negative values mean scrolled DOWN.
         /// </summary>
         public static int ScrollDelta => -(ScrollHistory[1] - ScrollHistory[0]);
+
+        public static Point MoveDelta => (MoveHistory[0] - MoveHistory[1]);
     }
 }

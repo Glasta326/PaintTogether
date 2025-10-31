@@ -39,7 +39,7 @@ namespace PaintTogether.Content.Brushes
             spriteBatch.End();
         }
 
-        protected override Color? BrushDraw(SpriteBatch spriteBatch, GraphicsDevice graphicsDevice)
+        protected override Color? BrushDraw(SpriteBatch spriteBatch, GraphicsDevice graphicsDevice, Point offset)
         {
             return ColorSelector.GetColor();
         }

@@ -107,6 +107,16 @@ namespace PaintTogether
             Element.UpdateAll();
 
             base.Update(gameTime);
+
+            Color[] c = new Color[10];
+            Rectangle region = new Rectangle(0, 0, 2, 2);
+
+            GraphicsDevice.SetRenderTarget(null);
+
+
+            Canvas.GetData<Color>(0, region, c, 0, 4);
+
+            
         }
 
         private void Update_Inner(GameTime gameTime)
@@ -128,7 +138,7 @@ namespace PaintTogether
         protected override void Draw(GameTime gameTime)
         {
             GraphicsDevice.SetRenderTarget(logoTarget);
-            GraphicsDevice.Clear(Color.Black);
+            GraphicsDevice.Clear(new Color(15, 15, 15));
             Element.PreDrawAll(_spriteBatch, GraphicsDevice);
             string brush = ActiveBrush is TestBrush ? "Red pen" : "Eraser";
             _spriteBatch.Begin(SpriteSortMode.Immediate, BlendState.AlphaBlend);
@@ -140,7 +150,7 @@ namespace PaintTogether
             GraphicsDevice.SetRenderTarget(Canvas);
             //GraphicsDevice.Clear(Color.Transparent); no!
             ActiveBrush.MainDraw(_spriteBatch, GraphicsDevice);
-            
+
             GraphicsDevice.SetRenderTarget(UITarget);
             GraphicsDevice.Clear(Color.Transparent);
             Element.PostDrawAll(_spriteBatch, GraphicsDevice);
@@ -149,11 +159,11 @@ namespace PaintTogether
             GraphicsDevice.SetRenderTarget(final);
             _spriteBatch.Begin(SpriteSortMode.Immediate, BlendState.AlphaBlend);
             _spriteBatch.Draw(logoTarget, Vector2.Zero, Color.White);
-            _spriteBatch.Draw(Canvas, Vector2.Zero, Color.White);
+            _spriteBatch.Draw(Canvas, Brush.Offset.ToVector2(), Color.White);
             _spriteBatch.Draw(UITarget, Vector2.Zero, Color.White);
             _spriteBatch.End();
 
-            
+
 
 
             // TODO:
@@ -166,7 +176,7 @@ namespace PaintTogether
             _spriteBatch.Begin(SpriteSortMode.Immediate, BlendState.AlphaBlend);
             _spriteBatch.Draw(final, new Rectangle(0, 0, Window.ClientBounds.Width, Window.ClientBounds.Height), Color.White);
             _spriteBatch.End();
-            
+
             base.Draw(gameTime);
         }
     }

@@ -24,7 +24,7 @@ namespace PaintTogether.Content.Brushes
             base.UpdateBrush();
         }
         Texture2D t;
-        protected override Color? BrushDraw(SpriteBatch spriteBatch, GraphicsDevice graphicsDevice)
+        protected override Color? BrushDraw(SpriteBatch spriteBatch, GraphicsDevice graphicsDevice, Point offset)
         {
             graphicsDevice.SetRenderTarget(Main.Canvas);
             BrushShader.Parameters["BrushColor"].SetValue(Color.White.ToVector4());
@@ -40,7 +40,7 @@ namespace PaintTogether.Content.Brushes
             };
 
             spriteBatch.Begin(SpriteSortMode.Immediate, blendState: Erase, effect: BrushShader);
-            spriteBatch.DrawLine(MouseData.MoveHistory[0], MouseData.MoveHistory[1], BrushShader, BrushSize);
+            spriteBatch.DrawLine(MouseData.MoveHistory[0] + offset, MouseData.MoveHistory[1] + offset, BrushShader, BrushSize);
             spriteBatch.End();
 
             return null;
