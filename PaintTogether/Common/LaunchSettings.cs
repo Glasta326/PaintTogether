@@ -33,6 +33,7 @@ namespace PaintTogether.Common
 
             SetResolution(root);
             SetSavePath(root);
+            SetLogState(root);
         }
 
         private static void SetResolution(JsonElement root)
@@ -52,11 +53,34 @@ namespace PaintTogether.Common
                 throw new Exception("Could not parse user specified resolution");
             }
         }
-        
+
         private static void SetSavePath(JsonElement root)
         {
             Main.SaveFolderPath = root.GetProperty("SaveFolderPath").GetString();
             clLogger.LogInfo($"Set saved files output file path to {Main.SaveFolderPath}");
+        }
+
+        private static void SetLogState(JsonElement root)
+        {
+            string x = root.GetProperty("VerboseLogging").GetString();
+            string[] trueKwrds = ["true", "yes", "1"];
+            string[] falseKwrds = ["false", "no", "0"];
+
+            if (trueKwrds.Contains(x.ToLower()))
+            {
+                clLogger.VerboseLogging = true;
+            }
+            else if (falseKwrds.Contains(x.ToLower()))
+            {
+                clLogger.VerboseLogging = false;
+            }
+            else
+            {
+                clLogger.LogWarning("Could not parse VerboseLogging setting.");
+
+                // If something goes so wrong that the setting isnt misspelt or something silly, then we probably want this enabled
+                clLogger.VerboseLogging = true; 
+            }
         }
     }
 }

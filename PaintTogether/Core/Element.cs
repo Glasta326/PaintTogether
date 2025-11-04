@@ -25,15 +25,17 @@ namespace PaintTogether.Core
             var elementTypes = typeof(Element).Assembly.GetTypes()
                 .Where(t => t.IsSubclassOf(typeof(Element)) && !t.IsAbstract);
 
+            Main.stopWatch.Restart();
             foreach (var type in elementTypes)
             {
                 if (Activator.CreateInstance(type) is Element instance)
                 {
                     ProgramElements.Add(instance);
-                    clLogger.LogInfo($"Registered program element : {instance.ToString()}");
+                    clLogger.LogInfo($"Registered program element : {instance.ToString()}", true);
                 }
             }
-            clLogger.LogInfo($"{ProgramElements.Count} elements registered");
+            Main.stopWatch.Stop();
+            clLogger.LogInfo($"{ProgramElements.Count} elements registered in {Main.stopWatch.ElapsedMilliseconds}ms");
         }
 
         /// <summary>
@@ -54,12 +56,14 @@ namespace PaintTogether.Core
         public virtual void Load() {}
         public static void LoadAll()
         {
+            Main.stopWatch.Restart();
             foreach (var e in ProgramElements.OrderByDescending(l => l.LoadPriority))
             {
                 e.Load();
-                clLogger.LogInfo($"Loaded resources for : {e} with priority {e.LoadPriority}");    
+                clLogger.LogInfo($"Initalised {e}", true);
             }
-            
+            Main.stopWatch.Stop();
+            clLogger.LogInfo($"Spent {Main.stopWatch.ElapsedMilliseconds}ms on initalising elements.");
         }
         
         /// <summary>
@@ -68,11 +72,14 @@ namespace PaintTogether.Core
         public virtual void Unload() {}
         public static void UnLoadAll()
         {
+            Main.stopWatch.Restart();
             foreach (var e in ProgramElements)
             {
                 e.Unload();
-                clLogger.LogInfo($"Unloaded resources for : {e} with priority {e.LoadPriority}");    
+                clLogger.LogInfo($"Unloaded {e}", true);
             }
+            Main.stopWatch.Stop();
+            clLogger.LogInfo($"Unloaded all elements in {Main.stopWatch.ElapsedMilliseconds}ms");
         }
 
         /// <summary>
@@ -82,11 +89,14 @@ namespace PaintTogether.Core
         public virtual void LoadAssets(GraphicsDevice graphicsDevice, ContentManager contentManager) {}
         public static void LoadAssetsAll(GraphicsDevice gd, ContentManager cm)
         {
+            Main.stopWatch.Restart();
             foreach (var e in ProgramElements)
             {
                 e.LoadAssets(gd, cm);
-                clLogger.LogInfo($"Loaded assets for : {e} with priority {e.LoadPriority}");    
+                clLogger.LogInfo($"Loaded assets for {e}", true);
             }
+            Main.stopWatch.Stop();
+            clLogger.LogInfo($"Spent {Main.stopWatch.ElapsedMilliseconds}ms on loading element assets");
         }
         
         /// <summary>

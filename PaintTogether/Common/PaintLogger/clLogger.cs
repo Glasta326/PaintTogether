@@ -28,6 +28,11 @@ namespace PaintTogether.Common.PaintLogger
         public static string LogFilePath { get; private set; }
 
         /// <summary>
+        /// Enables/Disables typically useless log details
+        /// </summary>
+        public static bool VerboseLogging { get; set; }
+
+        /// <summary>
         /// Direct access to the stream for the client log file. <br/>
         /// Can be used to write to the file
         /// </summary>
@@ -64,7 +69,6 @@ namespace PaintTogether.Common.PaintLogger
             LogInfo($"Executable : {Environment.ProcessPath}");
             LogInfo($"Working directory : {Path.GetFullPath(Directory.GetCurrentDirectory())}");
             LogInfo($"Process ID : {Environment.ProcessId}, Process memory usage : {(Process.GetCurrentProcess().PrivateMemorySize64 / 1048576d):f2}MB, Process priority : {Process.GetCurrentProcess().PriorityClass}");
-
         }
 
 
@@ -79,8 +83,12 @@ namespace PaintTogether.Common.PaintLogger
         /// <summary>
         /// Allows you to manually write some information to the log file
         /// </summary>
-        public static void LogInfo(object args)
+        public static void LogInfo(object args, bool verboseOnly = false)
         {
+            if (verboseOnly && !VerboseLogging)
+            {
+                return;
+            }
             LogFile.WriteLine($"[{LogTime}] [INFO] {args}");
             Console.WriteLine($"[{LogTime}] [INFO] {args}");
         }
