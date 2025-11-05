@@ -135,7 +135,7 @@ namespace PaintTogether
             {
                 // we do -MoveDelta,
                 // if you think about it relativley, inverting the movement of the camera position is essentially moving the canvas with the camera as the reference frame.
-                PaintTogether.Content.Canvas.CameraPosition += -MouseData.MoveDelta.ToVector2() / PaintTogether.Content.Canvas.CameraZoom;
+                PaintTogether.Content.Canvas.CameraPosition += MouseData.MoveDelta.ToVector2() / PaintTogether.Content.Canvas.CameraZoom;
 
                 // Potentially make a CameraPosition class with custom methods for moving and overloaded operators and whatnot
                 // Porbably a good idea
@@ -147,6 +147,10 @@ namespace PaintTogether
             if (Keyboard.GetState().IsKeyDown(Keys.S))
             {
                 PaintTogether.Content.Canvas.Zoom2(0.9f, Mouse.GetState().Position.ToVector2());
+            }
+            if (Keyboard.GetState().IsKeyDown(Keys.D))
+            {
+                PaintTogether.Content.Canvas.CameraPosition += new Vector2(-1, 0);
             }
         }
 

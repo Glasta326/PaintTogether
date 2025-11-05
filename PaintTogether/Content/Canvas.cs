@@ -14,7 +14,8 @@ namespace PaintTogether.Content
     {
         public static List<RenderTarget2D> Layers = new List<RenderTarget2D>();
 
-        public static Vector2 CameraPosition { get; set; } = Vector2.Zero;
+
+        public static Vector2 CameraPosition = Vector2.Zero;
 
         public static float CameraZoom = 1f;
 
@@ -27,12 +28,11 @@ namespace PaintTogether.Content
             CameraZoom *= zoomChange;
             CameraZoom = MathHelper.Clamp(CameraZoom, 0.1f, 20f);
             Vector2 afterZoom = ScreenToCanvas(cursorScreen);
-            CameraPosition += (beforeZoom - afterZoom);
+            CameraPosition += (afterZoom - beforeZoom);
         }
 
         public static void Init(GraphicsDevice graphicsDevice, ContentManager contentManager)
         {
-            
         }
 
         /// <summary>
@@ -74,12 +74,8 @@ namespace PaintTogether.Content
         /// </summary>
         public static Matrix CanvasTransform()
         {
-            return Matrix.CreateTranslation(new Vector3(-CameraPosition, 0f)) *
+            return Matrix.CreateTranslation(new Vector3(CameraPosition, 0f)) *
             Matrix.CreateScale(CameraZoom);
-            
-
-            // Apply scaling first, then translation
-            // This way, when zoomed in, trying to move the canvas 500px to the right wont move it 500px * scaling, and will just move it 500px always
         }
 
         /// <summary>
