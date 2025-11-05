@@ -16,11 +16,7 @@ namespace PaintTogether.Common
         // TODO : change these hardcoded values when get canvas properly sorted
         public static Vector2 MousePosNormalised() => new Vector2((float)State.X / Main.instance.Window.ClientBounds.Width, (float)State.Y / Main.instance.Window.ClientBounds.Height);
 
-        public static Point MousePosPoint() => new Point
-        (
-            (int)(State.X / WindowData.ResolutionMultiplier.X),
-            (int)(State.Y / WindowData.ResolutionMultiplier.Y)
-        );
+        public static Point MousePosPoint() => new Point(State.X, State.Y);
         
         /// <summary>
         /// Information about LeftMouseButton

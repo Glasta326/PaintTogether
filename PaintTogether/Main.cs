@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -59,12 +60,17 @@ namespace PaintTogether
             _spriteBatch = new SpriteBatch(GraphicsDevice);
             Element.LoadAssetsAll(GraphicsDevice, Content);
 
+            PaintTogether.Content.Canvas.AddCanvasLayer(3);
+
             logoTarget = new RenderTarget2D(GraphicsDevice, CanvasResolution.X, CanvasResolution.Y, false, SurfaceFormat.Color, DepthFormat.None, 0, RenderTargetUsage.DiscardContents);
             Canvas = new RenderTarget2D(GraphicsDevice, CanvasResolution.X, CanvasResolution.Y, false, SurfaceFormat.Color, DepthFormat.None, 0, RenderTargetUsage.PreserveContents);
             UITarget = new RenderTarget2D(GraphicsDevice, CanvasResolution.X, CanvasResolution.Y, false, SurfaceFormat.Color, DepthFormat.None, 0, RenderTargetUsage.DiscardContents);
             final = new RenderTarget2D(GraphicsDevice, CanvasResolution.X, CanvasResolution.Y);
             logo = Content.Load<Texture2D>("Textures/proxy-image");
             font = Content.Load<SpriteFont>("Fonts/TestFont");
+
+            GraphicsDevice.SetRenderTarget(Canvas);
+            GraphicsDevice.Clear(Color.White);
         }
 
         protected override void OnExiting(object sender, ExitingEventArgs args)
@@ -115,7 +121,6 @@ namespace PaintTogether
 
 
             Canvas.GetData<Color>(0, region, c, 0, 4);
-
             
         }
 
@@ -125,6 +130,24 @@ namespace PaintTogether
             MouseData.MoveHistory.Add(MouseData.MousePosPoint());
             MouseData.ScrollHistory.Add(MouseData.State.ScrollWheelValue); // Push the new scroll value to the scroll history so scrollDelta is accurate
             GlobalTimeWrappedHourly = (float)(gameTime.TotalGameTime.TotalSeconds % 3600.0);
+
+            if (MouseData.RightClick == ButtonState.Pressed)
+            {
+                // we do -MoveDelta,
+                // if you think about it relativley, inverting the movement of the camera position is essentially moving the canvas with the camera as the reference frame.
+                PaintTogether.Content.Canvas.CameraPosition += -MouseData.MoveDelta.ToVector2() / PaintTogether.Content.Canvas.CameraZoom;
+
+                // Potentially make a CameraPosition class with custom methods for moving and overloaded operators and whatnot
+                // Porbably a good idea
+            }
+            if (Keyboard.GetState().IsKeyDown(Keys.W))
+            {
+                PaintTogether.Content.Canvas.Zoom2(1.1f, Mouse.GetState().Position.ToVector2());
+            }
+            if (Keyboard.GetState().IsKeyDown(Keys.S))
+            {
+                PaintTogether.Content.Canvas.Zoom2(0.9f, Mouse.GetState().Position.ToVector2());
+            }
         }
 
         private void UpdateBrush()
@@ -137,6 +160,29 @@ namespace PaintTogether
 
         protected override void Draw(GameTime gameTime)
         {
+            GraphicsDevice.SetRenderTarget(Canvas);
+            //GraphicsDevice.Clear(Color.White);
+            ActiveBrush.MainDraw(_spriteBatch, GraphicsDevice);
+
+            GraphicsDevice.SetRenderTarget(UITarget);
+            GraphicsDevice.Clear(Color.Transparent);
+            _spriteBatch.Begin(SpriteSortMode.Immediate, BlendState.AlphaBlend);
+            _spriteBatch.DrawString(font, $"Brush size : {PaintTogether.Content.Canvas.CameraPosition}", Vector2.Zero, Color.White);
+            _spriteBatch.End();
+            Element.PostDrawAll(_spriteBatch, GraphicsDevice);
+            ActiveBrush.UiDraw(_spriteBatch, GraphicsDevice);
+
+            GraphicsDevice.SetRenderTarget(null);
+            _spriteBatch.Begin(SpriteSortMode.Immediate, BlendState.AlphaBlend, transformMatrix: PaintTogether.Content.Canvas.CanvasTransform(), samplerState: SamplerState.PointClamp);
+            _spriteBatch.Draw(Canvas, Vector2.Zero, Color.White);
+            _spriteBatch.End();
+
+            _spriteBatch.Begin(SpriteSortMode.Immediate, BlendState.AlphaBlend);
+            _spriteBatch.Draw(UITarget, Vector2.Zero, Color.White);
+            _spriteBatch.End();
+
+
+            /*
             GraphicsDevice.SetRenderTarget(logoTarget);
             GraphicsDevice.Clear(new Color(15, 15, 15));
             Element.PreDrawAll(_spriteBatch, GraphicsDevice);
@@ -148,7 +194,7 @@ namespace PaintTogether
             _spriteBatch.End();
 
             GraphicsDevice.SetRenderTarget(Canvas);
-            //GraphicsDevice.Clear(Color.Transparent); no!
+            GraphicsDevice.Clear(Color.White);
             ActiveBrush.MainDraw(_spriteBatch, GraphicsDevice);
 
             GraphicsDevice.SetRenderTarget(UITarget);
@@ -157,9 +203,16 @@ namespace PaintTogether
             ActiveBrush.UiDraw(_spriteBatch, GraphicsDevice);
 
             GraphicsDevice.SetRenderTarget(final);
+
             _spriteBatch.Begin(SpriteSortMode.Immediate, BlendState.AlphaBlend);
             _spriteBatch.Draw(logoTarget, Vector2.Zero, Color.White);
-            _spriteBatch.Draw(Canvas, Brush.Offset.ToVector2(), Color.White);
+            _spriteBatch.End();
+
+            _spriteBatch.Begin(SpriteSortMode.Immediate, BlendState.AlphaBlend, transformMatrix: GetCanvasTransform(), samplerState: SamplerState.PointClamp);
+            _spriteBatch.Draw(Canvas, Vector2.Zero, Color.White);
+            _spriteBatch.End();
+
+            _spriteBatch.Begin(SpriteSortMode.Immediate, BlendState.AlphaBlend);
             _spriteBatch.Draw(UITarget, Vector2.Zero, Color.White);
             _spriteBatch.End();
 
@@ -174,10 +227,12 @@ namespace PaintTogether
             GraphicsDevice.SetRenderTarget(null);
             GraphicsDevice.Clear(Color.Black);
             _spriteBatch.Begin(SpriteSortMode.Immediate, BlendState.AlphaBlend);
-            _spriteBatch.Draw(final, new Rectangle(0, 0, Window.ClientBounds.Width, Window.ClientBounds.Height), Color.White);
+            _spriteBatch.Draw(final, new Rectangle(0,0,(int)WindowData.WindowSize.X,(int)WindowData.WindowSize.Y), Color.White);
             _spriteBatch.End();
 
             base.Draw(gameTime);
+
+            */
         }
     }
 }
