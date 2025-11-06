@@ -8,28 +8,15 @@ using Microsoft.Xna.Framework.Graphics;
 using PaintTogether.Common;
 using PaintTogether.Common.PaintLogger;
 
-namespace PaintTogether.Content
+namespace PaintTogether.Content.Canvas
 {
     public static class Canvas
     {
         public static List<RenderTarget2D> Layers = new List<RenderTarget2D>();
 
-
-        public static Vector2 CameraPosition = Vector2.Zero;
-
-        public static float CameraZoom = 1f;
+        public static CanvasCamera Camera = new CanvasCamera();
 
         public static Point Resolution { get; set; }
-
-        // --- Helper: zoom toward cursor ---
-        public static void Zoom2(float zoomChange, Vector2 cursorScreen)
-        {
-            Vector2 beforeZoom = ScreenToCanvas(cursorScreen);
-            CameraZoom *= zoomChange;
-            CameraZoom = MathHelper.Clamp(CameraZoom, 0.1f, 20f);
-            Vector2 afterZoom = ScreenToCanvas(cursorScreen);
-            CameraPosition += (afterZoom - beforeZoom);
-        }
 
         public static void Init(GraphicsDevice graphicsDevice, ContentManager contentManager)
         {
@@ -74,8 +61,8 @@ namespace PaintTogether.Content
         /// </summary>
         public static Matrix CanvasTransform()
         {
-            return Matrix.CreateTranslation(new Vector3(CameraPosition, 0f)) *
-            Matrix.CreateScale(CameraZoom);
+            return Matrix.CreateTranslation(new Vector3(Camera.Position, 0f)) *
+            Matrix.CreateScale(Camera.Zoom);
         }
 
         /// <summary>

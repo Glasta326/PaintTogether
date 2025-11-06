@@ -10,6 +10,7 @@ using PaintTogether.Common;
 using PaintTogether.Common.DataTypes;
 using PaintTogether.Common.Utilities;
 using PaintTogether.Core;
+using PaintTogether.Content.Canvas;
 
 namespace PaintTogether.Content.Brushes
 {
@@ -123,7 +124,7 @@ namespace PaintTogether.Content.Brushes
             BrushShader.Parameters["BrushColor"].SetValue(drawColor.ToVector4());
 
             spriteBatch.Begin(SpriteSortMode.Immediate, effect: BrushShader);
-            spriteBatch.DrawLine(Canvas.ScreenToCanvas(MouseData.MoveHistory[0]), Canvas.ScreenToCanvas(MouseData.MoveHistory[1]), BrushShader, BrushSize);
+            spriteBatch.DrawLine(Canvas.Canvas.ScreenToCanvas(MouseData.MoveHistory[0]), Canvas.Canvas.ScreenToCanvas(MouseData.MoveHistory[1]), BrushShader, BrushSize);
             spriteBatch.End();
         }
 
