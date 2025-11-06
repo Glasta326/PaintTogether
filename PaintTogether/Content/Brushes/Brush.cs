@@ -120,7 +120,7 @@ namespace PaintTogether.Content.Brushes
         /// </summary>
         private void DefaultDraw(SpriteBatch spriteBatch, GraphicsDevice graphicsDevice, Color drawColor)
         {
-            graphicsDevice.SetRenderTarget(Main.Canvas);
+            graphicsDevice.SetRenderTarget(Canvas.Layers.ActiveLayer);
             BrushShader.Parameters["BrushColor"].SetValue(drawColor.ToVector4());
 
             spriteBatch.Begin(SpriteSortMode.Immediate, effect: BrushShader);

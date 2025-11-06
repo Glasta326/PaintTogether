@@ -16,6 +16,7 @@ using PaintTogether.Common.Utilities;
 using PaintTogether.Content.Brushes;
 using PaintTogether.Content.UI;
 using PaintTogether.Core;
+using PaintTogether.Content;
 using PaintTogether.Content.PaintCanvas;
 
 namespace PaintTogether
@@ -34,17 +35,17 @@ namespace PaintTogether
         protected override void Initialize()
         {
             clLogger.Init();
-
             LaunchSettings.Load();
+
+            Canvas.Init(GraphicsDevice);
 
             Element.InitaliseRegistry();
             Element.LoadAll();
-
             
+
             base.Initialize();
         }
-
-        public static RenderTarget2D Canvas;
+        
         public static RenderTarget2D logoTarget;
 
         public static RenderTarget2D UITarget;
@@ -61,15 +62,16 @@ namespace PaintTogether
             _spriteBatch = new SpriteBatch(GraphicsDevice);
             Element.LoadAssetsAll(GraphicsDevice, Content);
 
-            logoTarget = new RenderTarget2D(GraphicsDevice, CanvasResolution.X, CanvasResolution.Y, false, SurfaceFormat.Color, DepthFormat.None, 0, RenderTargetUsage.DiscardContents);
-            Canvas = new RenderTarget2D(GraphicsDevice, CanvasResolution.X, CanvasResolution.Y, false, SurfaceFormat.Color, DepthFormat.None, 0, RenderTargetUsage.PreserveContents);
-            UITarget = new RenderTarget2D(GraphicsDevice, CanvasResolution.X, CanvasResolution.Y, false, SurfaceFormat.Color, DepthFormat.None, 0, RenderTargetUsage.DiscardContents);
-            final = new RenderTarget2D(GraphicsDevice, CanvasResolution.X, CanvasResolution.Y);
+            logoTarget = new RenderTarget2D(GraphicsDevice, Canvas.Resolution.X, Canvas.Resolution.Y, false, SurfaceFormat.Color, DepthFormat.None, 0, RenderTargetUsage.DiscardContents);
+            UITarget = new RenderTarget2D(GraphicsDevice, Canvas.Resolution.X, Canvas.Resolution.Y, false, SurfaceFormat.Color, DepthFormat.None, 0, RenderTargetUsage.DiscardContents);
+            final = new RenderTarget2D(GraphicsDevice, Canvas.Resolution.X, Canvas.Resolution.Y);
             logo = Content.Load<Texture2D>("Textures/proxy-image");
             font = Content.Load<SpriteFont>("Fonts/TestFont");
 
-            GraphicsDevice.SetRenderTarget(Canvas);
-            GraphicsDevice.Clear(Color.White);
+
+            Canvas.Layers.AddLayer();
+            GraphicsDevice.SetRenderTarget(Canvas.Layers[1]);
+            GraphicsDevice.Clear(Color.Transparent);
         }
 
         protected override void OnExiting(object sender, ExitingEventArgs args)
@@ -101,6 +103,15 @@ namespace PaintTogether
                 {
                     ActiveBrush = Element.Get<TestBrush3>();
                 }
+
+                if (Keyboard.GetState().IsKeyDown(Keys.F1))
+                {
+                    Canvas.Layers.ActiveLayerIndex = 0;
+                }
+                if (Keyboard.GetState().IsKeyDown(Keys.F2))
+                {
+                    Canvas.Layers.ActiveLayerIndex = 1;
+                }
             }
 
             Update_Inner(gameTime);
@@ -119,7 +130,7 @@ namespace PaintTogether
             GraphicsDevice.SetRenderTarget(null);
 
 
-            Canvas.GetData<Color>(0, region, c, 0, 4);
+            Canvas.Layers.ActiveLayer.GetData<Color>(0, region, c, 0, 4);
             
         }
 
@@ -164,7 +175,7 @@ namespace PaintTogether
 
         protected override void Draw(GameTime gameTime)
         {
-            GraphicsDevice.SetRenderTarget(Canvas);
+            GraphicsDevice.SetRenderTarget(Canvas.Layers.ActiveLayer);
             //GraphicsDevice.Clear(Color.White);
             ActiveBrush.MainDraw(_spriteBatch, GraphicsDevice);
 
@@ -178,7 +189,10 @@ namespace PaintTogether
 
             GraphicsDevice.SetRenderTarget(null);
             _spriteBatch.Begin(SpriteSortMode.Immediate, BlendState.AlphaBlend, transformMatrix: PaintTogether.Content.PaintCanvas.Canvas.CanvasTransform(), samplerState: SamplerState.PointClamp);
-            _spriteBatch.Draw(Canvas, Vector2.Zero, Color.White);
+            for (int i = 0; i < Canvas.Layers.Count; i++)
+            {
+                _spriteBatch.Draw(Canvas.Layers[i], Vector2.Zero, Color.White);
+            }
             _spriteBatch.End();
 
             _spriteBatch.Begin(SpriteSortMode.Immediate, BlendState.AlphaBlend);

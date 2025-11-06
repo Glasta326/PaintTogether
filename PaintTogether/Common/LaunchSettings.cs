@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using Microsoft.Xna.Framework;
 using PaintTogether.Common.PaintLogger;
 using PaintTogether.Common.Utilities;
+using PaintTogether.Content.PaintCanvas;
 
 namespace PaintTogether.Common
 {
@@ -45,7 +46,7 @@ namespace PaintTogether.Common
 
             if (int.TryParse(strings[0], out int r1) && int.TryParse(strings[1], out int r2) && r1 >= 0 && r2 >= 0)
             {
-                Main.CanvasResolution = new Point(r1, r2);
+                Canvas.Resolution = new Point(r1, r2);
                 clLogger.LogInfo($"Set canvas resolution to {r1} x {r2}");
                 return;
             }

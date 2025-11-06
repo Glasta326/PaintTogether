@@ -59,11 +59,6 @@ namespace PaintTogether
         /// </summary>
         public static Brush ActiveBrush;
 
-        /// <summary>
-        /// Defaults to 1200x720
-        /// </summary>
-        public static Point CanvasResolution;
-
         #endregion
     }
 }

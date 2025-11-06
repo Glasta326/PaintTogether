@@ -12,47 +12,22 @@ namespace PaintTogether.Content.PaintCanvas
 {
     public static class Canvas
     {
-        public static List<RenderTarget2D> Layers = new List<RenderTarget2D>();
+        public static CanvasLayers Layers = new CanvasLayers();
 
         public static CanvasCamera Camera = new CanvasCamera();
 
+        /// <summary>
+        /// Size of the canvas area in pixels.
+        /// </summary>
         public static Point Resolution { get; set; }
 
-        //public static int ActiveLayerIndex = 2;
-        //public static RenderTarget2D activeLayer => Layers[ActiveLayerIndex];
-
-        public static void Init(GraphicsDevice graphicsDevice, ContentManager contentManager)
+        public static void Init(GraphicsDevice graphicsDevice)
         {
+            // Initalise the canvas with a single white layer
+            Layers.AddLayer();
             
-        }
-
-        /// <summary>
-        /// Inserts a new drawing layer into the canvas layer stack. <br/>
-        /// Defaults to placing at the top of the stack (after everything else)
-        /// </summary>
-        /// <param name="index">Will be inserted at this position in the layer stack.<br/>
-        /// If stack is [ layer1, layer2, layer3, layer4 ], inserting into the stack at index 3 will result in:<br/>
-        /// [ layer1, layer2, newlayer3, layer 4, layer 5 ] </param>
-        public static void AddCanvasLayer(int index = -1)
-        {
-            try
-            {
-                if (index == -1)
-                {
-                    Layers.Add(new RenderTarget2D(Main.instance.GraphicsDevice, Main.CanvasResolution.X, Main.CanvasResolution.Y,
-                    false, SurfaceFormat.Color, DepthFormat.None, 0, RenderTargetUsage.PreserveContents));
-                }
-                else
-                {
-                    Layers.Insert(index, new RenderTarget2D(Main.instance.GraphicsDevice, Main.CanvasResolution.X, Main.CanvasResolution.Y,
-                    false, SurfaceFormat.Color, DepthFormat.None, 0, RenderTargetUsage.PreserveContents));
-                }
-            }
-            catch (ArgumentOutOfRangeException)
-            {
-                clLogger.LogWarning($"Attempted to insert canvas layer at position: {index} Which is outside of the bounds of layer stack: {Layers.Count}");
-                AddCanvasLayer(-1); // Recursion!? In MY paint program? It's more likely than you think.
-            }
+            graphicsDevice.SetRenderTarget(Layers.ActiveLayer);
+            graphicsDevice.Clear(Color.White);
         }
 
         /// <summary>
