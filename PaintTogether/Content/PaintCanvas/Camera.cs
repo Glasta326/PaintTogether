@@ -5,15 +5,11 @@ using System.Threading.Tasks;
 using Microsoft.Xna.Framework;
 using PaintTogether.Common;
 
-namespace PaintTogether.Content.Canvas
+namespace PaintTogether.Content.PaintCanvas
 {
     public struct CanvasCamera
     {
-        private float _zoomLevel;
-
-        public float Zoom { get; set; }
-
-        private Vector2 _cameraPosition;
+        public float Zoom { get; private set; }
 
         public Vector2 Position{ get; set; }
 

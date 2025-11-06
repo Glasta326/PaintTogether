@@ -16,6 +16,7 @@ using PaintTogether.Common.Utilities;
 using PaintTogether.Content.Brushes;
 using PaintTogether.Content.UI;
 using PaintTogether.Core;
+using PaintTogether.Content.PaintCanvas;
 
 namespace PaintTogether
 {
@@ -133,23 +134,23 @@ namespace PaintTogether
             {
                 // we do -MoveDelta,
                 // if you think about it relativley, inverting the movement of the camera position is essentially moving the canvas with the camera as the reference frame.
-                PaintTogether.Content.Canvas.Canvas.Camera.Position += MouseData.MoveDelta.ToVector2() / PaintTogether.Content.Canvas.Canvas.Camera.Zoom;
-
+                PaintTogether.Content.PaintCanvas.Canvas.Camera.Position += MouseData.MoveDelta.ToVector2() / PaintTogether.Content.PaintCanvas.Canvas.Camera.Zoom;
+            
                 // Potentially make a CameraPosition class with custom methods for moving and overloaded operators and whatnot
                 // Porbably a good idea
             }
             if (Keyboard.GetState().IsKeyDown(Keys.W))
             {
-                PaintTogether.Content.Canvas.Canvas.Camera.ZoomToPosition(1.1f, MouseData.MousePosVector());
+                PaintTogether.Content.PaintCanvas.Canvas.Camera.ZoomToPosition(1.1f, MouseData.MousePosVector());
             }
             if (Keyboard.GetState().IsKeyDown(Keys.S))
             {
-                PaintTogether.Content.Canvas.Canvas.Camera.ZoomToPosition(0.9f, MouseData.MousePosVector());
+                PaintTogether.Content.PaintCanvas.Canvas.Camera.ZoomToPosition(0.9f, MouseData.MousePosVector());
             }
             if (Keyboard.GetState().IsKeyDown(Keys.A))
             {
                 // dividing by cameraZoom makes it so the movement is always 1 pixel on the actual physical screen
-                PaintTogether.Content.Canvas.Canvas.Camera.Position += new Vector2(-1, 0) / PaintTogether.Content.Canvas.Canvas.Camera.Zoom;
+                PaintTogether.Content.PaintCanvas.Canvas.Camera.Position += new Vector2(-1, 0) / PaintTogether.Content.PaintCanvas.Canvas.Camera.Zoom;
             }
         }
 
@@ -170,13 +171,13 @@ namespace PaintTogether
             GraphicsDevice.SetRenderTarget(UITarget);
             GraphicsDevice.Clear(Color.Transparent);
             _spriteBatch.Begin(SpriteSortMode.Immediate, BlendState.AlphaBlend);
-            _spriteBatch.DrawString(font, $"Brush size : {PaintTogether.Content.Canvas.Canvas.Camera.Position}", Vector2.Zero, Color.White);
+            _spriteBatch.DrawString(font, $"Brush size : {PaintTogether.Content.PaintCanvas.Canvas.Camera.Position}", Vector2.Zero, Color.White);
             _spriteBatch.End();
             Element.PostDrawAll(_spriteBatch, GraphicsDevice);
             ActiveBrush.UiDraw(_spriteBatch, GraphicsDevice);
 
             GraphicsDevice.SetRenderTarget(null);
-            _spriteBatch.Begin(SpriteSortMode.Immediate, BlendState.AlphaBlend, transformMatrix: PaintTogether.Content.Canvas.Canvas.CanvasTransform(), samplerState: SamplerState.PointClamp);
+            _spriteBatch.Begin(SpriteSortMode.Immediate, BlendState.AlphaBlend, transformMatrix: PaintTogether.Content.PaintCanvas.Canvas.CanvasTransform(), samplerState: SamplerState.PointClamp);
             _spriteBatch.Draw(Canvas, Vector2.Zero, Color.White);
             _spriteBatch.End();
 

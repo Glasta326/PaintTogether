@@ -8,7 +8,7 @@ using Microsoft.Xna.Framework.Graphics;
 using PaintTogether.Common;
 using PaintTogether.Common.PaintLogger;
 
-namespace PaintTogether.Content.Canvas
+namespace PaintTogether.Content.PaintCanvas
 {
     public static class Canvas
     {
@@ -18,8 +18,12 @@ namespace PaintTogether.Content.Canvas
 
         public static Point Resolution { get; set; }
 
+        //public static int ActiveLayerIndex = 2;
+        //public static RenderTarget2D activeLayer => Layers[ActiveLayerIndex];
+
         public static void Init(GraphicsDevice graphicsDevice, ContentManager contentManager)
         {
+            
         }
 
         /// <summary>

@@ -41,16 +41,17 @@ namespace PaintTogether.Common
             string x = root.GetProperty("Resolution").GetString();
 
             // Look for any common seperators: [10x10] [10X10] [10:10] [10|10] [10,10] [10\10] [10*10] [10-10]
-            string[] strings = Regex.Split(x, @"[xX:|,\*\-]"); 
+            string[] strings = Regex.Split(x, @"[xX:|,\*\-]");
 
-            if (int.TryParse(strings[0], out int r1) && int.TryParse(strings[1], out int r2))
+            if (int.TryParse(strings[0], out int r1) && int.TryParse(strings[1], out int r2) && r1 >= 0 && r2 >= 0)
             {
                 Main.CanvasResolution = new Point(r1, r2);
                 clLogger.LogInfo($"Set canvas resolution to {r1} x {r2}");
+                return;
             }
             else
             {
-                throw new Exception("Could not parse user specified resolution");
+                throw new Exception($"Could not parse user specified resolution");
             }
         }
 
