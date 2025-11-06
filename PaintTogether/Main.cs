@@ -68,10 +68,8 @@ namespace PaintTogether
             logo = Content.Load<Texture2D>("Textures/proxy-image");
             font = Content.Load<SpriteFont>("Fonts/TestFont");
 
-
-            Canvas.Layers.AddLayer();
-            GraphicsDevice.SetRenderTarget(Canvas.Layers[1]);
-            GraphicsDevice.Clear(Color.Transparent);
+            // TODO : remove this this is just for demonstrating the layers working
+            Canvas.Layers.AddBasicLayer();
         }
 
         protected override void OnExiting(object sender, ExitingEventArgs args)
@@ -189,6 +187,7 @@ namespace PaintTogether
 
             GraphicsDevice.SetRenderTarget(null);
             _spriteBatch.Begin(SpriteSortMode.Immediate, BlendState.AlphaBlend, transformMatrix: PaintTogether.Content.PaintCanvas.Canvas.CanvasTransform(), samplerState: SamplerState.PointClamp);
+            // Draw each layer ontop of eachother. Layer 0 is bottom layer
             for (int i = 0; i < Canvas.Layers.Count; i++)
             {
                 _spriteBatch.Draw(Canvas.Layers[i], Vector2.Zero, Color.White);

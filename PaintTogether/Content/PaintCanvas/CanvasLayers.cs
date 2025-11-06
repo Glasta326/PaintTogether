@@ -81,8 +81,27 @@ namespace PaintTogether.Content.PaintCanvas
                 clLogger.LogWarning($"Attempted to insert canvas layer at position: {index} Which is outside of the bounds of layer stack: {_layers.Count}");
                 AddLayer(-1); // Recursion!? In MY paint program? It's more likely than you think.
             }
-            int placedIndex = index == -1 ? _layers.Count : index;
+            int placedIndex = index == -1 ? _layers.Count - 1 : index;
             clLogger.LogInfo($"Created layer at index {placedIndex}");
+        }
+
+        /// <summary>
+        /// See <see cref="AddLayer"/> for more details:<br/>
+        /// Adds a basic transparent layer.<br/>
+        /// Mostly a shortcut for doing: <br/>
+        /// Canvas.Layers.AddLayer();<br/>
+        /// GraphicsDevice.SetRenderTarget(Canvas.Layers[x]);<br/>
+        /// GraphicsDevice.Clear(Color.Transparent);
+        /// </summary>
+        public void AddBasicLayer(int index = -1)
+        {
+            AddLayer(index);
+            if (index == -1)
+            {
+                index = this.Count;
+            }
+            Main.instance.GraphicsDevice.SetRenderTarget(this[index - 1]);
+            Main.instance.GraphicsDevice.Clear(Color.Transparent);
         }
 
 
