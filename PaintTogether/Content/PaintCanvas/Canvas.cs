@@ -7,11 +7,19 @@ using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
 using PaintTogether.Common;
 using PaintTogether.Common.PaintLogger;
+using PaintTogether.Common.Utilities;
 
 namespace PaintTogether.Content.PaintCanvas
 {
     public static class Canvas
     {
+        /// <summary>
+        /// Layer that tool previews are drawn onto<br/>
+        /// Like the bit that shows you what a rectangle tool will draw once you let go of the mouse<br/>
+        /// This layer is seperate from <see cref="Layers"/>
+        /// </summary>
+        public static RenderTarget2D PreviewLayer;
+
         public static CanvasLayers Layers = new CanvasLayers();
 
         public static CanvasCamera Camera = new CanvasCamera();
@@ -23,11 +31,48 @@ namespace PaintTogether.Content.PaintCanvas
 
         public static void Init(GraphicsDevice graphicsDevice)
         {
+            // Create the layer that draws ontop of everything canvas-related to show what a tool is going to draw once you let go of left click
+            // Note that it still has .preserveContents enables
+            // We manually .clear() it with Color.Transparent at the start of the draw because otherwise every time something switched to it as the rendertarget it clears with black and hides the main canvas
+            PreviewLayer = new RenderTarget2D(graphicsDevice, Resolution.X, Resolution.Y, false, SurfaceFormat.Color, DepthFormat.None, 0, RenderTargetUsage.PreserveContents);
+
             // Initalise the canvas with a single white layer
             Layers.AddLayer();
-            
+
             graphicsDevice.SetRenderTarget(Layers.ActiveLayer);
             graphicsDevice.Clear(Color.White);
+        }
+
+
+        /// <summary>
+        /// Draws all layers of the canvas and the tool preview layer to the specified rendertarget
+        /// </summary>
+        /// <param name="target">null by default. The rendertarget the canvas will be drawn to</param>
+        public static void Draw(GraphicsDevice graphicsDevice, SpriteBatch spriteBatch, RenderTarget2D target = null)
+        {
+            graphicsDevice.SetRenderTarget(target);
+
+            spriteBatch.Begin(SpriteSortMode.Immediate, BlendState.AlphaBlend, transformMatrix: CanvasTransform(), samplerState: SamplerState.PointClamp);
+
+            // Draw each layer ontop of eachother. Layer 0 is bottom layer
+            for (int i = 0; i < Layers.Count; i++)
+            {
+                spriteBatch.Draw(Layers[i], Vector2.Zero, Color.White);
+            }
+
+            // Draw the tool preview layer ontop of everything
+            spriteBatch.Draw(PreviewLayer, new Vector2(Main.GlobalTimeWrappedHourly.UnitSine() * 100), Color.White);
+
+            spriteBatch.End();
+        }
+
+        /// <summary>
+        /// Manually clears <see cref="Canvas.PreviewLayer"/>
+        /// </summary>
+        public static void ResetPreviewLayer(GraphicsDevice graphicsDevice)
+        {
+            graphicsDevice.SetRenderTarget(PreviewLayer);
+            graphicsDevice.Clear(Color.Transparent);
         }
 
         /// <summary>

@@ -45,6 +45,11 @@ namespace PaintTogether.Core
         /// </summary>
         public virtual int LoadPriority => 0;
 
+        /// <summary>
+        /// Whether .Update() is automatically called every frame on this Element
+        /// </summary>
+        public virtual bool AutoUpdate => true;
+
         public static T Get<T>() where T : Element
         {
             return ProgramElements.OfType<T>().FirstOrDefault();

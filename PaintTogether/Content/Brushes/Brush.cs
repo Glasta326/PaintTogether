@@ -16,6 +16,8 @@ namespace PaintTogether.Content.Brushes
 {
     public abstract class Brush : Element
     {
+        public override bool AutoUpdate => false;
+
         private static int _brushSize;
 
         /// <summary>
@@ -75,7 +77,7 @@ namespace PaintTogether.Content.Brushes
         /// <summary>
         /// Update logic for the selected brush. Should always be run from Main's Update()
         /// </summary>
-        public void MainUpdate()
+        public override void Update()
         {
             BrushShouldDraw = false;
             if (MouseData.LeftClick == ButtonState.Pressed)

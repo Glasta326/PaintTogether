@@ -18,6 +18,8 @@ using PaintTogether.Content.UI;
 using PaintTogether.Core;
 using PaintTogether.Content;
 using PaintTogether.Content.PaintCanvas;
+using PaintTogether.Core.UndoSystem;
+using PaintTogether.Content.Tools;
 
 namespace PaintTogether
 {
@@ -70,6 +72,8 @@ namespace PaintTogether
 
             // TODO : remove this this is just for demonstrating the layers working
             Canvas.Layers.AddBasicLayer();
+
+
         }
 
         protected override void OnExiting(object sender, ExitingEventArgs args)
@@ -78,12 +82,25 @@ namespace PaintTogether
             clLogger.Unload();
         }
 
+        static Element b;
+
         protected override void Update(GameTime gameTime)
         {
             if (ActiveBrush is null)
             {
                 ActiveBrush = Element.Get<PenBrush>();
             }
+            
+            /*
+            if (b is Brush d)
+            {
+                d.BrushShader;
+            }
+            if (b is Tool t)
+            {
+                t.ToolShader;
+            }
+            */
 
             if (!ColorSelector.isFocused)
             {
@@ -167,12 +184,17 @@ namespace PaintTogether
         {
             if (ActiveBrush is not null)
             {
-                ActiveBrush.MainUpdate();
+                ActiveBrush.Update();
             }
         }
 
         protected override void Draw(GameTime gameTime)
         {
+            // Manually re-clear the preview layer before anything tries to draw to it
+            Canvas.ResetPreviewLayer(GraphicsDevice);
+
+            #region Drawing stuff to rendertargets
+
             GraphicsDevice.SetRenderTarget(Canvas.Layers.ActiveLayer);
             //GraphicsDevice.Clear(Color.White);
             ActiveBrush.MainDraw(_spriteBatch, GraphicsDevice);
@@ -180,24 +202,29 @@ namespace PaintTogether
             GraphicsDevice.SetRenderTarget(UITarget);
             GraphicsDevice.Clear(Color.Transparent);
             _spriteBatch.Begin(SpriteSortMode.Immediate, BlendState.AlphaBlend);
-            _spriteBatch.DrawString(font, $"Brush size : {PaintTogether.Content.PaintCanvas.Canvas.Camera.Position}", Vector2.Zero, Color.White);
+            _spriteBatch.DrawString(font, $"Brush size : {Canvas.Camera.Position}", Vector2.Zero, Color.White);
             _spriteBatch.End();
             Element.PostDrawAll(_spriteBatch, GraphicsDevice);
             ActiveBrush.UiDraw(_spriteBatch, GraphicsDevice);
 
-            GraphicsDevice.SetRenderTarget(null);
-            _spriteBatch.Begin(SpriteSortMode.Immediate, BlendState.AlphaBlend, transformMatrix: PaintTogether.Content.PaintCanvas.Canvas.CanvasTransform(), samplerState: SamplerState.PointClamp);
-            // Draw each layer ontop of eachother. Layer 0 is bottom layer
-            for (int i = 0; i < Canvas.Layers.Count; i++)
-            {
-                _spriteBatch.Draw(Canvas.Layers[i], Vector2.Zero, Color.White);
-            }
+            #endregion
+
+            GraphicsDevice.SetRenderTarget(Canvas.PreviewLayer);
+            _spriteBatch.Begin();
+            _spriteBatch.Draw(logo, Vector2.Zero, Color.White);
             _spriteBatch.End();
+
+            #region Actually drawing stuff to the output
+            
+            GraphicsDevice.SetRenderTarget(null);
+
+            Canvas.Draw(GraphicsDevice, _spriteBatch, null);
 
             _spriteBatch.Begin(SpriteSortMode.Immediate, BlendState.AlphaBlend);
             _spriteBatch.Draw(UITarget, Vector2.Zero, Color.White);
             _spriteBatch.End();
 
+            #endregion
 
             /*
             GraphicsDevice.SetRenderTarget(logoTarget);
