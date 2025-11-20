@@ -61,7 +61,7 @@ namespace PaintTogether.Content.PaintCanvas
             }
 
             // Draw the tool preview layer ontop of everything
-            spriteBatch.Draw(PreviewLayer, new Vector2(Main.GlobalTimeWrappedHourly.UnitSine() * 100), Color.White);
+            spriteBatch.Draw(PreviewLayer, Vector2.Zero, Color.White);
 
             spriteBatch.End();
         }

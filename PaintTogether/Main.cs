@@ -90,6 +90,11 @@ namespace PaintTogether
             {
                 ActiveBrush = Element.Get<PenBrush>();
             }
+
+            if (t is null)
+            {
+                t = Element.Get<TestTool>();
+            }
             
             /*
             if (b is Brush d)
@@ -154,6 +159,7 @@ namespace PaintTogether
             MouseData.State = Mouse.GetState(); // We do this and just read from state when getting mouse info so we arent requesting to get the state a zillion times
             MouseData.MoveHistory.Add(MouseData.MousePosPoint());
             MouseData.ScrollHistory.Add(MouseData.State.ScrollWheelValue); // Push the new scroll value to the scroll history so scrollDelta is accurate
+            MouseData.ClickHistory.Add(MouseData.LeftClick == ButtonState.Pressed);
             GlobalTimeWrappedHourly = (float)(gameTime.TotalGameTime.TotalSeconds % 3600.0);
 
             if (MouseData.RightClick == ButtonState.Pressed)
@@ -179,12 +185,17 @@ namespace PaintTogether
                 PaintTogether.Content.PaintCanvas.Canvas.Camera.Position += new Vector2(-1, 0) / PaintTogether.Content.PaintCanvas.Canvas.Camera.Zoom;
             }
         }
-
+        
+        public static Tool t;
         private void UpdateBrush()
         {
             if (ActiveBrush is not null)
             {
                 ActiveBrush.Update();
+            }
+            if (t is not null)
+            {
+                t.Update();
             }
         }
 
@@ -211,8 +222,10 @@ namespace PaintTogether
 
             GraphicsDevice.SetRenderTarget(Canvas.PreviewLayer);
             _spriteBatch.Begin();
-            _spriteBatch.Draw(logo, Vector2.Zero, Color.White);
+            //_spriteBatch.Draw(logo, Vector2.Zero, Color.White);
             _spriteBatch.End();
+
+            t.MainDraw(_spriteBatch,GraphicsDevice);
 
             #region Actually drawing stuff to the output
             

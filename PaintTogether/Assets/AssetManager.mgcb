@@ -44,6 +44,12 @@
 /processorParam:DebugMode=Auto
 /build:Shaders/TestBrushEffect.fx
 
+#begin Shaders/TestToolShader.fx
+/importer:EffectImporter
+/processor:EffectProcessor
+/processorParam:DebugMode=Auto
+/build:Shaders/TestToolShader.fx
+
 #begin Sounds/MenuClick.wav
 /importer:WavImporter
 /processor:SoundEffectProcessor

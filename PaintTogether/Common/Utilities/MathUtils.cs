@@ -679,6 +679,22 @@ namespace PaintTogether.Common.Utilities
             return new Rectangle(center.X - halfSide, center.Y - halfSide, sideLength, sideLength);
         }
 
+        public static Rectangle RectangleXYXY(int x1, int y1, int x2, int y2)
+        {
+            int topLeftX = Math.Min(x1,x2);
+            int topLeftY = Math.Min(y1,y2);
+
+            int bottomRightX = Math.Max(x1,x2);
+            int bottomRightY = Math.Max(y1,y2);
+
+            return new Rectangle(topLeftX, topLeftY, bottomRightX - topLeftX, bottomRightY - topLeftY);
+        }
+
+        public static Rectangle RectangleXYXY(Point topleft, Point bottomRight)
+        {
+            return RectangleXYXY(topleft.X,topleft.Y,bottomRight.X,bottomRight.Y);
+        }
+
         #endregion
     }
 }

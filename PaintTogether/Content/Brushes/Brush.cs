@@ -29,7 +29,7 @@ namespace PaintTogether.Content.Brushes
             {
                 return _brushSize;
             }
-            private set
+            set
             {
                 _brushSize = MathHelper.Clamp(value, 1, int.MaxValue);
             }
@@ -101,7 +101,7 @@ namespace PaintTogether.Content.Brushes
                 return;
             }
 
-            Color? res = BrushDraw(spriteBatch, graphicsDevice); // ok this doesnt work im too tired rn
+            Color? res = BrushDraw(spriteBatch, graphicsDevice); // ok this doesnt work im too tired rn // <- No idea what that comment means but scared to remove it
             if (res is null)
             {
                 return;

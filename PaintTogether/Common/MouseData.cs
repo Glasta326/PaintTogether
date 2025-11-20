@@ -40,6 +40,8 @@ namespace PaintTogether.Common
 
         public static readonly ShiftRegister<int> ScrollHistory = new ShiftRegister<int>(2);
 
+        public static readonly ShiftRegister<bool> ClickHistory = new ShiftRegister<bool>(2);
+
         /// <summary>
         /// How far the scroll wheel has been scrolled this frame. <br/>
         /// Positive values mean scrolled UP. <br/>
@@ -48,5 +50,15 @@ namespace PaintTogether.Common
         public static int ScrollDelta => -(ScrollHistory[1] - ScrollHistory[0]);
 
         public static Point MoveDelta => (MoveHistory[0] - MoveHistory[1]);
+
+        /// <summary>
+        /// True for one frame right as the user presses the left click button
+        /// </summary>
+        public static bool JustClicked => (ClickHistory[0] && !ClickHistory[1]);
+
+        /// <summary>
+        /// True for one frame right as the user lets go of the left click button
+        /// </summary>
+        public static bool JustLetGo => (!ClickHistory[0] && ClickHistory[1]);
     }
 }
