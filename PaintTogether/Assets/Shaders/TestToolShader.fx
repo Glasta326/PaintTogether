@@ -9,6 +9,7 @@
 
 Texture2D SpriteTexture;
 float4 Color;
+float2 Resolution;
 
 sampler2D SpriteTextureSampler = sampler_state
 {
@@ -25,12 +26,19 @@ struct VertexShaderOutput
 float4 MainPS(VertexShaderOutput input) : COLOR
 {	
 	float2 uv = input.TextureCoordinates;
+	float2 pixCoords = uv * Resolution;
 
 	// Color of the canvas initally
 	float4 color = tex2D(SpriteTextureSampler, uv) * input.Color;
-	
-	// Solid rectangle for now
-	color = Color;
+
+	if (pixCoords.x < 10.0 || pixCoords.x > Resolution.x - 10.0) 
+	{
+		color = Color;
+	}
+	if (pixCoords.y < 10.0 || pixCoords.y > Resolution.y - 10.0) 
+	{
+		color = Color;
+	}
 
 	return color;
 }

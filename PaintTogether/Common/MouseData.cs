@@ -1,6 +1,7 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Input;
 using PaintTogether.Common.DataTypes;
+using PaintTogether.Content.PaintCanvas;
 
 namespace PaintTogether.Common
 {
@@ -17,6 +18,11 @@ namespace PaintTogether.Common
         public static Vector2 MousePosNormalised() => new Vector2((float)State.X / Main.instance.Window.ClientBounds.Width, (float)State.Y / Main.instance.Window.ClientBounds.Height);
 
         public static Point MousePosPoint() => new Point(State.X, State.Y);
+        
+        /// <summary>
+        /// Returns the mouse position in canvas space rather than screen space
+        /// </summary>
+        public static Point MousePosCanvasSpace() => Canvas.ScreenToCanvas(MousePosPoint());
         
         /// <summary>
         /// Information about LeftMouseButton

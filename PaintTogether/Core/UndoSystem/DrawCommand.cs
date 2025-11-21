@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.Xna.Framework.Graphics;
 
 namespace PaintTogether.Core.UndoSystem
 {
@@ -11,20 +12,45 @@ namespace PaintTogether.Core.UndoSystem
     /// </summary>
     public class DrawCommand // TODO: probably best if we structure around sending these "Actions" to the server.
     {
-        private Action _apply;
+        // Method that draws this drawCommand
+        private Action<SpriteBatch, GraphicsDevice, object[]> _apply;
 
+        // Method that undoes this drawCommand
         private Action _undo;
 
-        public DrawCommand(Action apply, Action undo)
+        public DrawCommand(Action<SpriteBatch, GraphicsDevice, object[]> apply, Action undo)
         {
             _apply = apply;
             _undo = undo;
         }
 
-        public void Apply() => _apply();
+        public Action<SpriteBatch, GraphicsDevice, object[]> Apply => _apply;
 
-        public void Undo() => _undo();
+        public Action Undo => _undo;
     }
+
+    /*
+    Example showing using an already defined function as a parameter, or using lambda syntax
+    EXAMPLE USAGE:
+    
+    DrawCommand command = new DrawCommand(ExampleFunction, () => { return; } );
+
+    private void ExampleFunction(SpriteBatch sb, GraphicsDevice gd, object[] data)
+    {
+        if (data is null)
+        {
+            sb.Draw();
+        }
+        return;
+    }
+
+    NOTES:
+    The idea is you parse in external values and whatever, writing it like you normally would a function
+    The .Apply() and .Undo() essentially capture the values it was given at the time
+    So when you create a drawCommand that draws a string at 0,0 with red text and whatever
+    Whenever you call .Apply() it essentially runs the function to draw the string at 0,0 with red text and whatever the string was at the time
+    its like a hardcoded function
+    */
 
 
     // This is copied from excel where i was figuring out how to make ctrlz/networking work

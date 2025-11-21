@@ -80,7 +80,7 @@ namespace PaintTogether.Content.Brushes
         public override void Update()
         {
             BrushShouldDraw = false;
-            if (MouseData.LeftClick == ButtonState.Pressed)
+            if (MouseData.MiddleClick == ButtonState.Pressed)
             {
                 BrushShouldDraw = true;
             }

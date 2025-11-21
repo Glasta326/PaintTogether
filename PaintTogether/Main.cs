@@ -157,9 +157,11 @@ namespace PaintTogether
         private void Update_Inner(GameTime gameTime)
         {
             MouseData.State = Mouse.GetState(); // We do this and just read from state when getting mouse info so we arent requesting to get the state a zillion times
-            MouseData.MoveHistory.Add(MouseData.MousePosPoint());
-            MouseData.ScrollHistory.Add(MouseData.State.ScrollWheelValue); // Push the new scroll value to the scroll history so scrollDelta is accurate
-            MouseData.ClickHistory.Add(MouseData.LeftClick == ButtonState.Pressed);
+            MouseData.MoveHistory.Push(MouseData.MousePosPoint());
+            MouseData.ScrollHistory.Push(MouseData.State.ScrollWheelValue); // Push the new scroll value to the scroll history so scrollDelta is accurate
+            MouseData.ClickHistory.Push(MouseData.LeftClick == ButtonState.Pressed);
+            KeyboardData.state = Keyboard.GetState();
+            KeyboardData.KeyboardHistory.Push(Keyboard.GetState());
             GlobalTimeWrappedHourly = (float)(gameTime.TotalGameTime.TotalSeconds % 3600.0);
 
             if (MouseData.RightClick == ButtonState.Pressed)
@@ -184,6 +186,8 @@ namespace PaintTogether
                 // dividing by cameraZoom makes it so the movement is always 1 pixel on the actual physical screen
                 PaintTogether.Content.PaintCanvas.Canvas.Camera.Position += new Vector2(-1, 0) / PaintTogether.Content.PaintCanvas.Canvas.Camera.Zoom;
             }
+
+            HistoryManager.Update();
         }
         
         public static Tool t;
@@ -227,6 +231,15 @@ namespace PaintTogether
 
             t.MainDraw(_spriteBatch,GraphicsDevice);
 
+            HistoryManager.Draw();
+
+            /*
+            if (HistoryManager.CommandHistory.Count > 0 && Keyboard.GetState().IsKeyDown(Keys.K))
+            {
+                HistoryManager.CommandHistory.Last().Undo();
+                HistoryManager.CommandHistory.RemoveAt(HistoryManager.CommandHistory.Count - 1);
+            }
+            */
             #region Actually drawing stuff to the output
             
             GraphicsDevice.SetRenderTarget(null);
