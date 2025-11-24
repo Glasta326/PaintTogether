@@ -40,7 +40,7 @@ namespace PaintTogether.Content.Tools
         public sealed override void LoadAssets(GraphicsDevice graphicsDevice, ContentManager contentManager)
         {
             // Emergency fallback but this should be overriden
-            ToolShader = contentManager.Load<Effect>("Shaders/PenBrushShader");
+            ToolShader = contentManager.Load<Effect>("Shaders/FillRectShader");
 
             LoadToolAssets(graphicsDevice, contentManager);
         }
@@ -131,7 +131,7 @@ namespace PaintTogether.Content.Tools
                 if (res is null) { return; }
 
                 // If we just got a color value back, then the tool wants to use the default draw logic with it's toolShader
-                DefaultDraw(spriteBatch, graphicsDevice, res.Value, ToolStartPos);
+                DefaultDraw(spriteBatch, graphicsDevice, ToolStartPos, MouseData.MousePosCanvasSpace(), res.Value);
             }
         }
 
@@ -172,8 +172,20 @@ namespace PaintTogether.Content.Tools
 
 
             graphicsDevice.SetRenderTarget(Canvas.Layers.ActiveLayer);
-            // Now we have our rendertarget of the region before it was affected by this tool, we can actually draw the tool now
-//            ToolDraw(spriteBatch, graphicsDevice, ToolStartPos, MouseData.MousePosCanvasSpace());
+
+            // Figure out whether to use DefaultDraw or ToolDraw and store whichever one actually draws this tool
+            Func<SpriteBatch,GraphicsDevice,Point,Point,Color,Color?> toolDrawFunc = DefaultDraw;
+            Color? res = ToolDraw(spriteBatch, graphicsDevice, ToolStartPos, MouseData.MousePosCanvasSpace(), ColorSelector.GetColor());
+            if (res is null)
+            {
+                toolDrawFunc = ToolDraw;
+            }
+            else
+            {
+                DefaultDraw(spriteBatch, graphicsDevice, ToolStartPos, MouseData.MousePosCanvasSpace(), ColorSelector.GetColor());
+                toolDrawFunc = DefaultDraw;
+            }
+
 
 
             // Ok so the rule for creating UndoableActions is to capture every single fucking variable before using it
@@ -181,13 +193,16 @@ namespace PaintTogether.Content.Tools
             Point _ToolEndPos = MouseData.MousePosCanvasSpace();
             Point _ToolStartPos = ToolStartPos;
             Color _toolColor = ColorSelector.GetColor();
+            RenderTarget2D _regionPreAffect = regionPreAffect;
+            Rectangle _affectedArea = affectedArea;
+            Func<SpriteBatch,GraphicsDevice,Point,Point,Color,Color?> _toolDrawFunc = toolDrawFunc; // Literally like 2 lines up i create this but i dont trust glasta
             UndoableAction toolAction = new UndoableAction(
             () => 
             {
                 using (SpriteBatch sb = new SpriteBatch(Main.instance.GraphicsDevice))
                 {
                     Main.instance.GraphicsDevice.SetRenderTarget(Canvas.Layers[_activeLayer]);
-                    ToolDraw(sb, Main.instance.GraphicsDevice, _ToolStartPos, _ToolEndPos, _toolColor);
+                    _toolDrawFunc(sb,Main.instance.GraphicsDevice,_ToolStartPos,_ToolEndPos,_toolColor);
                 }
             }, 
             () =>
@@ -196,30 +211,43 @@ namespace PaintTogether.Content.Tools
                 {
                     Main.instance.GraphicsDevice.SetRenderTarget(Canvas.Layers[_activeLayer]);
                     sb.Begin();
-                    sb.Draw(regionPreAffect, affectedArea, Color.White);
+                    sb.Draw(_regionPreAffect, _affectedArea, Color.White);
                     sb.End();
                 }
                 return;
             });
 
+            // Update : We dont call it because the drawing methods are already called before we make the undoableAction
             // Unsure whether its better to create the undoableAction and apply it to make the "actual tool drawing to canvas" happen
             // Or if i just raw call ToolDraw() 
             // Doing this for now
-            toolAction.Apply();
+            //toolAction.Apply();
 
             
         }
 
-
-
-
         // Most tools essentially just create a rectangle between the start and end point, and then run some sort of shader that draws a circle or something
         // As such, the default logic will be to draw a rectangle between start and end, and then apply whatever the tool shader is to it
         // TODO: This
-        private void DefaultDraw(SpriteBatch spriteBatch, GraphicsDevice graphicsDevice, Color drawColor, Point startPos)
+        private Color? DefaultDraw(SpriteBatch spriteBatch, GraphicsDevice graphicsDevice, Point toolStartPos, Point toolEndPos, Color toolColor)
         {
-            
+            Point _start = toolStartPos;
+            Point _mouse = toolEndPos;
+            Rectangle drawArea = MathUtils.RectangleXYXY(_start,_mouse);
 
+            // Could potentially not have these fields in the shader, so we need the null checks
+            // Its the ["Color"]? <- little question mark because i know im going to forget
+            ToolShader.Parameters["Color"]?.SetValue(toolColor.ToVector4());
+            ToolShader.Parameters["Resolution"]?.SetValue(new Vector2(drawArea.Width,drawArea.Height));
+            
+            spriteBatch.Begin(SpriteSortMode.Immediate,effect: ToolShader);
+
+            ToolShader.CurrentTechnique.Passes[0].Apply();
+            spriteBatch.Draw(CommonKeys.DummyTexture,drawArea,Color.White);
+
+            spriteBatch.End();
+
+            return null; // Unforunatley i need this to also return color? to match the return type of the toolDraw hook so i can swap it around in the funcs
         }
     }
 }

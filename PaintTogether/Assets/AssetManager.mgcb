@@ -26,6 +26,12 @@
 /processorParam:DebugMode=Auto
 /build:Shaders/Eraser.fx
 
+#begin Shaders/FillRectShader.fx
+/importer:EffectImporter
+/processor:EffectProcessor
+/processorParam:DebugMode=Auto
+/build:Shaders/FillRectShader.fx
+
 #begin Shaders/PenBrushShader.fx
 /importer:EffectImporter
 /processor:EffectProcessor

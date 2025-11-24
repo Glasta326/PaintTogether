@@ -93,7 +93,19 @@ namespace PaintTogether
 
             if (t is null)
             {
-                t = Element.Get<TestTool>();
+                t = Element.Get<TestLineTool>();
+            }
+            // I need to get input sorted fucking desperatly
+            if (!ColorSelector.isFocused)
+            {
+                if (Keyboard.GetState().IsKeyDown(Keys.Right))
+                {
+                    t = Element.Get<TestLineTool>();
+                }
+                if (Keyboard.GetState().IsKeyDown(Keys.Left))
+                {
+                    t = Element.Get<TestTool>();
+                }
             }
             
             /*
