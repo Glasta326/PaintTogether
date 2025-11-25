@@ -40,7 +40,7 @@ namespace PaintTogether.Content.PaintCanvas
             Layers.AddLayer();
 
             graphicsDevice.SetRenderTarget(Layers.ActiveLayer);
-            graphicsDevice.Clear(Color.White);
+            graphicsDevice.Clear(Color.Black);
         }
 
 

@@ -28,16 +28,19 @@ namespace PaintTogether.Common
         /// Information about LeftMouseButton
         /// </summary>
         public static ButtonState LeftClick => State.LeftButton;
+        public static bool IsLeftClick => State.LeftButton == ButtonState.Pressed;
         
         /// <summary>
         /// Information about RightMouseButton
         /// </summary>
         public static ButtonState RightClick => State.RightButton;
+        public static bool IsRightClick => State.RightButton == ButtonState.Pressed;
 
         /// <summary>
         /// Information about MiddleMouseButton
         /// </summary>
         public static ButtonState MiddleClick => State.MiddleButton;
+        public static bool IsMiddleClick => State.MiddleButton == ButtonState.Pressed;
         
         /// <summary>
         /// Stores the position of the mouse at [0] and the position of the mouse last frame at [1]

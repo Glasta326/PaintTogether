@@ -20,12 +20,11 @@ namespace PaintTogether.Content.Tools
             ToolShader = contentManager.Load<Effect>("Shaders/TestToolShader");
         }
 
-        protected override Color? ToolDraw(SpriteBatch spriteBatch, GraphicsDevice graphicsDevice, Point toolStartPos, Point toolEndPos, Color toolColor)
+        protected override Color? ToolDraw(SpriteBatch spriteBatch, GraphicsDevice graphicsDevice, Point toolStartPos, Point toolEndPos, Color toolColor, int toolSize)
         {
             Point _start = toolStartPos;
             Point _mouse = toolEndPos;
             Rectangle drawArea = MathUtils.RectangleXYXY(_start,_mouse);
-
 
             ToolShader.Parameters["Color"].SetValue(toolColor.ToVector4());
             ToolShader.Parameters["Resolution"].SetValue(new Vector2(drawArea.Width,drawArea.Height));

@@ -43,11 +43,11 @@ namespace PaintTogether
 
             Element.InitaliseRegistry();
             Element.LoadAll();
-            
+
 
             base.Initialize();
         }
-        
+
         public static RenderTarget2D logoTarget;
 
         public static RenderTarget2D UITarget;
@@ -93,21 +93,19 @@ namespace PaintTogether
 
             if (t is null)
             {
-                t = Element.Get<TestLineTool>();
+                //t = Element.Get<TestTool>();
+            }
+
+            if (_b is null)
+            {
+                _b = Element.Get<_PenBrush>();
             }
             // I need to get input sorted fucking desperatly
             if (!ColorSelector.isFocused)
             {
-                if (Keyboard.GetState().IsKeyDown(Keys.Right))
-                {
-                    t = Element.Get<TestLineTool>();
-                }
-                if (Keyboard.GetState().IsKeyDown(Keys.Left))
-                {
-                    t = Element.Get<TestTool>();
-                }
+                //t = Element.Get<TestTool>();
             }
-            
+
             /*
             if (b is Brush d)
             {
@@ -163,7 +161,7 @@ namespace PaintTogether
 
 
             Canvas.Layers.ActiveLayer.GetData<Color>(0, region, c, 0, 4);
-            
+
         }
 
         private void Update_Inner(GameTime gameTime)
@@ -181,7 +179,7 @@ namespace PaintTogether
                 // we do -MoveDelta,
                 // if you think about it relativley, inverting the movement of the camera position is essentially moving the canvas with the camera as the reference frame.
                 PaintTogether.Content.PaintCanvas.Canvas.Camera.Position += MouseData.MoveDelta.ToVector2() / PaintTogether.Content.PaintCanvas.Canvas.Camera.Zoom;
-            
+
                 // Potentially make a CameraPosition class with custom methods for moving and overloaded operators and whatnot
                 // Porbably a good idea
             }
@@ -201,8 +199,9 @@ namespace PaintTogether
 
             HistoryManager.Update();
         }
-        
+
         public static Tool t;
+        public static _Brush _b;
         private void UpdateBrush()
         {
             if (ActiveBrush is not null)
@@ -212,6 +211,10 @@ namespace PaintTogether
             if (t is not null)
             {
                 t.Update();
+            }
+            if (_b is not null)
+            {
+                _b.Update();
             }
         }
 
@@ -241,8 +244,9 @@ namespace PaintTogether
             //_spriteBatch.Draw(logo, Vector2.Zero, Color.White);
             _spriteBatch.End();
 
-            t.MainDraw(_spriteBatch,GraphicsDevice);
-
+            //t.MainDraw(_spriteBatch,GraphicsDevice);
+            _b.MainDraw(_spriteBatch, GraphicsDevice);
+            
             HistoryManager.Draw();
 
             /*
@@ -253,7 +257,7 @@ namespace PaintTogether
             }
             */
             #region Actually drawing stuff to the output
-            
+
             GraphicsDevice.SetRenderTarget(null);
 
             Canvas.Draw(GraphicsDevice, _spriteBatch, null);

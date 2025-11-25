@@ -118,7 +118,14 @@ namespace PaintTogether.Core
         public static void UpdateAll()
         {
             foreach (var e in ProgramElements)
+            {
+                if (!e.AutoUpdate)
+                {
+                    continue;
+                }
                 e.Update();
+            }
+                
         }
 
 
