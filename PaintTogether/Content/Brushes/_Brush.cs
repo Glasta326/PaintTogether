@@ -23,8 +23,6 @@ namespace PaintTogether.Content.Brushes
 
         public virtual Effect _BrushShader { get; protected set; }
 
-        private Effect shader3;
-
         #region Loading
 
         public sealed override void Load()
@@ -36,7 +34,6 @@ namespace PaintTogether.Content.Brushes
         {
             // Default, should get overitten by anything inheriting this class really
             _BrushShader = contentManager.Load<Effect>("Shaders/PenBrushShader");
-            shader3 = contentManager.Load<Effect>("Shaders/FillRectShader");
             Load_BrushAssets(graphicsDevice, contentManager);
         }
 
@@ -99,7 +96,7 @@ namespace PaintTogether.Content.Brushes
             }
             // NOTE: i think this is bad?, like, we check if we're clicking and were clicking last frame, and then seperatly check if we just clicked now?
             // Isnt it better to just check if we're clicking at all and return true on that?
-            if (MouseData.JustClicked)
+            if (MouseData.JustClicked && !ColorSelector.isFocused) // Also avoid accidently initally clicking on the UI
             {
                 return true;
             }
@@ -211,15 +208,8 @@ namespace PaintTogether.Content.Brushes
             spriteBatch.Draw(Canvas.Layers.ActiveLayer, new Rectangle(0, 0, affectedArea.Width, affectedArea.Height), affectedArea, Color.White);
             spriteBatch.End();
 
-            graphicsDevice.SetRenderTarget(Canvas.Layers.ActiveLayer);
-            shader3.Parameters["Color"].SetValue(Color.White.ToVector4());
-            spriteBatch.Begin(SpriteSortMode.Immediate, effect: shader3);
-            spriteBatch.Draw(CommonKeys.DummyTexture, affectedArea, Color.White);
-            spriteBatch.End();
-
 
             graphicsDevice.SetRenderTarget(Canvas.Layers.ActiveLayer);
-
             Func<SpriteBatch, GraphicsDevice, List<Point>, Color, int, Color?> _brushDrawFunc = DefaultDraw;
             Color? res = _BrushDraw(spriteBatch, graphicsDevice, ActiveCursorHistory, ColorSelector.GetColor(), _BrushSize);
             if (res is null)
