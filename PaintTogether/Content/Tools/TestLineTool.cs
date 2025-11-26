@@ -19,14 +19,11 @@ namespace PaintTogether.Content.Tools
         protected override Color? ToolDraw(SpriteBatch spriteBatch, GraphicsDevice graphicsDevice, Point toolStartPos, Point toolEndPos, Color toolColor, int toolSize)
         {
             ToolShader.Parameters["BrushColor"].SetValue(toolColor.ToVector4());
-            spriteBatch.Begin(effect:ToolShader);
+            spriteBatch.Begin(effect: ToolShader);
+            
+            spriteBatch.DrawLine(toolStartPos, toolEndPos, ToolShader, toolSize); 
 
-            for (int i = 1; i < ActiveCursorHistory.Count; i++)
-            {
-                spriteBatch.DrawLine(ActiveCursorHistory[i-1], ActiveCursorHistory[i], ToolShader, toolSize); // we need to capture toolsize!!!
-            }
-
-            spriteBatch.End();  
+            spriteBatch.End();
             return null;
         }
     }

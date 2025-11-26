@@ -11,6 +11,10 @@ namespace PaintTogether.Core.UndoSystem
     // Instead the Historymanager can directly get the apply and undo actions from the UndoableAction
     // "oh but my logging" it's useless from here it just shows Applied: UndoableAction lmfao
     // do it from HistoryManager whenever ctrlz or ctrly is pressed
+    // Also there should be a manadatory "name" field for each undoableAction both for debugging reasons so i can see what the undo stack actually is composed of
+    // and the log can print the name of each thing added to it, but also there could be UI to see what the undo history contains
+    // maybe the user wants to know how many times they clicked the circle tool idfk
+    // extending that thought maybe anything inheriting from brush or tool could also have a mandatory name field that is passed to the undoable action when the action is createad
     public class UndoableAction
     {
         private Action _apply;
@@ -28,6 +32,11 @@ namespace PaintTogether.Core.UndoSystem
             // Whenever a new action by the user occurs,
             // redo history is cleared because otherwise id have to deal with multiple timelines and the fucking multiverse
             HistoryManager.CommandRedoHistory.Clear();
+
+            if (clLogger.VerboseLogging)
+            {
+                clLogger.LogInfo($"New action: {this.GetType().Name}");
+            }
         }
 
         public void Apply()

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Formats.Asn1;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.Xna.Framework;
@@ -14,8 +15,10 @@ namespace PaintTogether.Content.UI
     public class ColorSelector : Element
     {
         static string hexCode = "000000";
-        Rectangle area;
+        public static Rectangle area;
         public static bool isFocused = false;
+
+        public static bool isHovering => area.Contains(MouseData.MousePosPoint());
 
         public static Color drawColor = Color.Navy;
         public override void Load()
@@ -50,7 +53,7 @@ namespace PaintTogether.Content.UI
         public override void Update()
         {
             drawColor = Color.Navy;
-            if (area.Contains(MouseData.MousePosPoint()))
+            if (isHovering)
             {
                 drawColor = Color.DarkGreen;
                 if (MouseData.LeftClick == ButtonState.Pressed)

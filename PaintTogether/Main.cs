@@ -98,7 +98,7 @@ namespace PaintTogether
 
             if (_b is null)
             {
-                _b = Element.Get<_PenBrush>();
+                //_b = Element.Get<PenBrush>();
             }
             // I need to get input sorted fucking desperatly
             if (!ColorSelector.isFocused)
@@ -122,16 +122,6 @@ namespace PaintTogether
                 if (Keyboard.GetState().IsKeyDown(Keys.Q))
                 {
                     ActiveBrush = Element.Get<PenBrush>();
-                }
-
-                if (Keyboard.GetState().IsKeyDown(Keys.W))
-                {
-                    ActiveBrush = Element.Get<Test2Brush>();
-                }
-
-                if (Keyboard.GetState().IsKeyDown(Keys.E))
-                {
-                    ActiveBrush = Element.Get<TestBrush3>();
                 }
 
                 if (Keyboard.GetState().IsKeyDown(Keys.F1))
@@ -201,13 +191,14 @@ namespace PaintTogether
         }
 
         public static Tool t;
-        public static _Brush _b;
+        public static Brush _b;
         private void UpdateBrush()
         {
             if (ActiveBrush is not null)
             {
                 ActiveBrush.Update();
             }
+            /*
             if (t is not null)
             {
                 t.Update();
@@ -216,6 +207,7 @@ namespace PaintTogether
             {
                 _b.Update();
             }
+            */
         }
 
         protected override void Draw(GameTime gameTime)
@@ -235,7 +227,7 @@ namespace PaintTogether
             _spriteBatch.DrawString(font, $"Brush size : {Canvas.Camera.Position}", Vector2.Zero, Color.White);
             _spriteBatch.End();
             Element.PostDrawAll(_spriteBatch, GraphicsDevice);
-            ActiveBrush.UiDraw(_spriteBatch, GraphicsDevice);
+            ActiveBrush.UIDraw(_spriteBatch, GraphicsDevice);
 
             #endregion
 
@@ -245,7 +237,7 @@ namespace PaintTogether
             _spriteBatch.End();
 
             //t.MainDraw(_spriteBatch,GraphicsDevice);
-            _b.MainDraw(_spriteBatch, GraphicsDevice);
+            //_b.MainDraw(_spriteBatch, GraphicsDevice);
             
             HistoryManager.Draw();
 

@@ -3,6 +3,7 @@ using System.Net.NetworkInformation;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using PaintTogether.Content.Brushes;
+using PaintTogether.Content.Tools;
 
 namespace PaintTogether.Common.Utilities
 {
@@ -80,7 +81,7 @@ namespace PaintTogether.Common.Utilities
         /// </summary>
         public static bool DrawLine(this SpriteBatch _spriteBatch, Effect shader)
         {
-            return _spriteBatch.DrawLine(MouseData.MoveHistory[0], MouseData.MoveHistory[1], shader, Brush.BrushSize);
+            return _spriteBatch.DrawLine(MouseData.MoveHistory[0], MouseData.MoveHistory[1], shader, Tool.ToolSize);
         }
 
     }
