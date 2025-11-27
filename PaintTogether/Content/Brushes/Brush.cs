@@ -83,9 +83,12 @@ namespace PaintTogether.Content.Brushes
         {
             // Whenever the brush is actually being used, we need to store all the points that compose the final brush stroke
             Active = GetActiveState();
-            if (Active)
+            if (Active) // Only actually add the point if the mouse is moving otherwise it breaks with translucent brushes
             {
-                BrushStrokePoints.Add(MouseData.MousePosCanvasSpace());
+                if (MouseData.MoveDelta != Point.Zero)
+                {
+                    BrushStrokePoints.Add(MouseData.MousePosCanvasSpace());
+                }
             }
             else
             {
@@ -168,7 +171,7 @@ namespace PaintTogether.Content.Brushes
             else
             {
                 graphicsDevice.SetRenderTarget(Canvas.PreviewLayer);
-                Color? res = BrushDraw(spriteBatch, graphicsDevice, BrushStrokePoints, ColorSelector.GetColor(), BrushSize);
+                Color? res = BrushDraw(spriteBatch, graphicsDevice, BrushStrokePoints, ColorSelector.GetColor(), BrushSize, true);
                 if (res is null) { return; }
 
                 // If the BrushDraw function returned us a non-null value,
@@ -215,9 +218,10 @@ namespace PaintTogether.Content.Brushes
             // the brush size leaks over the edge
             affectedArea.Inflate(BrushSize * 0.5f + 1f, BrushSize * 0.5f + 1f);  // +1f because if toolsize is at 1 then a single pixel can leak outside sometimes
 
-            // No point doing anything if the affected area was zero
-            if (affectedArea.Width == 0 || affectedArea.Height == 0)
+            // No point doing anything if the affected area was zero or negative
+            if (affectedArea.Width <= 0 || affectedArea.Height <= 0)
             {
+                clLogger.LogWarning($"Attempted to draw brush over bad area! Width: {affectedArea.Width}, Height: {affectedArea.Height}");
                 return;
             }
 
@@ -234,7 +238,7 @@ namespace PaintTogether.Content.Brushes
             // This attempts to actually draw the brush stroke to the currently active canvas layer, and set the draw func to be the overriden draw call
             // but if overriden draw call returns us a color value, we instead use the default draw call for the draw func with that defined color value
             graphicsDevice.SetRenderTarget(Canvas.Layers.ActiveLayer);
-            Func<SpriteBatch, GraphicsDevice, List<Point>, Color, int, Color?> brushDrawFunc = DefaultDraw;
+            Func<SpriteBatch, GraphicsDevice, List<Point>, Color, int, bool, Color?> brushDrawFunc = DefaultDraw;
             Color? res = BrushDraw(spriteBatch, graphicsDevice, BrushStrokePoints, ColorSelector.GetColor(), BrushSize);
             if (res is null)
             {
@@ -255,7 +259,8 @@ namespace PaintTogether.Content.Brushes
             RenderTarget2D _regionPreAffect = regionPreAffect;
             Rectangle _affectedArea = affectedArea;
             int _brushSize = BrushSize;
-            Func<SpriteBatch, GraphicsDevice, List<Point>, Color, int, Color?> _brushDrawFunc = brushDrawFunc; // This is unnessicary
+            bool _isPreview = false;
+            Func<SpriteBatch, GraphicsDevice, List<Point>, Color, int, bool, Color?> _brushDrawFunc = brushDrawFunc; // This is unnessicary
 
             // There should never be a change in the graphics device, so using the reference to the main instance is ok
             // Create the new undoable action (This is automatically pushed to the undo history upon creation)
@@ -266,7 +271,7 @@ namespace PaintTogether.Content.Brushes
                 using (SpriteBatch sb = new SpriteBatch(Main.instance.GraphicsDevice))
                 {
                     Main.instance.GraphicsDevice.SetRenderTarget(Canvas.Layers[_activeLayerIndex]);
-                    _brushDrawFunc(sb, Main.instance.GraphicsDevice, _ActiveCursorHistory, _BrushColor, _brushSize);
+                    _brushDrawFunc(sb, Main.instance.GraphicsDevice, _ActiveCursorHistory, _BrushColor, _brushSize, _isPreview);
                 }
             },
             () =>
@@ -275,7 +280,7 @@ namespace PaintTogether.Content.Brushes
                 using (SpriteBatch sb = new SpriteBatch(Main.instance.GraphicsDevice))
                 {
                     Main.instance.GraphicsDevice.SetRenderTarget(Canvas.Layers[_activeLayerIndex]);
-                    sb.Begin();
+                    sb.Begin(SpriteSortMode.Immediate, BlendState.Opaque); // Important!, If we do any other blendstate, when it tries to re-draw transparent pixels, it will instead not override what's underneath them
                     sb.Draw(_regionPreAffect, _affectedArea, Color.White);
                     sb.End();
                 }
@@ -292,7 +297,7 @@ namespace PaintTogether.Content.Brushes
         /// Default drawing logic. The defined shader and draws a line between each brush point. <br/>
         /// Behaviour is similar to a typical pen tool in something like MSPaint but using the override-defined BrushShader
         /// </summary>
-        private Color? DefaultDraw(SpriteBatch spriteBatch, GraphicsDevice graphicsDevice, List<Point> drawPoints, Color brushColor, int brushSize)
+        private Color? DefaultDraw(SpriteBatch spriteBatch, GraphicsDevice graphicsDevice, List<Point> drawPoints, Color brushColor, int brushSize, bool isPreview = false)
         {
             BrushShader.Parameters["BrushColor"]?.SetValue(brushColor.ToVector4());
             spriteBatch.Begin(SpriteSortMode.Immediate, effect: BrushShader);
@@ -311,7 +316,7 @@ namespace PaintTogether.Content.Brushes
         /// Return null to cancel the default logic. <br/>
         /// Returns <see cref="Color.White"/> by default.
         /// </summary>
-        protected virtual Color? BrushDraw(SpriteBatch spriteBatch, GraphicsDevice graphicsDevice, List<Point> drawPoints, Color _brushColor, int _brushSize) { return Color.White; }
+        protected virtual Color? BrushDraw(SpriteBatch spriteBatch, GraphicsDevice graphicsDevice, List<Point> drawPoints, Color _brushColor, int _brushSize, bool isPreview = false) { return Color.White; }
 
         /// <summary>
         /// For drawing anything ui-related for this brush on the preview layer of the canvas.

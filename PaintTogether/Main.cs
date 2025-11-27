@@ -123,6 +123,10 @@ namespace PaintTogether
                 {
                     ActiveBrush = Element.Get<PenBrush>();
                 }
+                if (Keyboard.GetState().IsKeyDown(Keys.E))
+                {
+                    ActiveBrush = Element.Get<EraserBrush>();
+                }
 
                 if (Keyboard.GetState().IsKeyDown(Keys.F1))
                 {

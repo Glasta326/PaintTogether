@@ -37,7 +37,7 @@ namespace PaintTogether.Content.Tools
             }
             set
             {
-                _toolSize = MathHelper.Clamp(value,1,int.MaxValue);
+                _toolSize = MathHelper.Clamp(value, 1, int.MaxValue);
             }
         }
 
@@ -253,7 +253,7 @@ namespace PaintTogether.Content.Tools
                 using (SpriteBatch sb = new SpriteBatch(Main.instance.GraphicsDevice))
                 {
                     Main.instance.GraphicsDevice.SetRenderTarget(Canvas.Layers[_activeLayer]);
-                    sb.Begin();
+                    sb.Begin(SpriteSortMode.Immediate, BlendState.Opaque); // Important!, If we do any other blendstate, when it tries to re-draw transparent pixels, it will instead not override what's underneath them
                     sb.Draw(_regionPreAffect, _affectedArea, Color.White);
                     sb.End();
                 }

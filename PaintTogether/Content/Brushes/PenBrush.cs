@@ -17,9 +17,9 @@ namespace PaintTogether.Content.Brushes
         }
 
 
-        protected override Color? BrushDraw(SpriteBatch spriteBatch, GraphicsDevice graphicsDevice, List<Point> drawPoints, Color _brushColor, int _brushSize)
+        protected override Color? BrushDraw(SpriteBatch spriteBatch, GraphicsDevice graphicsDevice, List<Point> drawPoints, Color _brushColor, int _brushSize, bool isPreview)
         {
-            return ColorSelector.GetColor();
+            return _brushColor;
         }
     }
 }
