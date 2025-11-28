@@ -1,24 +1,18 @@
 using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Threading.Tasks;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
-using Microsoft.Xna.Framework.Input;
 using PaintTogether.Common;
 using PaintTogether.Common.PaintLogger;
 using PaintTogether.Common.Utilities;
-using PaintTogether.Content.Brushes;
 using PaintTogether.Content.PaintCanvas;
 using PaintTogether.Content.UI;
 using PaintTogether.Core;
 using PaintTogether.Core.UndoSystem;
 
-namespace PaintTogether.Content.Tools
+namespace PaintTogether.Content.Applicators.Tools
 {
-    public abstract class Tool : Element
+    public abstract class DragTool : Element
     {
         #region Fields
 

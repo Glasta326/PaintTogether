@@ -194,7 +194,7 @@ namespace PaintTogether
             HistoryManager.Update();
         }
 
-        public static Tool t;
+        public static DragTool t;
         public static Brush _b;
         private void UpdateBrush()
         {

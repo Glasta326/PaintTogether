@@ -1,14 +1,11 @@
-using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
 using PaintTogether.Common.PaintLogger;
 using PaintTogether.Common.Utilities;
 
-namespace PaintTogether.Content.Brushes
+namespace PaintTogether.Content.Applicators.Brushes
 {
     public class EraserBrush : Brush
     {
@@ -30,6 +27,7 @@ namespace PaintTogether.Content.Brushes
         protected override void LoadBrushAssets(GraphicsDevice graphicsDevice, ContentManager contentManager)
         {
             BrushShader = contentManager.Load<Effect>("Shaders/PenBrushShader");
+            clLogger.LogInfo($"{Vector3.Dot(new Vector3(36,6f,0f),new Vector3(-1f,6,-1))}");
         }
 
         protected override Color? BrushDraw(SpriteBatch spriteBatch, GraphicsDevice graphicsDevice, List<Point> drawPoints, Color _brushColor, int _brushSize, bool isPreview)

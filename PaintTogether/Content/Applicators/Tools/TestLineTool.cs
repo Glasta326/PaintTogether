@@ -1,15 +1,11 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
 using PaintTogether.Common.Utilities;
 
-namespace PaintTogether.Content.Tools
+namespace PaintTogether.Content.Applicators.Tools
 {
-    public class TestLineTool : Tool
+    public class TestLineTool : DragTool
     {
         protected override void LoadToolAssets(GraphicsDevice graphicsDevice, ContentManager contentManager)
         {

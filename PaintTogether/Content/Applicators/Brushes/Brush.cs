@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading.Tasks;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
@@ -9,16 +8,16 @@ using PaintTogether.Common;
 using PaintTogether.Common.PaintLogger;
 using PaintTogether.Common.Utilities;
 using PaintTogether.Content.PaintCanvas;
-using PaintTogether.Content.Tools;
+using PaintTogether.Content.Applicators.Tools;
 using PaintTogether.Content.UI;
 using PaintTogether.Core;
 using PaintTogether.Core.UndoSystem;
 
-namespace PaintTogether.Content.Brushes
+namespace PaintTogether.Content.Applicators.Brushes
 {
     /// <summary>
     /// Base class for all brush types.<br/>
-    /// Very similar to <see cref="Tool"/> but application and stored data is different.
+    /// Very similar to <see cref="DragTool"/> but application and stored data is different.
     /// </summary>
     public abstract class Brush : Element
     {
@@ -27,7 +26,7 @@ namespace PaintTogether.Content.Brushes
         public override bool AutoUpdate => false; // Manually handled
 
         // Just read it from tool.cs, its meant to be shared across all cursor elements anyway
-        protected static int BrushSize => Tool.ToolSize;
+        protected static int BrushSize => DragTool.ToolSize;
 
         /// <summary>
         /// The actual shader that gets applied to the brush area
@@ -96,7 +95,7 @@ namespace PaintTogether.Content.Brushes
             }
 
             // Control stroke width with mouse scroll wheel for now
-            Tool.ToolSize += (int)(MouseData.ScrollDelta * 0.00833333333333f);
+            DragTool.ToolSize += (int)(MouseData.ScrollDelta * 0.00833333333333f);
 
             // invoke inheriting class's update logic
             UpdateBrush();

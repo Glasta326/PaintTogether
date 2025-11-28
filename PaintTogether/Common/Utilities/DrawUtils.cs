@@ -81,7 +81,7 @@ namespace PaintTogether.Common.Utilities
         /// </summary>
         public static bool DrawLine(this SpriteBatch _spriteBatch, Effect shader)
         {
-            return _spriteBatch.DrawLine(MouseData.MoveHistory[0], MouseData.MoveHistory[1], shader, Tool.ToolSize);
+            return _spriteBatch.DrawLine(MouseData.MoveHistory[0], MouseData.MoveHistory[1], shader, DragTool.ToolSize);
         }
 
     }
