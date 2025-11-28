@@ -188,6 +188,12 @@ namespace PaintTogether.Content.Applicators.Brushes
             int highestY = 0;
             int lowestY = int.MaxValue;
 
+            if (drawPoints.Count == 0)
+            {
+                drawPoints.Add(MouseData.MousePosCanvasSpace());
+                drawPoints.Add(MouseData.MousePosCanvasSpace());
+            }
+
             // I hate this
             // TODO: something better than this atrocity
             for (int i = 0; i < drawPoints.Count; i++)
@@ -212,13 +218,15 @@ namespace PaintTogether.Content.Applicators.Brushes
                 }
             }
 
+
+
             Rectangle affectedArea = MathUtils.RectangleXYXY(lowestX, lowestY, highestX, highestY);
             // Account for the fact if you were to draw right at the edge with a large brush,
             // the brush size leaks over the edge
             affectedArea.Inflate(BrushSize * 0.5f + 1f, BrushSize * 0.5f + 1f);  // +1f because if toolsize is at 1 then a single pixel can leak outside sometimes
 
             // No point doing anything if the affected area was zero or negative
-            if (affectedArea.Width <= 0 || affectedArea.Height <= 0)
+            if (affectedArea.Width < 0 || affectedArea.Height < 0)
             {
                 clLogger.LogWarning($"Attempted to draw brush over bad area! Width: {affectedArea.Width}, Height: {affectedArea.Height}");
                 return;
@@ -228,11 +236,7 @@ namespace PaintTogether.Content.Applicators.Brushes
             // Then draw the affected area of the active canvas layer into this new rendertarget
             // Essentially copying the region into the new rendertarget
             RenderTarget2D regionPreAffect = new RenderTarget2D(graphicsDevice, affectedArea.Width, affectedArea.Height, false, Canvas.Layers.ActiveLayer.Format, Canvas.Layers.ActiveLayer.DepthStencilFormat);
-            graphicsDevice.SetRenderTarget(regionPreAffect);
-            graphicsDevice.Clear(Color.Transparent);
-            spriteBatch.Begin(SpriteSortMode.Immediate);
-            spriteBatch.Draw(Canvas.Layers.ActiveLayer, new Rectangle(0, 0, affectedArea.Width, affectedArea.Height), affectedArea, Color.White);
-            spriteBatch.End();
+            DrawUtils.CopySection(spriteBatch, Canvas.Layers.ActiveLayer, affectedArea, regionPreAffect, new Rectangle(0, 0, affectedArea.Width, affectedArea.Height));
 
             // This attempts to actually draw the brush stroke to the currently active canvas layer, and set the draw func to be the overriden draw call
             // but if overriden draw call returns us a color value, we instead use the default draw call for the draw func with that defined color value

@@ -27,15 +27,13 @@ namespace PaintTogether.Content.Applicators.Brushes
         protected override void LoadBrushAssets(GraphicsDevice graphicsDevice, ContentManager contentManager)
         {
             BrushShader = contentManager.Load<Effect>("Shaders/PenBrushShader");
-            clLogger.LogInfo($"{Vector3.Dot(new Vector3(36,6f,0f),new Vector3(-1f,6,-1))}");
         }
 
         protected override Color? BrushDraw(SpriteBatch spriteBatch, GraphicsDevice graphicsDevice, List<Point> drawPoints, Color _brushColor, int _brushSize, bool isPreview)
         {
-            clLogger.LogInfo($"{_brushColor}");
             if (isPreview)
             {
-                BrushShader.Parameters["BrushColor"]?.SetValue(new Color(64,0,0,32).ToVector4());
+                BrushShader.Parameters["BrushColor"]?.SetValue(new Color(64,0,0,64).ToVector4());
                 spriteBatch.Begin(SpriteSortMode.Immediate, BlendState.NonPremultiplied, effect: BrushShader);
             }
             else

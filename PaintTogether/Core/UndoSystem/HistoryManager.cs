@@ -22,13 +22,19 @@ namespace PaintTogether.Core.UndoSystem
             ActionToInvoke = null;
             if (KeyboardData.state.IsKeyDown(Keys.LeftControl) && KeyboardData.KeyJustPressed(Keys.Z))
             {
-                clLogger.LogInfo($"CTRL+Z just pressed");
+                if (clLogger.VerboseLogging)
+                {
+                    clLogger.LogInfo($"CTRL+Z just pressed");
+                }
                 UndoMostRecent();
             }
             // Cant have them both at the same time now can we
             else if (KeyboardData.state.IsKeyDown(Keys.LeftControl) && KeyboardData.KeyJustPressed(Keys.Y))
             {
-                clLogger.LogInfo($"CTRL+Y just pressed");
+                if (clLogger.VerboseLogging)
+                {
+                    clLogger.LogInfo($"CTRL+Z just pressed");
+                }
                 RedoMostRecent();
             }
         }

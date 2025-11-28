@@ -14,7 +14,7 @@ namespace PaintTogether.Content.UI
 {
     public class ColorSelector : Element
     {
-        static string hexCode = "000000";
+        public static string hexCode = "000000";
         public static Rectangle area;
         public static bool isFocused = false;
 

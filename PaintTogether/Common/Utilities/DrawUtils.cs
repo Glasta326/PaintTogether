@@ -2,8 +2,7 @@ using System;
 using System.Net.NetworkInformation;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
-using PaintTogether.Content.Brushes;
-using PaintTogether.Content.Tools;
+using PaintTogether.Content.Applicators.Tools;
 
 namespace PaintTogether.Common.Utilities
 {
@@ -82,6 +81,33 @@ namespace PaintTogether.Common.Utilities
         public static bool DrawLine(this SpriteBatch _spriteBatch, Effect shader)
         {
             return _spriteBatch.DrawLine(MouseData.MoveHistory[0], MouseData.MoveHistory[1], shader, DragTool.ToolSize);
+        }
+
+        /// <summary>
+        /// Copies a region of pixels from a source rendertarget to a destination rendertarget
+        /// </summary>
+        /// <param name="source">rendertarget to copy FROM</param>
+        /// <param name="sourceRect">area of rendertarget to copy FROM</param>
+        /// <param name="dest">rendertarget to copy TO</param>
+        /// <param name="destRect">area of rendertarget copied TO</param>
+        public static void CopySection(this SpriteBatch sb, RenderTarget2D source, Rectangle sourceRect, RenderTarget2D dest, Rectangle destRect)
+        {
+            Main.instance.GraphicsDevice.SetRenderTarget(dest);
+            sb.Begin(SpriteSortMode.Immediate,BlendState.Opaque,SamplerState.PointClamp);
+            sb.Draw(source,destRect,sourceRect,Color.White);
+            sb.End();
+            Main.instance.GraphicsDevice.SetRenderTarget(null);
+        }
+
+        /// <summary>
+        /// Gets the color value of a specfic pixel inside a rendertarget
+        /// </summary>
+        public static Color GetPixel(this RenderTarget2D target, Point pos)
+        {
+            Color[] p = new Color[1];
+            Rectangle r = new Rectangle(pos.X,pos.Y,1,1);
+            target.GetData<Color>(0,r,p,0,1);
+            return p[0];
         }
 
     }

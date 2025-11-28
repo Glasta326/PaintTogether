@@ -20,6 +20,13 @@ namespace PaintTogether.Content.PaintCanvas
         /// </summary>
         public static RenderTarget2D PreviewLayer;
 
+        /// <summary>
+        /// This layer is never drawn or shown the user.<br/>
+        /// It exists purely to act as a buffer for tools and operations.<br/>
+        /// It is cleared at the end of each frame automatically
+        /// </summary>
+        public static RenderTarget2D DummyLayer;
+
         public static CanvasLayers Layers = new CanvasLayers();
 
         public static CanvasCamera Camera = new CanvasCamera();
@@ -35,6 +42,8 @@ namespace PaintTogether.Content.PaintCanvas
             // Note that it still has .preserveContents enables
             // We manually .clear() it with Color.Transparent at the start of the draw because otherwise every time something switched to it as the rendertarget it clears with black and hides the main canvas
             PreviewLayer = new RenderTarget2D(graphicsDevice, Resolution.X, Resolution.Y, false, SurfaceFormat.Color, DepthFormat.None, 0, RenderTargetUsage.PreserveContents);
+
+            DummyLayer = new RenderTarget2D(graphicsDevice, Resolution.X, Resolution.Y, false, SurfaceFormat.Color, DepthFormat.None, 0, RenderTargetUsage.PreserveContents);
 
             // Initalise the canvas with a single white layer
             Layers.AddLayer();
@@ -72,6 +81,15 @@ namespace PaintTogether.Content.PaintCanvas
         public static void ResetPreviewLayer(GraphicsDevice graphicsDevice)
         {
             graphicsDevice.SetRenderTarget(PreviewLayer);
+            graphicsDevice.Clear(Color.Transparent);
+        }
+
+        /// <summary>
+        /// Manually clears <see cref="Canvas.DummyLayer"/>
+        /// </summary>
+        public static void ResetDummyLayer(GraphicsDevice graphicsDevice)
+        {
+            graphicsDevice.SetRenderTarget(DummyLayer);
             graphicsDevice.Clear(Color.Transparent);
         }
 

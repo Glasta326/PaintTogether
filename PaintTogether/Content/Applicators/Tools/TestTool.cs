@@ -20,6 +20,7 @@ namespace PaintTogether.Content.Applicators.Tools
 
             ToolShader.Parameters["Color"].SetValue(toolColor.ToVector4());
             ToolShader.Parameters["Resolution"].SetValue(new Vector2(drawArea.Width,drawArea.Height));
+            ToolShader.Parameters["Width"].SetValue(toolSize);
 
             spriteBatch.Begin(SpriteSortMode.Immediate,effect: ToolShader);
 

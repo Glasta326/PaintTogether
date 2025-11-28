@@ -6,7 +6,8 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
-using PaintTogether.Content.Brushes;
+using PaintTogether.Content.Applicators.Brushes;
+using PaintTogether.Core;
 
 namespace PaintTogether
 {
@@ -57,7 +58,7 @@ namespace PaintTogether
         /// <summary>
         /// Current brush type being held by the user
         /// </summary>
-        public static Brush ActiveBrush;
+        public static Element ActiveBrush;
 
         #endregion
     }

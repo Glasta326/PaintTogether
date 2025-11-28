@@ -13,13 +13,14 @@ using PaintTogether.Common;
 using PaintTogether.Common.DataTypes;
 using PaintTogether.Common.PaintLogger;
 using PaintTogether.Common.Utilities;
-using PaintTogether.Content.Brushes;
+using PaintTogether.Content.Applicators.Brushes;
 using PaintTogether.Content.UI;
 using PaintTogether.Core;
 using PaintTogether.Content;
 using PaintTogether.Content.PaintCanvas;
 using PaintTogether.Core.UndoSystem;
-using PaintTogether.Content.Tools;
+using PaintTogether.Content.Applicators.Tools;
+using PaintTogether.Content.Applicators.ClickTools;
 
 namespace PaintTogether
 {
@@ -100,6 +101,10 @@ namespace PaintTogether
             {
                 //_b = Element.Get<PenBrush>();
             }
+            if (_t is null)
+            {
+                _t = Element.Get<testClick>();
+            }
             // I need to get input sorted fucking desperatly
             if (!ColorSelector.isFocused)
             {
@@ -119,14 +124,27 @@ namespace PaintTogether
 
             if (!ColorSelector.isFocused)
             {
-                if (Keyboard.GetState().IsKeyDown(Keys.Q))
+                if (Keyboard.GetState().IsKeyDown(Keys.D1))
                 {
                     ActiveBrush = Element.Get<PenBrush>();
                 }
-                if (Keyboard.GetState().IsKeyDown(Keys.E))
+                if (Keyboard.GetState().IsKeyDown(Keys.D2))
                 {
                     ActiveBrush = Element.Get<EraserBrush>();
                 }
+                if (Keyboard.GetState().IsKeyDown(Keys.R))
+                {
+                    ActiveBrush = Element.Get<TestTool>();
+                }
+                if (Keyboard.GetState().IsKeyDown(Keys.F))
+                {
+                    ActiveBrush = Element.Get<TestLineTool>();
+                }
+                if (Keyboard.GetState().IsKeyDown(Keys.D3))
+                {
+                    ActiveBrush = Element.Get<testClick>();
+                }
+                // color picker is controlled inside its own class for now
 
                 if (Keyboard.GetState().IsKeyDown(Keys.F1))
                 {
@@ -196,22 +214,18 @@ namespace PaintTogether
 
         public static DragTool t;
         public static Brush _b;
+        public static ClickTool _t;
         private void UpdateBrush()
         {
             if (ActiveBrush is not null)
             {
                 ActiveBrush.Update();
             }
-            /*
-            if (t is not null)
-            {
-                t.Update();
-            }
-            if (_b is not null)
-            {
-                _b.Update();
-            }
-            */
+            //if (_b is not null)
+            //{
+            //    _b.Update();
+            //}
+            
         }
 
         protected override void Draw(GameTime gameTime)
@@ -223,7 +237,20 @@ namespace PaintTogether
 
             GraphicsDevice.SetRenderTarget(Canvas.Layers.ActiveLayer);
             //GraphicsDevice.Clear(Color.White);
-            ActiveBrush.MainDraw(_spriteBatch, GraphicsDevice);
+            //ActiveBrush.MainDraw(_spriteBatch, GraphicsDevice);
+
+            if (ActiveBrush is Brush b)
+            {
+                b.MainDraw(_spriteBatch,GraphicsDevice);
+            }
+            if (ActiveBrush is DragTool d)
+            {
+                d.MainDraw(_spriteBatch,GraphicsDevice);
+            }
+            if (ActiveBrush is ClickTool c)
+            {
+                c.MainDraw(_spriteBatch,GraphicsDevice);
+            }
 
             GraphicsDevice.SetRenderTarget(UITarget);
             GraphicsDevice.Clear(Color.Transparent);
@@ -231,7 +258,20 @@ namespace PaintTogether
             _spriteBatch.DrawString(font, $"Brush size : {Canvas.Camera.Position}", Vector2.Zero, Color.White);
             _spriteBatch.End();
             Element.PostDrawAll(_spriteBatch, GraphicsDevice);
-            ActiveBrush.UIDraw(_spriteBatch, GraphicsDevice);
+
+            
+            if (ActiveBrush is Brush B)
+            {
+                B.UIDraw(_spriteBatch,GraphicsDevice);
+            }
+            if (ActiveBrush is DragTool D)
+            {
+                //D.UIDraw(_spriteBatch,GraphicsDevice);
+            }
+            if (ActiveBrush is ClickTool C)
+            {
+                C.UIDraw(_spriteBatch,GraphicsDevice);
+            }
 
             #endregion
 
@@ -242,6 +282,7 @@ namespace PaintTogether
 
             //t.MainDraw(_spriteBatch,GraphicsDevice);
             //_b.MainDraw(_spriteBatch, GraphicsDevice);
+            //_t.MainDraw(_spriteBatch,GraphicsDevice);
             
             HistoryManager.Draw();
 

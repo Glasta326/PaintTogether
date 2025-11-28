@@ -41,13 +41,13 @@ namespace PaintTogether.Core.UndoSystem
 
         public void Apply()
         {
-            clLogger.LogInfo($"Applied: {this.GetType().Name}");
+            //clLogger.LogInfo($"Applied: {this.GetType().Name}");
             _apply();
         }
 
         public void Undo()
         {
-            clLogger.LogInfo($"Undo: {this.GetType().Name}");
+            //clLogger.LogInfo($"Undo: {this.GetType().Name}");
             _undo();
         }
     }

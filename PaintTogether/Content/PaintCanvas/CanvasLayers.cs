@@ -51,6 +51,27 @@ namespace PaintTogether.Content.PaintCanvas
                 }
             }
         }
+        
+        /// <summary>
+        /// Attempts to get a specified layer from the layer array 
+        /// </summary>
+        /// <param name="i">Index of the layer</param>
+        /// <param name="layer">Returned layer value</param>
+        /// <returns>True if the index was valid and the layer could be found<br/>
+        /// False if the index was invalid and the layer could not be found</returns>
+        public readonly bool tryGet(int i, out RenderTarget2D layer)
+        {
+            try
+            {
+                layer = _layers[i];
+                return true;
+            }
+            catch (System.Exception)
+            {
+                layer = null;
+                return false;
+            }
+        }
 
         public readonly int Count => _layers.Count;
 
