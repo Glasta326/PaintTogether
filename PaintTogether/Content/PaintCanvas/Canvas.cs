@@ -140,5 +140,29 @@ namespace PaintTogether.Content.PaintCanvas
             Matrix inverse = Matrix.Invert(CanvasTransform());
             return Vector2.Transform(screenPos.ToVector2(), inverse).ToPoint();
         }
+
+        public static bool InBounds(int x, int y)
+        {
+            if (MathUtils.InRange(x, 0, Resolution.X) && MathUtils.InRange(y, 0, Resolution.Y))
+            {
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+        }
+
+        public static bool InBounds(Point p)
+        {
+            return InBounds(p.X, p.Y);
+        }
+
+        public static Point ClampBounds(Point p)
+        {
+            return new Point(MathHelper.Clamp(p.X, 0, Resolution.X), MathHelper.Clamp(p.Y, 0, Resolution.Y));
+        }
+
+
     }
 }

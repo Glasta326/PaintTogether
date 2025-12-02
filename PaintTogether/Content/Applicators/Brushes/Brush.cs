@@ -302,6 +302,9 @@ namespace PaintTogether.Content.Applicators.Brushes
         /// </summary>
         private Color? DefaultDraw(SpriteBatch spriteBatch, GraphicsDevice graphicsDevice, List<Point> drawPoints, Color brushColor, int brushSize, bool isPreview = false)
         {
+            // TODO: this is slow as shit!!!!
+            // As it turns out, for long brush strokes, the program tries to draw a line potentially hundreds of times, and drawing a line takes hundreds of brush operations
+            Main.stopWatch.Restart();
             BrushShader.Parameters["BrushColor"]?.SetValue(brushColor.ToVector4());
             spriteBatch.Begin(SpriteSortMode.Immediate, effect: BrushShader);
             for (int i = 1; i < drawPoints.Count; i++)
@@ -309,6 +312,9 @@ namespace PaintTogether.Content.Applicators.Brushes
                 spriteBatch.DrawLine(drawPoints[i - 1], drawPoints[i], BrushShader, brushSize);
             }
             spriteBatch.End();
+            Main.stopWatch.Stop();
+
+            clLogger.LogInfo($"{Main.stopWatch.ElapsedMilliseconds}ms");
 
             return null; // Needs the same return type as _BrushDraw in order to fit in the func
         }

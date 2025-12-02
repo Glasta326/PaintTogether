@@ -142,7 +142,7 @@ namespace PaintTogether
                 }
                 if (Keyboard.GetState().IsKeyDown(Keys.D3))
                 {
-                    ActiveBrush = Element.Get<testClick>();
+                    ActiveBrush = Element.Get<FloodFill>();
                 }
                 // color picker is controlled inside its own class for now
 

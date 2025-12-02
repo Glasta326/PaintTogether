@@ -1,0 +1,193 @@
+
+
+
+PACKET VERIFICATION:
+
+client sends info with some form of unique identifier, like the exact current time of the action occuring
+example client says it did a line tool from some X to Y , at THIS unix time, and whatever else
+the client next computes some HASH function of that packet data , a line between 100, 200 at exactly 12pm will always produce hash 72BBF2273 or something
+the client then sends the original packet to the server.
+the server recieves the packet, and calculates that same hash on the data, and then sends that hash back to the client
+if the client's hash matches what the server sent, then all is OK and the client sends some unique signal to the server saying that the data is validated (probably just send whatever that exact time in the packet was or something)
+if the client's hash does not match, the client sends the BAD signal, and re-sends the packet and repeats everything
+
+if the server does not respond, before the draw action expires, delete this thread that handles this packet
+(explained more in the LAG INTERPOLATION section)
+
+
+MULTIPLE CLIENTS:
+
+the server only keeps track of whose connected, and just relays things between clients
+so, the clients keep track of every other client's actions and undo history
+the action history is stored as a dictionary of undohistories
+in single player, there is just one entry of yourself, and it behaves how it does already
+in multiplayer, whenever a new client joins, the server announces this to everybody, and each connected client creates a new index in the dictionary for the new client's actions to go into.
+this way, when a client needs to UNDO an action, instead of needing to send the pixel data of the rendertarget that undoes to action, the client just tells the server to broadcast an UNDO command for that client
+same with APPLY actions, the client just treats it as an action you performed, locally calculating what the undo action should do.
+
+example:
+
+so lets say a server is started and client A joins
+client a's client makes a new slot in the history index for "client a".
+if client A draws a line from x to y, the appropriate logic to create the undoableAction is called for that action, so it snapshots the area affected before drawing the line, eject
+then that undoableAction is added to the undo history index for "client a"
+now, client b joins.
+lets say client b draws a circle at point x with radius r
+client b sends the data packet to the server, VERIFICATION and whatnot happens, and then the server tells all other clients (so just client a in this case) that "client b" did ACTION
+same packet VERIFICATION needs to happen obviously, but then client A understands it needs to do the applyDraw() for a circle tool at x with radius r, does the rendertarget snapshot and all that, and creates the undoable action
+this undoableAction is then inserted into the "client b" slot in the undo history dictionary
+if client b hits ctrl z, same server relaying happen, and then client a's client simply just does the .Undo() on the most recent action for "client b" and removes that action and adds to the redo stack
+-------------------
+[just thought of an issue
+in that example, client a draws a line at whatever, THEN client b joins
+now, client a has an undo history where "client a" has a line tool action.
+client b has an undo history that is blank.
+solution?: server can keep track of every action that happens under each client, like an undo history almost, except with no redo stack, just a "redo" action on the action history,
+whenver a new client joins, it "catches up" and draws every action so far in the servers action history to its own canvas and whatnot]
+----------------------
+example:
+client a joins.
+client a draws a line, undoes that line, creates a new layer at index 2, and then drwas a circle on layer 2
+if client b now joins, the server has all these actions logged, and tells client b "client a draw a line at xy, call undo() for client a, creatae new layer at index 2, client a draws circle on layer 2"
+client b is now entirely caught up and has the undo history and canvas as everyone else
+server only has to keep track of actions and action parameters, which are very small and cheap.
+could eventially run out of memory but would take hundreds of years
+can write actions to disk occasionally if needed?
+
+
+
+LAG INTERPOLATION:
+supposing my client draws a line from x1y1 to x2y2.
+the client then needs to spend time verifying the packet to the server, and can only be certain the server recieved the line command after [telling server we drew line, recieving server's hash, sending own hash/resending because bad ash]
+if there is 100ms each way lag. if the data doesnt' corrupt then thats 300ms between doing applyDraw() and the client being certain it is ok to actually draw the line.
+this would feel awful to use. so we need a way to temporarily draw stuff while its still being verified, and only actually draw it to the canvas when the client is certain the server recieved it
+(or in terms of recieivng commands, the client is certain what the server sent wasn't corrupted)
+
+instead of clients directly drawing to the canvas when applyTool is called, and instead of creating a normal drawCommand
+the canvas instead contains a hidden buffer layer infront of each layer
+
+so if the canvas has layer 0, layer 1, and layer 2
+the canvas actually will have, layer 0, layer 0 buffer, layer 1, layer 1 buffer, layer 2, layer 2 buffer
+(potentially instead we have custom layer class that has it's own buffer rendertarget for cleanliness)
+
+there is also a dictionary of expireableDrawActions, indexed by [UUID, ACTION]
+whenever the client wants to draw something, it creates an expireableDrawAction and this is added to the expireableDrawAction dictionary
+(EDA = expireableDrawAction)
+eda's have their own internal timer, (probably like 3 seconds or so?), if the eda lasts this long before anything happens to it, it is deleted from the dictionary
+the buffer layers in the canvas draw every existing eda to them each frame, so the visual of the draw happening still happens instantly to the user.
+however, if the eda isnt applied in time, it gets deleted, and no longer draws as it doesnt exist
+because it was never actually changing pixels in the non-resetting canvas layers, nothing actually happened
+now, the whole point of an EDA is that it exists in this temporary space long enough to get verified by the PACKET VERIFICATION process.
+when the draw command packet is verified, the client will go into the eda dictionary, find the one with the uuid that got verified, and actually apply it to the canvas.
+
+overall notes:
+1) what if the client hits undo (ctrl+z) before the eda is verified?
+it is deleted from the eda dictionary. nothing else needsd to happen
+the section in PACKET VERIFICATION where the server sends back the hash, and the client compares the local hash to check the packet was not corrupted,
+here, the client also runs checks that the eda still exists and whatnot. so the server can never recieve the OK signal if the eda does not exist
+perhaps, if the eda does not exist when the client goes to check it still exists, the client can instead send the DESTROY signal to the server
+this tells the server to just destroy the thread handling this specific packet being verified, as clearly it isnt needed anymore as it doesnt exist now
+
+2) what happens when a user leaves?
+when a user hits the disconnect button, all edas are destroyed, and it sends a signal to the server that it is leaving.
+when the server detects that a user has left, it forwards that to all the clients (server also sends a heartbeat every second or so, so it can also discover when clients leave without notifying)
+when clients recieve the "user has left" message, the action history dictionary for that client is deleted.
+the server still keeps the now nonexistant user's changes in that big list of everything, so when the client is "catching up", the instruction that the client left will also be in the catching up info.
+also, any existing threads on the server related to handling packets from that now disconnected client are instantly DESTROYED. as they might be mid-verification and the disconnected client can no longer verify.
+
+
+
+OVERALL DESIGN:
+when the server recives some data from a client, the very first thing it does is create a new thread to handle that packet
+every packet is handled in its own thread.
+
+
+lets run through an example of a simple scenario in full detail:
+------------------------------------------------------------
+server is started. has a blank list ready to store all the action history of all the clients that will connect and do actions.
+server starts to watch for oncoming tcp clients , and keeps track of who'se currently connected, ect.
+client a joins the server.
+the server sends client a everything that has happened to catch up on (currently nothing).
+
+
+client a draws a LINE from 0,0 to 100,100 with color WHITE at unix:1764700928 (unix might not work we need something with more time accuracy).
+client a calculates the hash of this information, which is 0XF222BFAH
+client a creates a new EDA with the draw function of that line with those parameters.
+this EDA is added to the EDA dictionary under the name "OXF222BFAH"
+this EDA will expire in 5 seconds.
+the EDA creates a thread to handle itself, the thread is given paramters on what type of tool it was and ect
+this thread sends the data to the server.
+this thread is now awaiting a response.
+
+the server recives a data packet from the client.
+the server creates a new thread to handle this packet.
+the thread reads the data, and calculates the hash of this data.
+this hash is sent back to the client
+the thread is now awaiting a response from the client
+
+(if you're wondering how the client knows which thread to send that recieved packet to. im not covering that here, packet routing can be figured out as im writing this, it shouldnt be too hard)
+the client's thread recieves the packet.
+first it checks if the eda still exists, it does.
+next, it comapres the hashes. the hashes are the same.
+the client sends the OK signal back to the server
+the client goes into the EDA dictionary looking for the one with the hash, and calls .Apply() on it.
+the EDA then draws itself, (in the same way redo() is currently handled, essentially just a single function call as it already has all the paramters like mouse pos and layer to draw to)
+(note: when it draws itself, the client also adds the new undoableAction to the "client a" index of the undohistory dictionary)
+
+the server thread handling this receives the OK signal.
+the server writes this draw command data (line tool, color, ect) to its action history.
+the server attempts to relay the draw command data packet to all other connected clients
+as there are no other connected users, nothing happens.
+
+
+client b joins the server.
+the server catches up client b.
+same verification process for sending packets, instead now it is the server sending the drawcommand packet to client b.
+(when the server is telling client b about the line client a drew from 0,0 to 100,100. client b makes an undoableAction out of it and it is added to the "client a" secion of client b's undo history dictionary)
+
+client a now draws another line from 200,200 to 400,400.
+the exact same thing happens from the previous line draw.
+but, when the server goes to relay the draw command to all other clients, client b exists.
+the server creates a new thread to handle sending the draw commmand to client b.
+the thread calculates the hash of the drawcommand data.
+the drawcommand is then sent to client b.
+
+client b's listener recieves the packet, and allocates a new thread to handle it.
+the new thread reads the packet draw command data, and calclualtes the hash of it.
+the thread then sends the server the hash.
+
+the server thread compares the recieved hash with the calculated one.
+the hashes are equal.
+the server sends the OK command to client b.
+
+client b creates a new undoableAction with the draw command data.
+the undoable action is invoked, drawing it to client b's canvas at the right layer and whatnot.
+the undoableAction is added to the "client a" section of client b's undo history dictionary (as this line draw came from client a)
+--------------------------------------------------------------------------
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

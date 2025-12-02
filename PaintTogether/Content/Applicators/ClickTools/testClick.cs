@@ -29,12 +29,18 @@ namespace PaintTogether.Content.Applicators.ClickTools
         protected override void OnClick()
         {
 
-            Color c = DrawUtils.GetPixel(Canvas.Layers.ActiveLayer,MouseData.MousePosPoint());
+            Color? c = DrawUtils.TryGetPixel(Canvas.Layers.ActiveLayer,MouseData.MousePosCanvasSpace());
+            if (!c.HasValue)
+            {
+                clLogger.LogWarning($"Attempted to read color value outside of canvas");
+                return;
+            }
+
             if (clLogger.VerboseLogging)
             {
                 clLogger.LogInfo($"Set color to: {c}");
             }
-            ColorSelector.hexCode = $"{c.R:X2}{c.G:X2}{c.B:X2}";
+            ColorSelector.hexCode = $"{c.Value.R:X2}{c.Value.G:X2}{c.Value.B:X2}";
         }
 
         protected override Rectangle ToolDraw(SpriteBatch spriteBatch, GraphicsDevice graphicsDevice, int layerIndex, Point drawPoint, Color drawColor)

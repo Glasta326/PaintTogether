@@ -2,6 +2,7 @@ using System;
 using System.Net.NetworkInformation;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using PaintTogether.Common.PaintLogger;
 using PaintTogether.Content.Applicators.Tools;
 
 namespace PaintTogether.Common.Utilities
@@ -93,20 +94,25 @@ namespace PaintTogether.Common.Utilities
         public static void CopySection(this SpriteBatch sb, RenderTarget2D source, Rectangle sourceRect, RenderTarget2D dest, Rectangle destRect)
         {
             Main.instance.GraphicsDevice.SetRenderTarget(dest);
-            sb.Begin(SpriteSortMode.Immediate,BlendState.Opaque,SamplerState.PointClamp);
-            sb.Draw(source,destRect,sourceRect,Color.White);
+            sb.Begin(SpriteSortMode.Immediate, BlendState.Opaque, SamplerState.PointClamp);
+            sb.Draw(source, destRect, sourceRect, Color.White);
             sb.End();
             Main.instance.GraphicsDevice.SetRenderTarget(null);
         }
 
         /// <summary>
-        /// Gets the color value of a specfic pixel inside a rendertarget
+        /// Attempts to get the color value of a specfic pixel inside a rendertarget
         /// </summary>
-        public static Color GetPixel(this RenderTarget2D target, Point pos)
+        public static Color? TryGetPixel(this RenderTarget2D target, Point pos)
         {
+            if (!target.Bounds.Contains(pos))
+            {
+                clLogger.LogWarning($"Could not retrieve pixel value from the target!\nThe position {pos} is outside the bounds {target.Bounds}");
+                return null;
+            }
             Color[] p = new Color[1];
-            Rectangle r = new Rectangle(pos.X,pos.Y,1,1);
-            target.GetData<Color>(0,r,p,0,1);
+            Rectangle r = new Rectangle(pos.X, pos.Y, 1, 1);
+            target.GetData<Color>(0, r, p, 0, 1);
             return p[0];
         }
 

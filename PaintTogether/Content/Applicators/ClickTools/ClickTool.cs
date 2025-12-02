@@ -91,7 +91,7 @@ namespace PaintTogether.Content.Applicators.ClickTools
             // TODO: Custom input configs for the user
 
             // Only active on the first clicking frame
-            if (MouseData.JustClicked && !ColorSelector.isHovering)
+            if (KeyboardData.KeyJustPressed(Microsoft.Xna.Framework.Input.Keys.Tab) && !ColorSelector.isHovering)
             {
                 return true;
             }

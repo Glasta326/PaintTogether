@@ -26,6 +26,8 @@ namespace PaintTogether.Content.UI
             Main.instance.Window.TextInput += HandleText;
 
             area = new Rectangle(300, 50, 150, 50);
+
+            hexCode = "FFFFFF";
         }
 
         private static void HandleText(object sender, TextInputEventArgs e)
