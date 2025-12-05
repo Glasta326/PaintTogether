@@ -314,7 +314,7 @@ namespace PaintTogether.Content.Applicators.Brushes
             spriteBatch.End();
             Main.stopWatch.Stop();
 
-            clLogger.LogInfo($"{Main.stopWatch.ElapsedMilliseconds}ms");
+            //clLogger.LogInfo($"{Main.stopWatch.ElapsedMilliseconds}ms");
 
             return null; // Needs the same return type as _BrushDraw in order to fit in the func
         }

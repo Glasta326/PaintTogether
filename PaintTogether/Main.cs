@@ -48,25 +48,24 @@ namespace PaintTogether
             Element.InitaliseRegistry();
             Element.LoadAll();
 
-            clientThread = new Thread(ConnectToServer);
+            TcpClient t = new TcpClient();
+            t.Connect("86.20.41.142", 12504);
+
+            clientThread = new Thread(() => ConnectToServer(t));
             clientThread.IsBackground = true;
             clientThread.Start();
 
+            readerThread = new Thread(() => ReadFromServer(t));
+            readerThread.IsBackground = true;
+            readerThread.Start();
 
             base.Initialize();
         }
 
-        private void ConnectToServer()
+        private void ConnectToServer(TcpClient t)
         {
             try
             {
-                TcpClient t = new TcpClient();
-                t.Connect("", 12504);
-
-                readerThread = new Thread(() => ReadFromServer(t));
-                readerThread.IsBackground = true;
-                readerThread.Start();
-
                 BinaryWriter wStream = new BinaryWriter(t.GetStream(), System.Text.Encoding.UTF8, true);
 
                 wStream.Write($"{Environment.ProcessId}");
@@ -101,7 +100,7 @@ namespace PaintTogether
             }
         }
 
-        public static Point otherMousePos = new Point(100,100);
+        public static Point otherMousePos = new Point(100, 100);
 
         public static Thread clientThread;
         public static Thread readerThread;

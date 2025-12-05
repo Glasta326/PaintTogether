@@ -74,6 +74,7 @@ namespace PaintTogetherServer
             // read some specific information from the client somehow to give us a username
             string name = reader.ReadString();
             SvLogger.LogInfo($"Name : {name}");
+            pc.name = name;
             while (true)
             {
                 // Read stream from client and enque packets to the work queue for the worker threads to handle

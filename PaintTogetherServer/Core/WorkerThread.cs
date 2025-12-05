@@ -17,7 +17,7 @@ namespace PaintTogetherServer.Core
         private int myID;
 
         public WorkerThread(int id)
-        {   
+        {
             myID = id;
             myThread = new Thread(Loop);
             myThread.IsBackground = true;
@@ -34,9 +34,11 @@ namespace PaintTogetherServer.Core
                     writer.Write(task.X);
                     writer.Write(task.Y);
                     writer.Flush();
+
+                    Console.WriteLine($"{task},{pc.name},{myID}");
                 }
-                
-                SvLogger.LogInfo($"{task} : {myID}");
+
+
                 Thread.Sleep(1);
             }
         }
