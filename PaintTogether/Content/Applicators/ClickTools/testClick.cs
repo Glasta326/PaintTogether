@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.Sockets;
 using System.Threading.Tasks;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
@@ -8,8 +9,10 @@ using Microsoft.Xna.Framework.Graphics;
 using PaintTogether.Common;
 using PaintTogether.Common.PaintLogger;
 using PaintTogether.Common.Utilities;
+using PaintTogether.Content.Applicators.Tools;
 using PaintTogether.Content.PaintCanvas;
 using PaintTogether.Content.UI;
+using PaintTogether.Core;
 
 namespace PaintTogether.Content.Applicators.ClickTools
 {
@@ -45,6 +48,8 @@ namespace PaintTogether.Content.Applicators.ClickTools
 
         protected override Rectangle ToolDraw(SpriteBatch spriteBatch, GraphicsDevice graphicsDevice, int layerIndex, Point drawPoint, Color drawColor)
         {   
+            TestLineTool x = Element.Get<TestLineTool>();
+            x.ToolDraw(spriteBatch,graphicsDevice,Point.Zero,new Point(100,100),Color.Red,5);
             return Rectangle.Empty;
         }
 

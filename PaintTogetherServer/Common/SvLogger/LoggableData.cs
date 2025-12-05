@@ -5,9 +5,9 @@ using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 
-namespace PaintTogether.Common.PaintLogger
+namespace PaintTogetherServer.Common.SvLogger
 {
-    public static class LoggableData
+public static class LoggableData
     {
         /// <summary>
         /// Gets the version number of this PaintTogetherClient build. <br/>

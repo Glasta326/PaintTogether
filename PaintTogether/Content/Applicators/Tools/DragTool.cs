@@ -292,7 +292,7 @@ namespace PaintTogether.Content.Applicators.Tools
         /// Return null to cancel the default logic. <br/>
         /// Returns <see cref="Color.White"/> by default.
         /// </summary>
-        protected virtual Color? ToolDraw(SpriteBatch spriteBatch, GraphicsDevice graphicsDevice, Point toolStartPos, Point toolEndPos, Color toolColor, int toolSize) { return Color.White; }
+        public virtual Color? ToolDraw(SpriteBatch spriteBatch, GraphicsDevice graphicsDevice, Point toolStartPos, Point toolEndPos, Color toolColor, int toolSize) { return Color.White; }
 
         #endregion
     }

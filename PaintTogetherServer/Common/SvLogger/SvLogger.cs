@@ -1,21 +1,16 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.IO;
 using System.Linq;
-using System.Reflection;
-using System.Runtime.InteropServices;
-using System.Threading;
 using System.Threading.Tasks;
-using PaintTogether.Common.DataTypes;
-using PaintTogether.Common.Utilities;
+using PaintTogetherServer.Common.Utilities;
 
-namespace PaintTogether.Common.PaintLogger
+namespace PaintTogetherServer.Common.SvLogger
 {
     /// <summary>
-    /// Logging utility for PaintTogether client program.
+    /// Logging utilty for PaintTogether server program.
     /// </summary>
-    public static class clLogger // named "clLogger" purely because it is easy to type from my hand's resting position and sounds like "ClientLogger"
+    public static class SvLogger
     {
         /// <summary>
         /// Path to the folder for log files
@@ -23,14 +18,9 @@ namespace PaintTogether.Common.PaintLogger
         public static string LogDirectory { get; private set; }
 
         /// <summary>
-        /// Path to the PaintTogether.log
+        /// Path to the PaintTogetherServer.log
         /// </summary>
         public static string LogFilePath { get; private set; }
-
-        /// <summary>
-        /// Enables/Disables typically useless log details
-        /// </summary>
-        public static bool VerboseLogging { get; set; }
 
         /// <summary>
         /// Direct access to the stream for the client log file. <br/>
@@ -47,7 +37,7 @@ namespace PaintTogether.Common.PaintLogger
         {
             // Set path strings
             LogDirectory = Path.Combine(CommonKeys.MainDirectory, "Logs");
-            LogFilePath = Path.Combine(LogDirectory, "PaintTogether.log");
+            LogFilePath = Path.Combine(LogDirectory, "PaintTogetherServer.log");
 
             // Make folder for logs, THEN make log files
             Directory.CreateDirectory(LogDirectory);
@@ -58,6 +48,15 @@ namespace PaintTogether.Common.PaintLogger
             AppDomain.CurrentDomain.UnhandledException += LogError;
 
             LogStartupInfo();
+        }
+
+        public static void Unload()
+        {
+            LogInfo($"Shutting down.");
+            LogFile.Close();
+            LogFile.Dispose();
+
+            AppDomain.CurrentDomain.UnhandledException -= LogError;
         }
 
         private static void LogStartupInfo()
@@ -71,24 +70,11 @@ namespace PaintTogether.Common.PaintLogger
             LogInfo($"Process ID : {Environment.ProcessId}, Process memory usage : {(Process.GetCurrentProcess().PrivateMemorySize64 / 1048576d):f2}MB, Process priority : {Process.GetCurrentProcess().PriorityClass}");
         }
 
-
-        public static void Unload()
-        {
-            LogFile.Close();
-            LogFile.Dispose();
-
-            AppDomain.CurrentDomain.UnhandledException -= LogError;
-        }
-
         /// <summary>
         /// Allows you to manually write some information to the log file
         /// </summary>
-        public static void LogInfo(object args, bool verboseOnly = false)
+        public static void LogInfo(object args)
         {
-            if (verboseOnly && !VerboseLogging)
-            {
-                return;
-            }
             LogFile.WriteLine($"[{LogTime}] [INFO] {args}");
             Console.WriteLine($"[{LogTime}] [INFO] {args}");
         }
@@ -100,7 +86,7 @@ namespace PaintTogether.Common.PaintLogger
         {
             LogFile.WriteLine($"[{LogTime}] [WARN] {args}");
             Console.WriteLine($"[{LogTime}] [WARN] {args}");
-        }   
+        }
 
         /// <summary>
         /// Automatically-called method writes to the log file when any unhandled exception occurs
@@ -108,6 +94,8 @@ namespace PaintTogether.Common.PaintLogger
         public static void LogError(object args, UnhandledExceptionEventArgs e)
         {
             LogFile.WriteLine($"[{LogTime}] [ERROR] {e.ExceptionObject}");
-        }   
+        }
+
+
     }
 }

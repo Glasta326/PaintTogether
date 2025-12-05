@@ -12,7 +12,7 @@ namespace PaintTogether.Content.Applicators.Tools
             ToolShader = contentManager.Load<Effect>("Shaders/TestToolShader");
         }
 
-        protected override Color? ToolDraw(SpriteBatch spriteBatch, GraphicsDevice graphicsDevice, Point toolStartPos, Point toolEndPos, Color toolColor, int toolSize)
+        public override Color? ToolDraw(SpriteBatch spriteBatch, GraphicsDevice graphicsDevice, Point toolStartPos, Point toolEndPos, Color toolColor, int toolSize)
         {
             Point _start = toolStartPos;
             Point _mouse = toolEndPos;

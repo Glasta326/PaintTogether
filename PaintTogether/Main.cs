@@ -21,6 +21,9 @@ using PaintTogether.Content.PaintCanvas;
 using PaintTogether.Core.UndoSystem;
 using PaintTogether.Content.Applicators.Tools;
 using PaintTogether.Content.Applicators.ClickTools;
+using System.Threading.Tasks;
+using System.Net.Sockets;
+using System.Net;
 
 namespace PaintTogether
 {
@@ -45,9 +48,63 @@ namespace PaintTogether
             Element.InitaliseRegistry();
             Element.LoadAll();
 
+            clientThread = new Thread(ConnectToServer);
+            clientThread.IsBackground = true;
+            clientThread.Start();
+
 
             base.Initialize();
         }
+
+        private void ConnectToServer()
+        {
+            try
+            {
+                TcpClient t = new TcpClient();
+                t.Connect(IPAddress.Loopback, 12504);
+
+                readerThread = new Thread(() => ReadFromServer(t));
+                readerThread.IsBackground = true;
+                readerThread.Start();
+
+                BinaryWriter wStream = new BinaryWriter(t.GetStream(), System.Text.Encoding.UTF8, true);
+
+                wStream.Write($"{Environment.ProcessId}");
+                wStream.Flush();
+                while (true)
+                {
+                    Point mousePos = MouseData.MousePosCanvasSpace();
+                    wStream.Write(mousePos.X);
+                    wStream.Write(mousePos.Y);
+                    wStream.Flush();
+                    Thread.Sleep(15);
+                }
+
+            }
+            catch (System.Exception)
+            {
+                clLogger.LogInfo($"Could not connect to server");
+            }
+        }
+
+        private void ReadFromServer(TcpClient t)
+        {
+            using BinaryReader r = new BinaryReader(t.GetStream(), System.Text.Encoding.UTF8, true);
+            clLogger.LogInfo($"Started reader!");
+            while (true)
+            {
+                int x = r.ReadInt32();
+                int y = r.ReadInt32();
+                Point p = new Point(x, y);
+                otherMousePos = p;
+                clLogger.LogInfo(otherMousePos);
+            }
+        }
+
+        public static Point otherMousePos = new Point(100,100);
+
+        public static Thread clientThread;
+        public static Thread readerThread;
 
         public static RenderTarget2D logoTarget;
 
@@ -142,7 +199,7 @@ namespace PaintTogether
                 }
                 if (Keyboard.GetState().IsKeyDown(Keys.D3))
                 {
-                    ActiveBrush = Element.Get<FloodFill>();
+                    ActiveBrush = Element.Get<testClick>();
                 }
                 // color picker is controlled inside its own class for now
 
@@ -173,6 +230,7 @@ namespace PaintTogether
 
 
             Canvas.Layers.ActiveLayer.GetData<Color>(0, region, c, 0, 4);
+
 
         }
 
@@ -225,7 +283,7 @@ namespace PaintTogether
             //{
             //    _b.Update();
             //}
-            
+
         }
 
         protected override void Draw(GameTime gameTime)
@@ -241,28 +299,29 @@ namespace PaintTogether
 
             if (ActiveBrush is Brush b)
             {
-                b.MainDraw(_spriteBatch,GraphicsDevice);
+                b.MainDraw(_spriteBatch, GraphicsDevice);
             }
             if (ActiveBrush is DragTool d)
             {
-                d.MainDraw(_spriteBatch,GraphicsDevice);
+                d.MainDraw(_spriteBatch, GraphicsDevice);
             }
             if (ActiveBrush is ClickTool c)
             {
-                c.MainDraw(_spriteBatch,GraphicsDevice);
+                c.MainDraw(_spriteBatch, GraphicsDevice);
             }
 
             GraphicsDevice.SetRenderTarget(UITarget);
             GraphicsDevice.Clear(Color.Transparent);
             _spriteBatch.Begin(SpriteSortMode.Immediate, BlendState.AlphaBlend);
             _spriteBatch.DrawString(font, $"Brush size : {Canvas.Camera.Position}", Vector2.Zero, Color.White);
+            _spriteBatch.Draw(CommonKeys.WhitePixel, otherMousePos.ToVector2(), null, Color.White, 0f, CommonKeys.WhitePixel.Size() * 0.5f, 10f, SpriteEffects.None, 0f);
             _spriteBatch.End();
             Element.PostDrawAll(_spriteBatch, GraphicsDevice);
 
-            
+
             if (ActiveBrush is Brush B)
             {
-                B.UIDraw(_spriteBatch,GraphicsDevice);
+                B.UIDraw(_spriteBatch, GraphicsDevice);
             }
             if (ActiveBrush is DragTool D)
             {
@@ -270,7 +329,7 @@ namespace PaintTogether
             }
             if (ActiveBrush is ClickTool C)
             {
-                C.UIDraw(_spriteBatch,GraphicsDevice);
+                C.UIDraw(_spriteBatch, GraphicsDevice);
             }
 
             #endregion
@@ -283,7 +342,7 @@ namespace PaintTogether
             //t.MainDraw(_spriteBatch,GraphicsDevice);
             //_b.MainDraw(_spriteBatch, GraphicsDevice);
             //_t.MainDraw(_spriteBatch,GraphicsDevice);
-            
+
             HistoryManager.Draw();
 
             /*
