@@ -61,7 +61,7 @@ namespace PaintTogether
             try
             {
                 TcpClient t = new TcpClient();
-                t.Connect(IPAddress.Loopback, 12504);
+                t.Connect("", 12504);
 
                 readerThread = new Thread(() => ReadFromServer(t));
                 readerThread.IsBackground = true;
