@@ -32,7 +32,7 @@ namespace PaintTogetherServer
 
 
             // Constantly look for joining clients and allocate a listener task for them
-            while (Running)
+            while (true)
             {
                 TcpClient client = await Listener.AcceptTcpClientAsync();
                 PaintClient pc = new PaintClient(client);
@@ -71,18 +71,20 @@ namespace PaintTogetherServer
             using var reader = new BinaryReader(pc.stream, System.Text.Encoding.UTF8, leaveOpen: true);
             using var writer = new BinaryWriter(pc.stream, System.Text.Encoding.UTF8, leaveOpen: true);
 
-            // read some specific information from the client somehow to give us a username
-            string name = reader.ReadString();
-            SvLogger.LogInfo($"Name : {name}");
-            pc.name = name;
+
             while (true)
             {
                 // Read stream from client and enque packets to the work queue for the worker threads to handle
-
+                
                 int x = reader.ReadInt32();
                 int y = reader.ReadInt32();   
                 Point p = new Point(x,y);
                 WorkerThread.WorkQueue.Add(p);
+
+                await Task.Delay(1); // what the fuck???
+                // I'm assuming this is some kind of compiler optimisation.
+                // if you have an async task, but don't actually write await anywhere, then it wont be async??????????/
+                // im just doing this await task delay for zero purpose other than to force the compiler to realise its async
             }
         }
 

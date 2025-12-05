@@ -68,8 +68,7 @@ namespace PaintTogether
             {
                 BinaryWriter wStream = new BinaryWriter(t.GetStream(), System.Text.Encoding.UTF8, true);
 
-                wStream.Write($"{Environment.ProcessId}");
-                wStream.Flush();
+
                 while (true)
                 {
                     Point mousePos = MouseData.MousePosCanvasSpace();
