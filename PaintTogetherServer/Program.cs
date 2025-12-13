@@ -31,16 +31,44 @@ namespace PaintTogetherServer
             StartServer();
 
 
-            // Constantly look for joining clients and allocate a listener task for them
-            while (true)
+            CancellationTokenSource cts = new CancellationTokenSource();
+
+
+            _ = Task.Run(() =>
             {
-                TcpClient client = await Listener.AcceptTcpClientAsync();
-                PaintClient pc = new PaintClient(client);
-                pc.ip = ((IPEndPoint)client.Client.RemoteEndPoint).Address.ToString();
-                SvLogger.LogInfo($"Client joined on [{pc.ip}]");
-                Clients.Add(pc);
-                _ = HandleClient(pc);
+                while (!cts.IsCancellationRequested)
+                {
+                    Console.WriteLine($"Enter here: ");
+                    string r = Console.ReadLine();
+                    r ??= "_";
+                    string[] types = ["end", "End", "END"];
+                    if (types.Contains(r.ToLower()))
+                    {
+                        Running = false;
+                        Listener.Stop();
+                    }
+                }
+            });
+
+            try
+            {
+                // Constantly look for joining clients and allocate a listener task for them
+                while (!cts.Token.IsCancellationRequested)
+                {
+                    TcpClient client = await Listener.AcceptTcpClientAsync();
+                    PaintClient pc = new PaintClient(client);
+                    pc.ip = ((IPEndPoint)client.Client.RemoteEndPoint).Address.ToString();
+                    SvLogger.LogInfo($"Client joined on [{pc.ip}]");
+                    int index = Clients.Count;
+                    Clients.Add(pc);
+                    _ = HandleClient(index);
+                }
             }
+            catch (SocketException)
+            {
+                
+            }
+
 
             Unload();
             SvLogger.Unload(); // Last thing we do is stop logging
@@ -66,20 +94,22 @@ namespace PaintTogetherServer
         /// <summary>
         /// Read incoming data from each client and enqueue the client's actions to the <see cref="WorkerThread.WorkQueue"/>
         /// </summary>
-        public static async Task HandleClient(PaintClient pc)
+        public static async Task HandleClient(int index)
         {
-            using var reader = new BinaryReader(pc.stream, System.Text.Encoding.UTF8, leaveOpen: true);
-            using var writer = new BinaryWriter(pc.stream, System.Text.Encoding.UTF8, leaveOpen: true);
+            var cl = Clients[index];
+            using var reader = new BinaryReader(cl.stream, System.Text.Encoding.UTF8, leaveOpen: true);
+            using var writer = new BinaryWriter(cl.stream, System.Text.Encoding.UTF8, leaveOpen: true);
 
-
-            while (true)
+            cl.name = reader.ReadInt32();
+            SvLogger.LogInfo($"Client {cl.name} Joined");
+            while (cl.tcp.Connected)
             {
                 // Read stream from client and enque packets to the work queue for the worker threads to handle
-                
-                int x = reader.ReadInt32();
-                int y = reader.ReadInt32();   
-                Point p = new Point(x,y);
-                WorkerThread.WorkQueue.Add(p);
+                int owner = reader.ReadInt32();
+
+                // Somehow read the object[] data?, is that possible?
+                // there's no .ReadObject() or anything
+                WorkerThread.WorkQueue.Add(new InfoPacket(owner, [data]));
 
                 await Task.Delay(1); // what the fuck???
                 // I'm assuming this is some kind of compiler optimisation.

@@ -6,10 +6,10 @@ using System.Threading.Tasks;
 
 namespace PaintTogetherServer.Core
 {
-    public struct PaintClient
+    public class PaintClient
     {
         public TcpClient tcp;
-        public string? name;
+        public int? name;
         public string? ip;
         public NetworkStream stream => tcp.GetStream();
 

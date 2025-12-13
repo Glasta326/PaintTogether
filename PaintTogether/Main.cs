@@ -48,41 +48,48 @@ namespace PaintTogether
             Element.InitaliseRegistry();
             Element.LoadAll();
 
-            TcpClient t = new TcpClient();
-            t.Connect("86.20.41.142", 12504);
+            try
+            {
+                TcpClient t = new TcpClient();
+                t.Connect("86.20.41.142", 12504);
 
-            clientThread = new Thread(() => ConnectToServer(t));
-            clientThread.IsBackground = true;
-            clientThread.Start();
+                clientThread = new Thread(() => ConnectToServer(t));
+                clientThread.IsBackground = true;
+                clientThread.Start();
 
-            readerThread = new Thread(() => ReadFromServer(t));
-            readerThread.IsBackground = true;
-            readerThread.Start();
+                readerThread = new Thread(() => ReadFromServer(t));
+                readerThread.IsBackground = true;
+                readerThread.Start();
+
+                clLogger.LogInfo($"Connected to server");
+            }
+            catch (System.Exception)
+            {
+                clLogger.LogWarning($"Could not connect to server");
+            }
+
+
 
             base.Initialize();
         }
 
         private void ConnectToServer(TcpClient t)
         {
-            try
+
+            BinaryWriter wStream = new BinaryWriter(t.GetStream(), System.Text.Encoding.UTF8, true);
+            clLogger.LogInfo($"Started writer!");
+            wStream.Write(Environment.ProcessId);
+            wStream.Flush();
+            while (true)
             {
-                BinaryWriter wStream = new BinaryWriter(t.GetStream(), System.Text.Encoding.UTF8, true);
-
-
-                while (true)
-                {
-                    Point mousePos = MouseData.MousePosCanvasSpace();
-                    wStream.Write(mousePos.X);
-                    wStream.Write(mousePos.Y);
-                    wStream.Flush();
-                    Thread.Sleep(15);
-                }
-
+                Point mousePos = MouseData.MousePosCanvasSpace();
+                wStream.Write(Environment.ProcessId);
+                wStream.Write(mousePos.X);
+                wStream.Write(mousePos.Y);
+                wStream.Flush();
+                Thread.Sleep(15);
             }
-            catch (System.Exception)
-            {
-                clLogger.LogInfo($"Could not connect to server");
-            }
+
         }
 
         private void ReadFromServer(TcpClient t)

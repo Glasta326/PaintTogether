@@ -20,18 +20,25 @@ namespace PaintTogether.Core
     {
         public static List<Element> ProgramElements = new List<Element>();
 
+        public static Dictionary<String, byte> NetRegistry = new Dictionary<string, byte>();
+
         public static void InitaliseRegistry()
         {
+            Main.stopWatch.Restart();
             var elementTypes = typeof(Element).Assembly.GetTypes()
                 .Where(t => t.IsSubclassOf(typeof(Element)) && !t.IsAbstract);
 
-            Main.stopWatch.Restart();
+            byte netIncr = 0;
             foreach (var type in elementTypes)
             {
                 if (Activator.CreateInstance(type) is Element instance)
                 {
                     ProgramElements.Add(instance);
                     clLogger.LogInfo($"Registered program element : {instance.ToString()}", true);
+
+
+                    NetRegistry.Add(instance.ToString(), netIncr);
+                    netIncr++;
                 }
             }
             Main.stopWatch.Stop();
@@ -54,11 +61,11 @@ namespace PaintTogether.Core
         {
             return ProgramElements.OfType<T>().FirstOrDefault();
         }
-        
+
         /// <summary>
         /// Load any non-asset resources here
         /// </summary>
-        public virtual void Load() {}
+        public virtual void Load() { }
         public static void LoadAll()
         {
             Main.stopWatch.Restart();
@@ -70,11 +77,11 @@ namespace PaintTogether.Core
             Main.stopWatch.Stop();
             clLogger.LogInfo($"Spent {Main.stopWatch.ElapsedMilliseconds}ms on initalising elements.");
         }
-        
+
         /// <summary>
         /// Safley unloads anything loaded in <see cref="Load"/>
         /// </summary>
-        public virtual void Unload() {}
+        public virtual void Unload() { }
         public static void UnLoadAll()
         {
             Main.stopWatch.Restart();
@@ -91,7 +98,7 @@ namespace PaintTogether.Core
         /// Load asset resources here <br/>
         /// Things like texture2d, font, ect.
         /// </summary>
-        public virtual void LoadAssets(GraphicsDevice graphicsDevice, ContentManager contentManager) {}
+        public virtual void LoadAssets(GraphicsDevice graphicsDevice, ContentManager contentManager) { }
         public static void LoadAssetsAll(GraphicsDevice gd, ContentManager cm)
         {
             Main.stopWatch.Restart();
@@ -103,18 +110,18 @@ namespace PaintTogether.Core
             Main.stopWatch.Stop();
             clLogger.LogInfo($"Spent {Main.stopWatch.ElapsedMilliseconds}ms on loading element assets");
         }
-        
+
         /// <summary>
         /// Called right at the start of the main update loop
         /// </summary>
-        public virtual void PreUpdate() {}
+        public virtual void PreUpdate() { }
         public static void PreUpdateAll()
         {
             foreach (var e in ProgramElements)
                 e.PreUpdate();
         }
-        
-        public virtual void Update() {}
+
+        public virtual void Update() { }
         public static void UpdateAll()
         {
             foreach (var e in ProgramElements)
@@ -125,7 +132,7 @@ namespace PaintTogether.Core
                 }
                 e.Update();
             }
-                
+
         }
 
 
@@ -139,11 +146,11 @@ namespace PaintTogether.Core
             foreach (var e in ProgramElements)
                 e.PreDraw(sb, gd);
         }
-        
+
         /// <summary>
         /// Used to draw things infront of this element
         /// </summary>
-        public virtual void PostDraw(SpriteBatch spriteBatch, GraphicsDevice graphicsDevice) {}
+        public virtual void PostDraw(SpriteBatch spriteBatch, GraphicsDevice graphicsDevice) { }
         public static void PostDrawAll(SpriteBatch sb, GraphicsDevice gd)
         {
             foreach (var e in ProgramElements)

@@ -16,8 +16,8 @@ namespace PaintTogether.Common.Utilities
         /// <summary>
         /// Directory most files will go to. Log files, ect
         /// </summary>
-        public static readonly String MainDirectory = "/home/Glasta/Projects/PaintTogether/PaintTogether";
-        //public static readonly String MainDirectory = Directory.GetCurrentDirectory();
+        //public static readonly String MainDirectory = "/home/Glasta/Projects/PaintTogether/PaintTogether";
+        public static readonly String MainDirectory = Directory.GetCurrentDirectory();
 
         public static readonly string LaunchSettingsFilePath = Path.Combine(MainDirectory, LaunchSettingsFile);
         

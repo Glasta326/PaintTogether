@@ -2,6 +2,7 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
 using PaintTogether.Common.Utilities;
+using PaintTogether.Core;
 
 namespace PaintTogether.Content.Applicators.Tools
 {
@@ -11,6 +12,12 @@ namespace PaintTogether.Content.Applicators.Tools
         {
             ToolShader = contentManager.Load<Effect>("Shaders/TestToolShader");
         }
+
+       // private void test(binaryreader)
+       // {
+            // handle it like tmod does, where you get the reader for the right packet type and can do .readint32, .readstring and so on
+            //ToolDraw(Main.spriteBatch, Main.instance.GraphicsDevice, data[0],data[1],data[2],data[3]);
+        //}
 
         public override Color? ToolDraw(SpriteBatch spriteBatch, GraphicsDevice graphicsDevice, Point toolStartPos, Point toolEndPos, Color toolColor, int toolSize)
         {
@@ -28,6 +35,9 @@ namespace PaintTogether.Content.Applicators.Tools
             spriteBatch.Draw(CommonKeys.DummyTexture,drawArea,Color.White);
 
             spriteBatch.End();
+
+
+            
 
             return null;
         }

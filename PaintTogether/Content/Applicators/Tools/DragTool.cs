@@ -179,7 +179,7 @@ namespace PaintTogether.Content.Applicators.Tools
             }
         }
 
-        private void ApplyTool(SpriteBatch spriteBatch, GraphicsDevice graphicsDevice, Point toolStartPos, Point toolEndPos)
+        public void ApplyTool(SpriteBatch spriteBatch, GraphicsDevice graphicsDevice, Point toolStartPos, Point toolEndPos)
         {
             Rectangle affectedArea = MathUtils.RectangleXYXY(toolStartPos, toolEndPos);
             // Account for things like the line tool which can draw at most half of the brush's width outside the area

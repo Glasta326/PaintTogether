@@ -21,7 +21,7 @@ namespace PaintTogether.Content.Applicators.ClickTools
 
         protected override void LoadClickToolAssets(GraphicsDevice graphicsDevice, ContentManager contentManager)
         {
-            
+
         }
 
         protected override void UpdateClickTool()
@@ -32,7 +32,7 @@ namespace PaintTogether.Content.Applicators.ClickTools
         protected override void OnClick()
         {
 
-            Color? c = DrawUtils.TryGetPixel(Canvas.Layers.ActiveLayer,MouseData.MousePosCanvasSpace());
+            Color? c = DrawUtils.TryGetPixel(Canvas.Layers.ActiveLayer, MouseData.MousePosCanvasSpace());
             if (!c.HasValue)
             {
                 clLogger.LogWarning($"Attempted to read color value outside of canvas");
@@ -47,9 +47,9 @@ namespace PaintTogether.Content.Applicators.ClickTools
         }
 
         protected override Rectangle ToolDraw(SpriteBatch spriteBatch, GraphicsDevice graphicsDevice, int layerIndex, Point drawPoint, Color drawColor)
-        {   
-            TestLineTool x = Element.Get<TestLineTool>();
-            x.ToolDraw(spriteBatch,graphicsDevice,Point.Zero,new Point(100,100),Color.Red,5);
+        {
+            //TestLineTool x = Element.Get<TestLineTool>();
+            //x.ToolDraw(spriteBatch, graphicsDevice, Point.Zero, new Point(100, 100), Color.Red, 5);
             return Rectangle.Empty;
         }
 

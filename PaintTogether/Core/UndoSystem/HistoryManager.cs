@@ -37,6 +37,8 @@ namespace PaintTogether.Core.UndoSystem
                 }
                 RedoMostRecent();
             }
+
+            
         }
 
         private static void UndoMostRecent()
