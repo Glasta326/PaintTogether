@@ -1,0 +1,37 @@
+idea is:
+
+each applicator class will handle its own packets
+so like
+lets use the rectangle tool as an example
+
+when the client program recieves a data packet, the only information the packet handler will actually handle is all the networky aspects of the packet, like *who* it came from, and *what* type of applicator it is. it does not look at the applicator data
+we can use one byte for WHO it is, and one for WHAT it is.
+
+lets say the program recives a data packet.
+the program reads the first byte, which is 243.
+the client's user dictionary was told when PFYDO connected that his id is 243. (server tells clients)
+so the client then knows this packet came from PFYDO ( although it can just hold onto the id i guess)
+anyway, it reads the next byte to see WHAT this packet is
+program reads 18, which is the rectangle tools
+then the program takes the ID, and TYPE, and looks at the element registry to see which element this packet data should be invoked to.
+
+perhaps element registry can be an opt in thing
+so like, the recatngle tool overrides a flag for "isNetImportant", and the element creator , when creating each element, looks at it and sees isNetImportant is true, and adds it to a key value dictionary.
+
+this assumes the element register is always in the same order each time. i don't actually know that.
+
+this way i can avoid manually having to override a "netID" property on every single brush type and whatnot
+
+anyway. after the .DrawFromAnotherClientIdkNameYet() is called on the correct element, the method will look something like this
+
+public void DrawFromAnotherClientIdkNameYet(byte User, object[] data)
+    {
+        ToolDraw(Main.spriteBatch, Main.instance.GraphicsDevice, data[0],data[1],data[2],data[3]);
+    }
+
+where ToolDraw is the Draw call that happens for this tool, so like when you let go of the mouse when drawing a rectangle. it looks like:
+
+      public override Color? ToolDraw(SpriteBatch spriteBatch, GraphicsDevice graphicsDevice, Point toolStartPos, Point toolEndPos, Color toolColor, int toolSize)
+        {
+        }
+in terms of formatting
