@@ -7,13 +7,13 @@ using System.Threading.Tasks;
 
 namespace PaintTogetherServer.Common.SvLogger
 {
-public static class LoggableData
+    public static class LoggableData
     {
         /// <summary>
-        /// Gets the version number of this PaintTogetherClient build. <br/>
+        /// Gets the version number of this PaintTogetherServer build. <br/>
         /// Eg 0.0.0.0
         /// </summary>
-        internal static string ClientVersionInfo()
+        public static string ServerVersionInfo()
         {
             var asm = Assembly.GetExecutingAssembly();
             var info = asm.GetName().Version;

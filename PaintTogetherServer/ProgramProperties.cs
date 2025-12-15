@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
+using PaintTogetherServer.Common.SvLogger;
 
 namespace PaintTogetherServer
 {
@@ -27,6 +28,11 @@ namespace PaintTogetherServer
                 _sw = value;
             }
         }
+
+        /// <summary>
+        /// The version of this program. Clients must be on the same version or they will be disconnected <br/>
+        /// </summary>
+        public static string VERSION = LoggableData.ServerVersionInfo();
 
         /// <summary>
         /// The number of worker threads the server will create<br/>

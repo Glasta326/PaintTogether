@@ -1,0 +1,14 @@
+
+
+
+
+client sends [byte toolType][byte[] toolData]
+
+server recieves, preprends a [packetSenderID] to the start
+server sends [packetSenderID][byte toolType][byte[] toolData] to all other clients
+
+client reads first byte to know who performed the action
+client reads second byte to know what action type was performed
+client reads byte[] array according to the tools decoding methods
+so a line tool might read two int32's, 3 bytes, and another int32
+which correspond to the start and end pos, the color, and the thickness of the tool

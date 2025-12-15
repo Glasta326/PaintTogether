@@ -7,14 +7,14 @@ namespace PaintTogetherServer.Core
 {
     public struct InfoPacket
     {
-        public object[] data;
+        public byte[] Data;
 
-        public int owner;
+        public uint OwnerID;
 
-        public InfoPacket(int _owner, object[] _data)
+        public InfoPacket(uint _ownerID, byte[] _Data)
         {
-            owner = _owner;
-            data = _data;
+            OwnerID = _ownerID;
+            Data = _Data;
         }
     }
 }

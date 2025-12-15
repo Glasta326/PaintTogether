@@ -76,18 +76,38 @@ namespace PaintTogether
         private void ConnectToServer(TcpClient t)
         {
 
+
             BinaryWriter wStream = new BinaryWriter(t.GetStream(), System.Text.Encoding.UTF8, true);
             clLogger.LogInfo($"Started writer!");
-            wStream.Write(Environment.ProcessId);
+
+            wStream.Write(LoggableData.ClientVersionInfo());
             wStream.Flush();
+
+            wStream.Write($"Glasta + {Environment.ProcessId}");
+            wStream.Flush();
+
+
             while (true)
             {
+                using var ms = new MemoryStream();
+                using var w = new BinaryWriter(ms);
+
                 Point mousePos = MouseData.MousePosCanvasSpace();
-                wStream.Write(Environment.ProcessId);
-                wStream.Write(mousePos.X);
-                wStream.Write(mousePos.Y);
+                byte packetType = 8;
+
+
+
+                w.Write(mousePos.X);
+                w.Write(mousePos.Y);
+
+                byte[] data = ms.ToArray();
+
+                wStream.Write(packetType);
+                wStream.Write(data.Length);
+                wStream.Write(data);
+
                 wStream.Flush();
-                Thread.Sleep(15);
+                Thread.Sleep(16);
             }
 
         }
@@ -95,18 +115,25 @@ namespace PaintTogether
         private void ReadFromServer(TcpClient t)
         {
             using BinaryReader r = new BinaryReader(t.GetStream(), System.Text.Encoding.UTF8, true);
+            
             clLogger.LogInfo($"Started reader!");
             while (true)
             {
-                int x = r.ReadInt32();
-                int y = r.ReadInt32();
-                Point p = new Point(x, y);
-                otherMousePos = p;
-                clLogger.LogInfo(otherMousePos);
+                uint dataOwner = r.ReadUInt32();
+                byte dataType = r.ReadByte();
+                int dataLen = r.ReadInt32();
+                int posX = r.ReadInt32();
+                int posY = r.ReadInt32();
+
+                otherMousePos = new Point(posX, posY);
+
+                Console.WriteLine($"Recieved packet: [type: {dataType}, owner: {dataOwner}]");
+                //Console.WriteLine(t.GetStream().Length);
             }
         }
 
         public static Point otherMousePos = new Point(100, 100);
+
 
         public static Thread clientThread;
         public static Thread readerThread;
@@ -320,6 +347,7 @@ namespace PaintTogether
             _spriteBatch.Begin(SpriteSortMode.Immediate, BlendState.AlphaBlend);
             _spriteBatch.DrawString(font, $"Brush size : {Canvas.Camera.Position}", Vector2.Zero, Color.White);
             _spriteBatch.Draw(CommonKeys.WhitePixel, otherMousePos.ToVector2(), null, Color.White, 0f, CommonKeys.WhitePixel.Size() * 0.5f, 10f, SpriteEffects.None, 0f);
+            _spriteBatch.Draw(CommonKeys.WhitePixel, MouseData.MousePosCanvasSpace().ToVector2(), null, Color.Red, 0f, CommonKeys.WhitePixel.Size() * 0.5f, 10f, SpriteEffects.None, 0f);
             _spriteBatch.End();
             Element.PostDrawAll(_spriteBatch, GraphicsDevice);
 

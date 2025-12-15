@@ -6,6 +6,8 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+        <AssemblyVersion>0.0.0.0</AssemblyVersion>
+        <!-- Pre-release development beta versions are 0.0.0.X-->
     </PropertyGroup>
 
 </Project>

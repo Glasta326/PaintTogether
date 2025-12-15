@@ -13,7 +13,7 @@ namespace PaintTogether.Common.PaintLogger
         /// Gets the version number of this PaintTogetherClient build. <br/>
         /// Eg 0.0.0.0
         /// </summary>
-        internal static string ClientVersionInfo()
+        public static string ClientVersionInfo()
         {
             var asm = Assembly.GetExecutingAssembly();
             var info = asm.GetName().Version;

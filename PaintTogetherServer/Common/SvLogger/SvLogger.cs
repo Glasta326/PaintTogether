@@ -61,7 +61,7 @@ namespace PaintTogetherServer.Common.SvLogger
 
         private static void LogStartupInfo()
         {
-            LogInfo($"Starting PaintTogether Client v{LoggableData.ClientVersionInfo()}");
+            LogInfo($"Starting PaintTogether Client v{LoggableData.ServerVersionInfo()}");
             LogInfo($"Log date : {DateTime.Now:dd/MM/yyyy}");
             LogInfo(LoggableData.RuntimeInfo());
             LogInfo($"CPU : {Environment.ProcessorCount} processors");

@@ -1,4 +1,5 @@
-﻿using System.Diagnostics;
+﻿using System.Collections.Concurrent;
+using System.Diagnostics;
 using System.Drawing;
 using System.Net;
 using System.Net.Sockets;
@@ -12,11 +13,12 @@ namespace PaintTogetherServer
     {
         public static TcpListener Listener;
 
-        public static List<PaintClient> Clients = new List<PaintClient>();
+        /// <summary>
+        /// Client dictionary indexed by client ID.
+        /// </summary>
+        public static ConcurrentDictionary<uint, PaintClient> Clients = new ConcurrentDictionary<uint, PaintClient>();
 
         public static List<WorkerThread> Workers = new List<WorkerThread>();
-
-        private volatile static bool Running = true;
 
         static async Task Main(string[] args)
         {
@@ -30,10 +32,8 @@ namespace PaintTogetherServer
 
             StartServer();
 
-
+            // Seperate task that reads when the server operator is attempting to input actions to the server
             CancellationTokenSource cts = new CancellationTokenSource();
-
-
             _ = Task.Run(() =>
             {
                 while (!cts.IsCancellationRequested)
@@ -44,12 +44,13 @@ namespace PaintTogetherServer
                     string[] types = ["end", "End", "END"];
                     if (types.Contains(r.ToLower()))
                     {
-                        Running = false;
+                        cts.Cancel();
                         Listener.Stop();
                     }
                 }
             });
 
+            uint clientCounter = 0;
             try
             {
                 // Constantly look for joining clients and allocate a listener task for them
@@ -57,16 +58,24 @@ namespace PaintTogetherServer
                 {
                     TcpClient client = await Listener.AcceptTcpClientAsync();
                     PaintClient pc = new PaintClient(client);
-                    pc.ip = ((IPEndPoint)client.Client.RemoteEndPoint).Address.ToString();
                     SvLogger.LogInfo($"Client joined on [{pc.ip}]");
-                    int index = Clients.Count;
-                    Clients.Add(pc);
-                    _ = HandleClient(index);
+
+                    // Clients are stored in a dict, so we create a new entry with the client's ID, and the client itself.
+                    // Worth noting the reason i do this is so the data packets sent the worker threads can be really simple:
+                    // The packet is basically just [ID],[DATA]
+                    // the workers can just compare integers to see if id's match
+                    // maybe my logic is flawed but this is also good if i never need to look up clients by ID
+                    pc.ID = clientCounter;
+                    Clients.TryAdd(pc.ID, pc);
+                    clientCounter++;
+
+                    _ = HandleClient(pc.ID);
                 }
             }
-            catch (SocketException)
+            // This triggers when the listener is stopped, and hopefully, also when the loop ends
+            catch (SocketException e)
             {
-                
+                SvLogger.LogInfo($"Server loop exited succesfully");
             }
 
 
@@ -94,22 +103,53 @@ namespace PaintTogetherServer
         /// <summary>
         /// Read incoming data from each client and enqueue the client's actions to the <see cref="WorkerThread.WorkQueue"/>
         /// </summary>
-        public static async Task HandleClient(int index)
+        public static async Task HandleClient(uint ID)
         {
-            var cl = Clients[index];
-            using var reader = new BinaryReader(cl.stream, System.Text.Encoding.UTF8, leaveOpen: true);
-            using var writer = new BinaryWriter(cl.stream, System.Text.Encoding.UTF8, leaveOpen: true);
+            // Oh shit we just got a new client
+            PaintClient pc = Clients[ID];
+            using var reader = new BinaryReader(pc.Stream, System.Text.Encoding.UTF8, leaveOpen: true);
+            using var writer = new BinaryWriter(pc.Stream, System.Text.Encoding.UTF8, leaveOpen: true);
 
-            cl.name = reader.ReadInt32();
-            SvLogger.LogInfo($"Client {cl.name} Joined");
-            while (cl.tcp.Connected)
+            // Most important thing is to valid the user is actually on the same version as everyone else.
+            // We expect the first packet to be a string with the client's version
+            // If the client version is in any way different to our version, we dont allow this person in.
+            string clVersion = reader.ReadString();
+            if (clVersion != VERSION)
             {
-                // Read stream from client and enque packets to the work queue for the worker threads to handle
-                int owner = reader.ReadInt32();
+                SvLogger.LogWarning($"Client [{pc.ip}] was rejected due to a version mismatch: Server = [{VERSION}], Client = [{clVersion}]");
+                pc.tcp.Close();
+                return;
+            }
 
-                // Somehow read the object[] data?, is that possible?
-                // there's no .ReadObject() or anything
-                WorkerThread.WorkQueue.Add(new InfoPacket(owner, [data]));
+            // Next, we expect another string for the user's username
+            // Same deal, if we don't get one, disconnect the user
+            // TODO: username checks, if anyone already has this username, if username is blank, ect
+            string _userName = reader.ReadString();
+            pc.UserName = _userName;
+
+            SvLogger.LogInfo($"Client [IP: {pc.ip}, ID: {pc.ID}] has joined with username: {pc.UserName}");
+
+            while (pc.tcp.Connected)
+            {
+
+                byte type = reader.ReadByte();
+                int length = reader.ReadInt32(); // Length value is length of the actualy data array. does not include the type
+                byte[] data = reader.ReadBytes(length);
+
+                using MemoryStream ms = new MemoryStream();
+                using var w = new BinaryWriter(ms);
+                w.Write(pc.ID);
+                w.Write(type);
+                w.Write(length);
+                w.Write(data);
+
+                byte[] newData = ms.ToArray();
+
+                WorkerThread.WorkQueue.Add(new InfoPacket(pc.ID, newData));
+
+                SvLogger.LogInfo($"{WorkerThread.WorkQueue.Count}");
+
+
 
                 await Task.Delay(1); // what the fuck???
                 // I'm assuming this is some kind of compiler optimisation.
@@ -121,9 +161,9 @@ namespace PaintTogetherServer
         static void Unload()
         {
             Workers.Clear();
-            for (int i = 0; i < Clients.Count; i++)
+            foreach (var ky in Clients.Keys)
             {
-                Clients[i].tcp.Close();
+                Clients[ky].tcp.Close();
             }
         }
 
