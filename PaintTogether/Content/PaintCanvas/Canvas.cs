@@ -94,6 +94,7 @@ namespace PaintTogether.Content.PaintCanvas
         }
 
         /// <summary>
+        /// ||Should be used in any spritebatches drawing the canvas to the screen||<br/>
         /// Transforms the canvas coordinates into output display coordinates based on zoom level and camera position <br/>
         /// The canvas NEVER ACTUALLY MOVES. We simply modify where it is drawn and the scaling of it's drawing <br/>
         /// A pixel at (10,10) will always be accessable at canvas[10,10], <br/>

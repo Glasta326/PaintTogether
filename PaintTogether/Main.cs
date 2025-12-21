@@ -73,6 +73,7 @@ namespace PaintTogether
             base.Initialize();
         }
 
+
         private void ConnectToServer(TcpClient t)
         {
 
@@ -92,13 +93,13 @@ namespace PaintTogether
                 using var ms = new MemoryStream();
                 using var w = new BinaryWriter(ms);
 
-                Point mousePos = MouseData.MousePosCanvasSpace();
+                MousePos = new Point(300 + (int)(Math.Sin(GlobalTimeWrappedHourly)),300 + (int)(Math.Sin(GlobalTimeWrappedHourly)));
                 byte packetType = 8;
 
 
 
-                w.Write(mousePos.X);
-                w.Write(mousePos.Y);
+                w.Write(MousePos.X);
+                w.Write(MousePos.Y);
 
                 byte[] data = ms.ToArray();
 
@@ -107,7 +108,7 @@ namespace PaintTogether
                 wStream.Write(data);
 
                 wStream.Flush();
-                Thread.Sleep(16);
+                Thread.Sleep(10);
             }
 
         }
@@ -115,7 +116,7 @@ namespace PaintTogether
         private void ReadFromServer(TcpClient t)
         {
             using BinaryReader r = new BinaryReader(t.GetStream(), System.Text.Encoding.UTF8, true);
-            
+
             clLogger.LogInfo($"Started reader!");
             while (true)
             {
@@ -127,11 +128,11 @@ namespace PaintTogether
 
                 otherMousePos = new Point(posX, posY);
 
-                Console.WriteLine($"Recieved packet: [type: {dataType}, owner: {dataOwner}]");
-                //Console.WriteLine(t.GetStream().Length);
+                clLogger.LogInfo($"Recieved packet: [type: {dataType}, owner: {dataOwner}, position: {posX},{posY}]");
             }
         }
 
+        public static Point MousePos = new Point(100, 100);
         public static Point otherMousePos = new Point(100, 100);
 
 
@@ -155,7 +156,7 @@ namespace PaintTogether
             Element.LoadAssetsAll(GraphicsDevice, Content);
 
             logoTarget = new RenderTarget2D(GraphicsDevice, Canvas.Resolution.X, Canvas.Resolution.Y, false, SurfaceFormat.Color, DepthFormat.None, 0, RenderTargetUsage.DiscardContents);
-            UITarget = new RenderTarget2D(GraphicsDevice, Canvas.Resolution.X, Canvas.Resolution.Y, false, SurfaceFormat.Color, DepthFormat.None, 0, RenderTargetUsage.DiscardContents);
+            UITarget = new RenderTarget2D(GraphicsDevice, Canvas.Resolution.X, Canvas.Resolution.Y, false, SurfaceFormat.Color, DepthFormat.None, 0, RenderTargetUsage.PreserveContents);
             final = new RenderTarget2D(GraphicsDevice, Canvas.Resolution.X, Canvas.Resolution.Y);
             logo = Content.Load<Texture2D>("Textures/proxy-image");
             font = Content.Load<SpriteFont>("Fonts/TestFont");
@@ -346,8 +347,11 @@ namespace PaintTogether
             GraphicsDevice.Clear(Color.Transparent);
             _spriteBatch.Begin(SpriteSortMode.Immediate, BlendState.AlphaBlend);
             _spriteBatch.DrawString(font, $"Brush size : {Canvas.Camera.Position}", Vector2.Zero, Color.White);
+            _spriteBatch.End();
+
+            _spriteBatch.Begin(SpriteSortMode.Immediate, BlendState.AlphaBlend);
             _spriteBatch.Draw(CommonKeys.WhitePixel, otherMousePos.ToVector2(), null, Color.White, 0f, CommonKeys.WhitePixel.Size() * 0.5f, 10f, SpriteEffects.None, 0f);
-            _spriteBatch.Draw(CommonKeys.WhitePixel, MouseData.MousePosCanvasSpace().ToVector2(), null, Color.Red, 0f, CommonKeys.WhitePixel.Size() * 0.5f, 10f, SpriteEffects.None, 0f);
+            _spriteBatch.Draw(CommonKeys.WhitePixel, otherMousePos.ToVector2(), null, Color.Red, 0f, CommonKeys.WhitePixel.Size() * 0.5f, 10f, SpriteEffects.None, 0f);
             _spriteBatch.End();
             Element.PostDrawAll(_spriteBatch, GraphicsDevice);
 

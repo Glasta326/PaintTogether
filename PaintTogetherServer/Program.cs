@@ -3,6 +3,7 @@ using System.Diagnostics;
 using System.Drawing;
 using System.Net;
 using System.Net.Sockets;
+using System.Numerics;
 using System.Threading.Tasks;
 using PaintTogetherServer.Common.SvLogger;
 using PaintTogetherServer.Core;
@@ -70,6 +71,7 @@ namespace PaintTogetherServer
                     clientCounter++;
 
                     _ = HandleClient(pc.ID);
+
                 }
             }
             // This triggers when the listener is stopped, and hopefully, also when the loop ends
@@ -129,33 +131,62 @@ namespace PaintTogetherServer
 
             SvLogger.LogInfo($"Client [IP: {pc.ip}, ID: {pc.ID}] has joined with username: {pc.UserName}");
 
+            Vector2 p = new Vector2(000,000);
             while (pc.tcp.Connected)
             {
-
+                /*
                 byte type = reader.ReadByte();
                 int length = reader.ReadInt32(); // Length value is length of the actualy data array. does not include the type
                 byte[] data = reader.ReadBytes(length);
-
+                
                 using MemoryStream ms = new MemoryStream();
                 using var w = new BinaryWriter(ms);
                 w.Write(pc.ID);
                 w.Write(type);
                 w.Write(length);
                 w.Write(data);
+                */
 
-                byte[] newData = ms.ToArray();
+                // data we recieved
+                sw.Restart();
+                byte _type = reader.ReadByte();
+                int _length = reader.ReadInt32();
+                byte[] _data = reader.ReadBytes(_length);
 
-                WorkerThread.WorkQueue.Add(new InfoPacket(pc.ID, newData));
-
-                SvLogger.LogInfo($"{WorkerThread.WorkQueue.Count}");
+               // Vector2 _p = new Vector2(p.X + DateTime.Now.Millisecond * 2,p.Y + DateTime.Now.Millisecond);
 
 
+                // Write the position into the memorystream, which is then converted to a byteArray
+               // using MemoryStream ms = new MemoryStream();
+               // using var w = new BinaryWriter(ms);
+               // w.Write((int)_p.X);
+                //w.Write((int)_p.Y);
+                //byte[] newData = ms.ToArray();
+
+                // write the data into the memorystream to convert into the bytearray for our packet
+                using MemoryStream MS = new MemoryStream();
+                using var W = new BinaryWriter(MS);
+                W.Write(pc.ID);
+                W.Write(_type);
+                W.Write(_length);
+                W.Write(_data);
+
+                var x = MS.ToArray();
+                
+                WorkerThread.WorkQueue.Add(new InfoPacket(pc.ID, MS.ToArray()));
+                sw.Stop();
+
+                SvLogger.LogInfo($"Took {sw.ElapsedMilliseconds}ms");
+
+                // Instead of adding this to a worker queue, what if we just handle the data here????
 
                 await Task.Delay(1); // what the fuck???
                 // I'm assuming this is some kind of compiler optimisation.
                 // if you have an async task, but don't actually write await anywhere, then it wont be async??????????/
                 // im just doing this await task delay for zero purpose other than to force the compiler to realise its async
             }
+
+            SvLogger.LogInfo($"Client [IP: {pc.ip}, ID: {pc.ID}, Username: {pc.UserName}] has disconnected ");
         }
 
         static void Unload()

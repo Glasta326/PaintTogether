@@ -17,7 +17,7 @@ namespace PaintTogetherServer
         }
 
         [ThreadStatic] private static Stopwatch _sw;
-        public static Stopwatch stopWatch
+        public static Stopwatch sw
         {
             get
             {
