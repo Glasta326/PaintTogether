@@ -51,9 +51,14 @@ namespace PaintTogether
         #region Active elements
 
         /// <summary>
-        /// Counts up once every second and wraps ever 3600 seconds
+        /// Counts up once every second and wraps every 3600 seconds
         /// </summary>
         public static float GlobalTimeWrappedHourly;
+        
+        /// <summary>
+        /// Counts up once per frame and wraps every 60 frames
+        /// </summary>
+        public static byte GlobalFramesWrappedSecond;
 
         /// <summary>
         /// Current brush type being held by the user

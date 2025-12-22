@@ -76,7 +76,8 @@ namespace PaintTogether
 
         private void ConnectToServer(TcpClient t)
         {
-
+            uint num = 0;
+            Point[] msHistory = new Point[10];
 
             BinaryWriter wStream = new BinaryWriter(t.GetStream(), System.Text.Encoding.UTF8, true);
             clLogger.LogInfo($"Started writer!");
@@ -87,13 +88,45 @@ namespace PaintTogether
             wStream.Write($"Glasta + {Environment.ProcessId}");
             wStream.Flush();
 
+            while (t.Connected)
+            {
+                for (int i = 0; i < msHistory.Length; i++)
+                {
+                    msHistory[i] = MouseData.MousePosPoint();
+                    Thread.Sleep(16);
+                }
+
+                using var ms = new MemoryStream();
+                using var w = new BinaryWriter(ms);
+
+                // Write each mouse pos into the stream
+                for (int i = 0; i < msHistory.Length; i++)
+                {
+                    w.Write(msHistory[i].X);
+                    w.Write(msHistory[i].Y);
+                }
+                byte[] data = ms.ToArray();
+                byte packetType = 8;
+
+
+                wStream.Write(packetType);
+                wStream.Write(data.Length);
+                wStream.Write(data);
+                wStream.Flush();
+                num++;
+                Console.WriteLine($"Sent packet no: {num}");
+            }
+
+            clLogger.LogInfo($"Server disconnected.");
+            return;
+
 
             while (true)
             {
                 using var ms = new MemoryStream();
                 using var w = new BinaryWriter(ms);
 
-                MousePos = new Point(300 + (int)(Math.Sin(GlobalTimeWrappedHourly)),300 + (int)(Math.Sin(GlobalTimeWrappedHourly)));
+                MousePos = MouseData.MousePosPoint();
                 byte packetType = 8;
 
 
@@ -108,32 +141,42 @@ namespace PaintTogether
                 wStream.Write(data);
 
                 wStream.Flush();
-                Thread.Sleep(10);
+                num++;
+                Console.WriteLine($"Sent packet no: {num}");
+                Thread.Sleep(1);
             }
 
         }
 
         private void ReadFromServer(TcpClient t)
         {
+            uint num = 0;
             using BinaryReader r = new BinaryReader(t.GetStream(), System.Text.Encoding.UTF8, true);
 
             clLogger.LogInfo($"Started reader!");
-            while (true)
+            while (t.Connected)
             {
                 uint dataOwner = r.ReadUInt32();
                 byte dataType = r.ReadByte();
                 int dataLen = r.ReadInt32();
-                int posX = r.ReadInt32();
-                int posY = r.ReadInt32();
-
-                otherMousePos = new Point(posX, posY);
-
-                clLogger.LogInfo($"Recieved packet: [type: {dataType}, owner: {dataOwner}, position: {posX},{posY}]");
+                for (int i = 0; i < (dataLen / 8); i++) // divide by 8 because its the number of BYTES and we want number of INTS which are 4 BYTES
+                {
+                    int _x = r.ReadInt32();
+                    int _y = r.ReadInt32();
+                    // Reset drawing index
+                    historyIndex = 0;
+                    otherMousePos[i] = new Point(_x, _y);
+                }
+                num++;
+                clLogger.LogInfo($"Recieved packet: [type: {dataType}, len: {dataLen}, owner: {dataOwner}, no: {num}]");
             }
+            clLogger.LogInfo($"Server disconnected.");
         }
 
         public static Point MousePos = new Point(100, 100);
-        public static Point otherMousePos = new Point(100, 100);
+        public static Point[] otherMousePos = new Point[10];
+
+        public static int historyIndex = 0;
 
 
         public static Thread clientThread;
@@ -264,7 +307,10 @@ namespace PaintTogether
 
             Canvas.Layers.ActiveLayer.GetData<Color>(0, region, c, 0, 4);
 
-
+            if (historyIndex < otherMousePos.Length - 1)
+            {
+                historyIndex++;
+            }
         }
 
         private void Update_Inner(GameTime gameTime)
@@ -276,6 +322,7 @@ namespace PaintTogether
             KeyboardData.state = Keyboard.GetState();
             KeyboardData.KeyboardHistory.Push(Keyboard.GetState());
             GlobalTimeWrappedHourly = (float)(gameTime.TotalGameTime.TotalSeconds % 3600.0);
+            GlobalFramesWrappedSecond = (byte)((gameTime.TotalGameTime.TotalSeconds * 60) % 60);
 
             if (MouseData.RightClick == ButtonState.Pressed)
             {
@@ -350,8 +397,10 @@ namespace PaintTogether
             _spriteBatch.End();
 
             _spriteBatch.Begin(SpriteSortMode.Immediate, BlendState.AlphaBlend);
-            _spriteBatch.Draw(CommonKeys.WhitePixel, otherMousePos.ToVector2(), null, Color.White, 0f, CommonKeys.WhitePixel.Size() * 0.5f, 10f, SpriteEffects.None, 0f);
-            _spriteBatch.Draw(CommonKeys.WhitePixel, otherMousePos.ToVector2(), null, Color.Red, 0f, CommonKeys.WhitePixel.Size() * 0.5f, 10f, SpriteEffects.None, 0f);
+            _spriteBatch.Draw(CommonKeys.WhitePixel, MouseData.MousePosPoint().ToVector2(), null, Color.White, 0f, CommonKeys.WhitePixel.Size() * 0.5f, 10f, SpriteEffects.None, 0f);
+            _spriteBatch.Draw(CommonKeys.WhitePixel, otherMousePos[historyIndex].ToVector2(), null, Color.Red, 0f, CommonKeys.WhitePixel.Size() * 0.5f, 10f, SpriteEffects.None, 0f);
+
+
             _spriteBatch.End();
             Element.PostDrawAll(_spriteBatch, GraphicsDevice);
 

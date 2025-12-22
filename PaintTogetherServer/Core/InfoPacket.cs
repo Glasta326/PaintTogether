@@ -4,17 +4,35 @@ using System.Linq;
 using System.Threading.Tasks;
 
 namespace PaintTogetherServer.Core
-{
-    public struct InfoPacket
+{   
+    /// <summary>
+    /// Represents an operation or information sent by a connected client.
+    /// </summary>
+    /// <param name="_OwnerID">The ID of this client found in <see cref="Program.Clients"/></param>
+    /// <param name="_Type">What type of packet this is</param>
+    /// <param name="_Data">The actual data inside of this packet</param>
+    public sealed class InfoPacket(uint _OwnerID, byte _Type, byte[] _Data)
     {
-        public byte[] Data;
+        /// <summary>
+        /// The ID in <see cref="Program.Clients"/> of this client. <br/>
+        /// Because this comes from the server's list of who is who, this value is always authoratitvley true.
+        /// </summary>
+        public readonly uint OwnerID = _OwnerID;
 
-        public uint OwnerID;
+        /// <summary>
+        /// The type of operation the data in this packet represents. <br/>
+        /// Type = 8 might be a brush stroke tool, type 1 could indicate this is a new layer operation.
+        /// </summary>
+        public readonly byte Type = _Type;
 
-        public InfoPacket(uint _ownerID, byte[] _Data)
-        {
-            OwnerID = _ownerID;
-            Data = _Data;
-        }
+        /// <summary>
+        /// How long the <see cref="Data"/> array is.
+        /// </summary>
+        public int Length => Data.Length;
+
+        /// <summary>
+        /// The actual data inside of this packet. Tool parameters, mouse positions, ect
+        /// </summary>
+        public readonly ReadOnlyMemory<byte> Data = new ReadOnlyMemory<byte>(_Data);
     }
 }

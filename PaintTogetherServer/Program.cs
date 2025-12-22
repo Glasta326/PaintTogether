@@ -7,7 +7,7 @@ using System.Numerics;
 using System.Threading.Tasks;
 using PaintTogetherServer.Common.SvLogger;
 using PaintTogetherServer.Core;
-
+using PaintTogetherServer.Core.ActionHistory;
 namespace PaintTogetherServer
 {
     public static partial class Program
@@ -54,11 +54,11 @@ namespace PaintTogetherServer
             uint clientCounter = 0;
             try
             {
-                // Constantly look for joining clients and allocate a listener task for them
+                // Server loop, constantly look for joining clients and allocate a handler task for them
                 while (!cts.Token.IsCancellationRequested)
                 {
                     TcpClient client = await Listener.AcceptTcpClientAsync();
-                    PaintClient pc = new PaintClient(client);
+                    PaintClient pc = new PaintClient(client, clientCounter);
                     SvLogger.LogInfo($"Client joined on [{pc.ip}]");
 
                     // Clients are stored in a dict, so we create a new entry with the client's ID, and the client itself.
@@ -66,12 +66,10 @@ namespace PaintTogetherServer
                     // The packet is basically just [ID],[DATA]
                     // the workers can just compare integers to see if id's match
                     // maybe my logic is flawed but this is also good if i never need to look up clients by ID
-                    pc.ID = clientCounter;
                     Clients.TryAdd(pc.ID, pc);
-                    clientCounter++;
-
                     _ = HandleClient(pc.ID);
 
+                    clientCounter++;
                 }
             }
             // This triggers when the listener is stopped, and hopefully, also when the loop ends
@@ -87,6 +85,8 @@ namespace PaintTogetherServer
 
         static void StartServer()
         {
+            EventReplay.Init();
+
             // If threadcount is < 0, that means we use default to using however many processors this computer has
             int workerCount = ThreadCount < 0 ? Environment.ProcessorCount : ThreadCount;
             for (int i = 0; i < workerCount; i++)
@@ -110,7 +110,6 @@ namespace PaintTogetherServer
             // Oh shit we just got a new client
             PaintClient pc = Clients[ID];
             using var reader = new BinaryReader(pc.Stream, System.Text.Encoding.UTF8, leaveOpen: true);
-            using var writer = new BinaryWriter(pc.Stream, System.Text.Encoding.UTF8, leaveOpen: true);
 
             // Most important thing is to valid the user is actually on the same version as everyone else.
             // We expect the first packet to be a string with the client's version
@@ -131,54 +130,16 @@ namespace PaintTogetherServer
 
             SvLogger.LogInfo($"Client [IP: {pc.ip}, ID: {pc.ID}] has joined with username: {pc.UserName}");
 
-            Vector2 p = new Vector2(000,000);
             while (pc.tcp.Connected)
             {
-                /*
-                byte type = reader.ReadByte();
-                int length = reader.ReadInt32(); // Length value is length of the actualy data array. does not include the type
+                byte packetType = reader.ReadByte();
+                int length = reader.ReadInt32();
                 byte[] data = reader.ReadBytes(length);
-                
-                using MemoryStream ms = new MemoryStream();
-                using var w = new BinaryWriter(ms);
-                w.Write(pc.ID);
-                w.Write(type);
-                w.Write(length);
-                w.Write(data);
-                */
 
-                // data we recieved
-                sw.Restart();
-                byte _type = reader.ReadByte();
-                int _length = reader.ReadInt32();
-                byte[] _data = reader.ReadBytes(_length);
-
-               // Vector2 _p = new Vector2(p.X + DateTime.Now.Millisecond * 2,p.Y + DateTime.Now.Millisecond);
-
-
-                // Write the position into the memorystream, which is then converted to a byteArray
-               // using MemoryStream ms = new MemoryStream();
-               // using var w = new BinaryWriter(ms);
-               // w.Write((int)_p.X);
-                //w.Write((int)_p.Y);
-                //byte[] newData = ms.ToArray();
-
-                // write the data into the memorystream to convert into the bytearray for our packet
-                using MemoryStream MS = new MemoryStream();
-                using var W = new BinaryWriter(MS);
-                W.Write(pc.ID);
-                W.Write(_type);
-                W.Write(_length);
-                W.Write(_data);
-
-                var x = MS.ToArray();
-                
-                WorkerThread.WorkQueue.Add(new InfoPacket(pc.ID, MS.ToArray()));
-                sw.Stop();
-
-                SvLogger.LogInfo($"Took {sw.ElapsedMilliseconds}ms");
-
-                // Instead of adding this to a worker queue, what if we just handle the data here????
+                WorkerThread.WorkQueue.Add
+                (
+                    new InfoPacket(ID, packetType, data)
+                );
 
                 await Task.Delay(1); // what the fuck???
                 // I'm assuming this is some kind of compiler optimisation.

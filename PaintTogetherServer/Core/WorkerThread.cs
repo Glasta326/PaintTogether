@@ -5,6 +5,7 @@ using System.Drawing;
 using System.Linq;
 using System.Threading.Tasks;
 using PaintTogetherServer.Common.SvLogger;
+using PaintTogetherServer.Core.ActionHistory;
 
 namespace PaintTogetherServer.Core
 {
@@ -50,24 +51,35 @@ namespace PaintTogetherServer.Core
         // so we need thread-safe network streams.
         // proabbly create a lock for each PaintClient stream 
         // locks make threads WAIT untill the lock is removed so no data is lost dw future glasta pookie
-        
-        
+        // Note: this might be unnicesary because we don't really care if two threads are writing data to the same stream?
+        // we'll see
+
         private void Loop()
         {
             foreach (var task in WorkQueue.GetConsumingEnumerable())
             {
-                
+                // Log the event before doing anything else
+                // Type 0 is registered to mouse movement, which we ignore as its super spammy and not worth storing
+                if (task.Type != 0)
+                {
+                    EventReplay.AddAction(task);
+                }
+
                 foreach (PaintClient pc in Program.Clients.Values.ToArray())
                 {
                     // Obviously dont send data back to the sender
                     if (pc.ID == task.OwnerID)
                     {
-                        //continue;
+                        continue;
                     }
-                    using var writer = new BinaryWriter(pc.Stream, System.Text.Encoding.UTF8, leaveOpen: true);
-                    writer.Write(task.Data);
-                    writer.Flush();
-                    SvLogger.LogInfo($"Thread: [{myID}] Sent packet from [{task.OwnerID}] aka [{Program.Clients[task.OwnerID].UserName}] to [{pc.ID}] aka [{pc.UserName}]");
+                    using var clientWriter = new BinaryWriter(pc.Stream, System.Text.Encoding.UTF8, leaveOpen: true);
+                    
+                    clientWriter.Write(task.OwnerID);
+                    clientWriter.Write(task.Type);
+                    clientWriter.Write(task.Length);
+                    clientWriter.Write(task.Data.Span);
+
+                    SvLogger.LogInfo($"Thread: [{myID}] Sent packet from [{task.OwnerID}] aka [{Program.Clients[task.OwnerID].UserName}] to [{pc.ID}] aka [{pc.UserName}] Containing [{task.Length}] bytes of data");
                 }
 
 
