@@ -44,5 +44,10 @@ namespace PaintTogetherServer
         /// The port that the <see cref="Program.Listener"/> runs on
         /// </summary>
         public static ushort ListenerPort = 12504;
+
+        /// <summary>
+        /// The maximum amount of times connection attempts can happen to the server
+        /// </summary>
+        public static uint MaxUsers = byte.MaxValue;
     }   
 }

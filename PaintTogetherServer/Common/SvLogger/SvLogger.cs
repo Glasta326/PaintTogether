@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Runtime.ExceptionServices;
 using System.Threading.Tasks;
 using PaintTogetherServer.Common.Utilities;
 
@@ -33,6 +34,13 @@ namespace PaintTogetherServer.Common.SvLogger
         /// </summary>
         public static string LogTime => $"{DateTime.Now:HH:mm:ss.fff}";
 
+        /// <summary>
+        /// Enables extremely detailed logging. Can bloat log file.
+        /// </summary>
+        public static bool VerboseLogging = true;
+        // TODO: disable versbose logging when finished
+
+        
         public static void Init()
         {
             // Set path strings
@@ -45,10 +53,13 @@ namespace PaintTogetherServer.Common.SvLogger
             LogFile.AutoFlush = true;
 
             // Automatically log any errors before crashing
-            AppDomain.CurrentDomain.UnhandledException += LogError;
+            AppDomain.CurrentDomain.UnhandledException += LogFatalError;
+            AppDomain.CurrentDomain.FirstChanceException += LogAnyError;
 
             LogStartupInfo();
         }
+
+
 
         public static void Unload()
         {
@@ -56,7 +67,7 @@ namespace PaintTogetherServer.Common.SvLogger
             LogFile.Close();
             LogFile.Dispose();
 
-            AppDomain.CurrentDomain.UnhandledException -= LogError;
+            AppDomain.CurrentDomain.UnhandledException -= LogFatalError;
         }
 
         private static void LogStartupInfo()
@@ -73,8 +84,12 @@ namespace PaintTogetherServer.Common.SvLogger
         /// <summary>
         /// Allows you to manually write some information to the log file
         /// </summary>
-        public static void LogInfo(object args)
+        public static void LogInfo(object args, bool verbose = false)
         {
+            if (verbose && !VerboseLogging)
+            {
+                return;
+            }
             LogFile.WriteLine($"[{LogTime}] [INFO] {args}");
             Console.WriteLine($"[{LogTime}] [INFO] {args}");
         }
@@ -89,11 +104,19 @@ namespace PaintTogetherServer.Common.SvLogger
         }
 
         /// <summary>
+        /// Automatically-called method writes to log file when ANY error occurs, before it is even potentially handled
+        /// </summary>
+        private static void LogAnyError(object? sender, FirstChanceExceptionEventArgs e)
+        {
+            LogFile.WriteLine($"[{LogTime}] [ERROR] {e.Exception}");
+        }
+
+        /// <summary>
         /// Automatically-called method writes to the log file when any unhandled exception occurs
         /// </summary>
-        public static void LogError(object args, UnhandledExceptionEventArgs e)
+        public static void LogFatalError(object args, UnhandledExceptionEventArgs e)
         {
-            LogFile.WriteLine($"[{LogTime}] [ERROR] {e.ExceptionObject}");
+            LogFile.WriteLine($"[{LogTime}] [FATAL] {e.ExceptionObject}");
         }
 
 

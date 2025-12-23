@@ -5,6 +5,7 @@ using System.Net;
 using System.Net.Sockets;
 using System.Numerics;
 using System.Threading.Tasks;
+using PaintTogetherServer.Common.Utilities;
 using PaintTogetherServer.Common.SvLogger;
 using PaintTogetherServer.Core;
 using PaintTogetherServer.Core.ActionHistory;
@@ -15,11 +16,21 @@ namespace PaintTogetherServer
         public static TcpListener Listener;
 
         /// <summary>
-        /// Client dictionary indexed by client ID.
+        /// User dictionary indexed by GUID. <br/>
+        /// This is persistent data and only ever lost on server restart. <br/>
+        /// When a client first joins, they give us a GUID, and we assign them a user in this dictionary <br/>
+        /// If the client disconnects, we remove their ConnectionID from the Clients dictionary, but that user still remains in the user dict <br/>
+        /// When a client connects and sends an already existing GUID (implying this client re-connected and was here before), <br/>
+        /// We create a new entry in the Clients dict with that GUID's associated byte ID.<br/>
+        /// </summary>
+        public static ConcurrentDictionary<Guid, PaintUser> Users = new ConcurrentDictionary<Guid, PaintUser>();
+
+        /// <summary>
+        /// Dictionary of activley connected users
         /// </summary>
         public static ConcurrentDictionary<uint, PaintClient> Clients = new ConcurrentDictionary<uint, PaintClient>();
 
-        public static List<WorkerThread> Workers = new List<WorkerThread>();
+        private static byte ClientCounter = 0;
 
         static async Task Main(string[] args)
         {
@@ -51,25 +62,25 @@ namespace PaintTogetherServer
                 }
             });
 
-            uint clientCounter = 0;
+
+
             try
             {
                 // Server loop, constantly look for joining clients and allocate a handler task for them
                 while (!cts.Token.IsCancellationRequested)
                 {
-                    TcpClient client = await Listener.AcceptTcpClientAsync();
-                    PaintClient pc = new PaintClient(client, clientCounter);
-                    SvLogger.LogInfo($"Client joined on [{pc.ip}]");
+                    TcpClient incoming = await Listener.AcceptTcpClientAsync();
+                    SvLogger.LogInfo($"New incoming connection on: [{((IPEndPoint)incoming.Client.RemoteEndPoint).Address}]");
+                    _ = HandleClient(incoming, ClientCounter);
 
-                    // Clients are stored in a dict, so we create a new entry with the client's ID, and the client itself.
-                    // Worth noting the reason i do this is so the data packets sent the worker threads can be really simple:
-                    // The packet is basically just [ID],[DATA]
-                    // the workers can just compare integers to see if id's match
-                    // maybe my logic is flawed but this is also good if i never need to look up clients by ID
-                    Clients.TryAdd(pc.ID, pc);
-                    _ = HandleClient(pc.ID);
-
-                    clientCounter++;
+                    if (ClientCounter < byte.MaxValue)
+                    {
+                        ClientCounter++;
+                    }
+                    else
+                    {
+                        SvLogger.LogWarning($"SERVER HAS REACHED MAXIMUM USERS. RUNNING IN SUSPENDED MODE");
+                    }
                 }
             }
             // This triggers when the listener is stopped, and hopefully, also when the loop ends
@@ -85,16 +96,18 @@ namespace PaintTogetherServer
 
         static void StartServer()
         {
+            string enabled = SvLogger.VerboseLogging ? "enabled." : "disabled.";
+            SvLogger.LogInfo($"Verbose logging {enabled}");
+
             EventReplay.Init();
 
             // If threadcount is < 0, that means we use default to using however many processors this computer has
             int workerCount = ThreadCount < 0 ? Environment.ProcessorCount : ThreadCount;
             for (int i = 0; i < workerCount; i++)
             {
-                Workers.Add(new WorkerThread(i));
+                WorkerThread.Workers.Add(new WorkerThread(i));
             }
             SvLogger.LogInfo($"Created {workerCount} worker threads");
-
 
             Listener = new TcpListener(IPAddress.Any, ListenerPort);
             Listener.Start();
@@ -105,11 +118,21 @@ namespace PaintTogetherServer
         /// <summary>
         /// Read incoming data from each client and enqueue the client's actions to the <see cref="WorkerThread.WorkQueue"/>
         /// </summary>
-        public static async Task HandleClient(uint ID)
+        public static async Task HandleClient(TcpClient client, byte ID)
         {
-            // Oh shit we just got a new client
-            PaintClient pc = Clients[ID];
+            PaintClient pc = new PaintClient(client, ID);
+
             using var reader = new BinaryReader(pc.Stream, System.Text.Encoding.UTF8, leaveOpen: true);
+            using var writer = new BinaryWriter(pc.Stream, System.Text.Encoding.UTF8, leaveOpen: true);
+
+            // Ok first check we even have room for this guy
+            if (ClientCounter >= MaxUsers)
+            {
+                SvLogger.LogWarning($"Client [{pc.ip}] was rejected due to maxmimum connection count reached: {ClientCounter}");
+                writer.Write((short)CommonKeys.ServerPacketTypes.ServerConnectionLimitReached);
+                pc.tcp.Close();
+                return;
+            }
 
             // Most important thing is to valid the user is actually on the same version as everyone else.
             // We expect the first packet to be a string with the client's version
@@ -118,41 +141,94 @@ namespace PaintTogetherServer
             if (clVersion != VERSION)
             {
                 SvLogger.LogWarning($"Client [{pc.ip}] was rejected due to a version mismatch: Server = [{VERSION}], Client = [{clVersion}]");
+                writer.Write((short)CommonKeys.ServerPacketTypes.VersionMismatch);
                 pc.tcp.Close();
                 return;
             }
 
-            // Next, we expect another string for the user's username
-            // Same deal, if we don't get one, disconnect the user
-            // TODO: username checks, if anyone already has this username, if username is blank, ect
-            string _userName = reader.ReadString();
-            pc.UserName = _userName;
-
-            SvLogger.LogInfo($"Client [IP: {pc.ip}, ID: {pc.ID}] has joined with username: {pc.UserName}");
-
-            while (pc.tcp.Connected)
+            // Next we get the client's """username""", really its just the guid so we can identify if we've seen them before
+            string _ = reader.ReadString();
+            Guid clGuid = Guid.Empty;
+            try
             {
-                byte packetType = reader.ReadByte();
-                int length = reader.ReadInt32();
-                byte[] data = reader.ReadBytes(length);
-
-                WorkerThread.WorkQueue.Add
-                (
-                    new InfoPacket(ID, packetType, data)
-                );
-
-                await Task.Delay(1); // what the fuck???
-                // I'm assuming this is some kind of compiler optimisation.
-                // if you have an async task, but don't actually write await anywhere, then it wont be async??????????/
-                // im just doing this await task delay for zero purpose other than to force the compiler to realise its async
+                clGuid = new Guid(_);
+            }
+            catch (FormatException)
+            {
+                SvLogger.LogWarning($"Client [{pc.ip}] was rejected due to a bad GUID: [{_}]");
+                writer.Write((short)CommonKeys.ServerPacketTypes.BadUID);
+                pc.tcp.Close();
+                return;
             }
 
-            SvLogger.LogInfo($"Client [IP: {pc.ip}, ID: {pc.ID}, Username: {pc.UserName}] has disconnected ");
+            // If we've seen this GUID before, that means this client is attempting to log in as an already existing user
+            // We assign this new client connection the id's this user has and broadcast the id of the rejoining user
+            if (Users.TryGetValue(clGuid, out PaintUser userInfo))
+            {
+                pc = new PaintClient(pc.tcp, userInfo.ClientID);
+                if (!Clients.TryAdd(userInfo.ClientID, pc))
+                {
+                    SvLogger.LogWarning($"Could not create new PaintClient from existing PaintUser");
+                }
+
+                NetUtils.BroadcastServerPacket(CommonKeys.ServerPacketTypes.ExistingUserConnecting, [userInfo.ClientID]);
+            }
+            // If we've never seen this GUID before, this means this is a new user and we need to asign them a new user slot
+            else
+            {
+                // First we need the username, Request the client to send it to us
+                //NetUtils.SendServerPacket(CommonKeys.ServerPacketTypes.RequestUsername, pc, []);
+                string userName = clGuid.ToString();
+
+                if (!Users.TryAdd(clGuid, new PaintUser(clGuid, ID, userName)))
+                {
+                    SvLogger.LogWarning($"Could not create new PaintUser");
+                }
+                if (!Clients.TryAdd(ID, pc))
+                {
+                    SvLogger.LogWarning($"Could not create new PaintClient from new PaintUser");
+                }
+
+            }
+
+
+            SvLogger.LogInfo($"Client [IP: {pc.ip}, ID: {pc.ID}, GUID: {clGuid}] has joined with username: {Users[clGuid].UserName}");
+
+            try
+            {
+                while (pc.tcp.Connected)
+                {
+                    byte packetType = reader.ReadByte();
+                    int length = reader.ReadInt32();
+                    byte[] data = reader.ReadBytes(length);
+
+                    WorkerThread.WorkQueue.Add
+                    (
+                        new InfoPacket(ID, packetType, data)
+                    );
+
+                    await Task.Delay(1); // what the fuck???
+                    // I'm assuming this is some kind of compiler optimisation.
+                    // if you have an async task, but don't actually write await anywhere, then it wont be async??????????/
+                    // im just doing this await task delay for zero purpose other than to force the compiler to realise its async
+                }
+            }
+            catch (EndOfStreamException)
+            {
+                if (Clients.TryRemove(ID, out PaintClient? _))
+                {
+                    SvLogger.LogInfo($"Client [IP: {pc.ip}, ID: {pc.ID}, Username: {Users[clGuid].UserName}] has disconnected ");
+                }
+                else
+                {
+                    throw new Exception($"Could not remove client [IP: {pc.ip}, ID: {pc.ID}, Username: {Users[clGuid].UserName}]");
+                }
+            }
         }
 
         static void Unload()
         {
-            Workers.Clear();
+            WorkerThread.Workers.Clear();
             foreach (var ky in Clients.Keys)
             {
                 Clients[ky].tcp.Close();
@@ -191,11 +267,17 @@ namespace PaintTogetherServer
         --optionName, --alternate <input>   : Information about the option. [Accepted value range] {Default value}
     Options:
         --help, --h                         : Displays this information about PaintTogetherServer and available options.
+        --verbose, --v                      : Enables verbose logging. Writes in extreme detail to the log file {False}
         --threadCount <count>               : Overrides the number of worker threads the server will allocate for handling client operations. [0-255] {-1}
         --port <number>                     : Overrides the port the server listen for clients on. [0-65535] {12504}";
                             SvLogger.LogInfo(s);
                             return true; // If the user specified help in any way, *return* true which tells main not to run the actual server
                                          // We dont parse any other params at all if help was a specified param
+
+                        case "--verbose":
+                        case "--v":
+                            SvLogger.VerboseLogging = true;
+                            break;
 
                         case "--threadcount":
                             if (!int.TryParse(args[i + 1], out int _threadCount) || _threadCount < 0 || _threadCount > byte.MaxValue)

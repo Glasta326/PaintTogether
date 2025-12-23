@@ -1,0 +1,11 @@
+PACKET OWNER IDS:
+255: server
+0 to 254: clients
+
+SERVER PACKET HEADER IDS:
+0: unused
+1-10: Disconnection reasons
+11-20: Server requesting things from clients
+21: new user connecting
+22: existing user connecting
+23: user disconnecting

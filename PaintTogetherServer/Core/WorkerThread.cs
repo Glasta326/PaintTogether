@@ -11,6 +11,8 @@ namespace PaintTogetherServer.Core
 {
     public class WorkerThread
     {
+        public static List<WorkerThread> Workers = new List<WorkerThread>();
+
         public static BlockingCollection<InfoPacket> WorkQueue = new(new ConcurrentQueue<InfoPacket>());
 
         public Thread myThread;
@@ -27,9 +29,6 @@ namespace PaintTogetherServer.Core
 
         private void Init()
         {
-
-
-
             Loop();
         }
 
@@ -65,21 +64,34 @@ namespace PaintTogetherServer.Core
                     EventReplay.AddAction(task);
                 }
 
-                foreach (PaintClient pc in Program.Clients.Values.ToArray())
+                foreach (PaintClient pc in Program.Clients.Values)
                 {
                     // Obviously dont send data back to the sender
                     if (pc.ID == task.OwnerID)
                     {
                         continue;
                     }
-                    using var clientWriter = new BinaryWriter(pc.Stream, System.Text.Encoding.UTF8, leaveOpen: true);
-                    
-                    clientWriter.Write(task.OwnerID);
-                    clientWriter.Write(task.Type);
-                    clientWriter.Write(task.Length);
-                    clientWriter.Write(task.Data.Span);
 
-                    SvLogger.LogInfo($"Thread: [{myID}] Sent packet from [{task.OwnerID}] aka [{Program.Clients[task.OwnerID].UserName}] to [{pc.ID}] aka [{pc.UserName}] Containing [{task.Length}] bytes of data");
+                    // It hurts, but otherwise two threads can write to the same stream at the same time and garble all the data
+                    // We are still geting multithreading performance though, just less
+                    // think about it with 2 threads, if thread 1 and thread 2 both need to send out a packet:
+                    // thread 1 is working on client a
+                    // thread 2 is waiting for thread 1
+                    // thread 1 is done, thread 2 now orks on client a while thread1 works on client b
+                    // thread 2 is finished with client a, but at roughly the same time, thread 1 just finishes on client b and moves on
+                    // so we still kind of align our threads and get performance gains
+                    lock (pc.streamLock)
+                    {
+                        using var clientWriter = new BinaryWriter(pc.Stream, System.Text.Encoding.UTF8, leaveOpen: true);
+
+                        clientWriter.Write(task.OwnerID);
+                        clientWriter.Write(task.Type);
+                        clientWriter.Write(task.Length);
+                        clientWriter.Write(task.Data.Span);
+                    }
+
+
+                    SvLogger.LogInfo($"Thread: [{myID}] Sent packet from [{task.OwnerID}] to [{pc.ID}] Containing [{task.Length}] bytes of data", true);
                 }
 
 

@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 namespace PaintTogetherServer.Core
 {
     /// <summary>
-    /// Represents a connected client.
+    /// Represents an activley connected user.
     /// </summary>
     public class PaintClient(TcpClient _tcp, uint _ID)
     {
@@ -16,14 +16,9 @@ namespace PaintTogetherServer.Core
         /// The actual TCP connection to this client
         /// </summary>
         public TcpClient tcp = _tcp;
-        
-        /// <summary>
-        /// The username specified by this client when joining. Represents this client to users
-        /// </summary>
-        public string UserName;
 
         /// <summary>
-        /// The ID generated for this client by the server. This ID is trustworthy and is the final authority on who this client is.
+        /// The ID generated for this client by the server.
         /// </summary>
         public uint ID = _ID;
 
@@ -36,5 +31,7 @@ namespace PaintTogetherServer.Core
         /// Shortcut to get the stream of this client
         /// </summary>
         public NetworkStream Stream => tcp.GetStream();
+
+        public object streamLock = new();
     }
 }

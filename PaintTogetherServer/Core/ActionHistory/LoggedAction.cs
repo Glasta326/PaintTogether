@@ -20,6 +20,6 @@ namespace PaintTogetherServer.Core.ActionHistory
 
         readonly InfoPacket Packet = _Packet;
 
-        readonly PaintClient Owner = _Owner;
+        readonly PaintClient? Owner = _Owner;
     }
 }

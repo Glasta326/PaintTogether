@@ -3,6 +3,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using PaintTogetherServer.Common.Utilities;
 
 namespace PaintTogetherServer.Core.ActionHistory
 {
@@ -34,7 +35,14 @@ namespace PaintTogetherServer.Core.ActionHistory
         {
             foreach (var data in InfoQueue.GetConsumingEnumerable())
             {
-                ActionHistory.Add(new LoggedAction(ActionCounter, DateTime.Now, data, Program.Clients[data.OwnerID]));
+                if (data.OwnerID == CommonKeys.ServerPacketID)
+                {
+                    ActionHistory.Add(new LoggedAction(ActionCounter, DateTime.Now, data, null)); // Actions done by the server dont have a client to reference
+                }
+                else
+                {
+                    ActionHistory.Add(new LoggedAction(ActionCounter, DateTime.Now, data, Program.Clients[data.OwnerID]));
+                }
                 ActionCounter++;
             }
         }

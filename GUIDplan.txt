@@ -1,0 +1,50 @@
+        ///
+        /// Example:
+        /// client a joins.
+        /// client a is assigned byte id of 0
+        /// client a is assigned a handler task
+        /// the handler task asks client A for a UID
+        /// client a responds with guid JISJ-WIIE-LKKK
+        /// the handler checks if JISJ-WIIE-LKKK exists in the user dict
+        /// it does not
+        /// create new entry in there using JISJ-WIIE-LKKK as key
+        /// entry is given a byte id of 0
+        /// this entry ID was created by the server. so it is auth and trusted.
+        /// we ask for username string
+        /// "glasta" returned from client
+        /// PaintUser.username = "glasta"
+        ///
+        ///
+        /// later, client disconnects
+        /// we destroy the entry at byteid0 in the Clients dict
+        /// relay to all clients that id0 disconnected
+        /// clients local action histroy for that user is mainted, but gui in the client shows a (disconnected) next to that user in the list
+        ///
+        /// client b joins
+        /// same shuffle as client a joining was
+        /// however, client b needs to catch up
+        /// client b now has UID BAIU-WDFN-UAWY
+        /// client b has byte id 1
+        /// client b username "atsalg"
+        /// so the Clients dict has one entry, but Users dict has two
+        /// relay every action accumulated in EventReplay to client b so they are caught up
+        /// client b is OK
+        ///
+        /// later
+        ///
+        /// client a attempts to join again
+        /// server does not know that yet
+        /// we create new paintclient entry on this tcp connection
+        /// assign handler for this client entry
+        /// handler asks for GUID
+        /// server recieves JISJ-WIIE-LKKK
+        /// found the user in the Users dict!
+        /// server assigns this tcp connection to the byte id found in the users dict
+        /// new entry in Clients, byteid 0 and the tcpconnection we're handling
+        /// we still have username from last time too
+        /// we catch up client JISJ-WIIE-LKKK on everything by sending them the whole eventreplay backlog one at a time
+        /// just like we did with client b
+        ///
+        /// we tell client b that a user with byteid 0 has joined
+        /// we tell client b that user is called "glasta"
+        /// packets coming from "glasta" are routed with byteid 0

@@ -85,8 +85,23 @@ namespace PaintTogether
             wStream.Write(LoggableData.ClientVersionInfo());
             wStream.Flush();
 
-            wStream.Write($"Glasta + {Environment.ProcessId}");
+            // Get guid
+            string path = Path.Combine(CommonKeys.MainDirectory,"GUID.txt");
+            if (!File.Exists(path))
+            {
+                File.WriteAllText(path,Guid.NewGuid().ToString());
+            }
+            Guid myGuid = new Guid(File.ReadAllText(path));
+
+            var x = myGuid.ToByteArray();
+            x[0] = (byte)Environment.ProcessId;
+
+            myGuid = new Guid(x);
+
+            wStream.Write(myGuid.ToString());
             wStream.Flush();
+
+            
 
             while (t.Connected)
             {
