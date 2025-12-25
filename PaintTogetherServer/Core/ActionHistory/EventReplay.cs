@@ -35,14 +35,7 @@ namespace PaintTogetherServer.Core.ActionHistory
         {
             foreach (var data in InfoQueue.GetConsumingEnumerable())
             {
-                if (data.OwnerID == CommonKeys.ServerPacketID)
-                {
-                    ActionHistory.Add(new LoggedAction(ActionCounter, DateTime.Now, data, null)); // Actions done by the server dont have a client to reference
-                }
-                else
-                {
-                    ActionHistory.Add(new LoggedAction(ActionCounter, DateTime.Now, data, Program.Clients[data.OwnerID]));
-                }
+                ActionHistory.Add(new LoggedAction(ActionCounter, DateTime.Now, data, data.OwnerID));
                 ActionCounter++;
             }
         }

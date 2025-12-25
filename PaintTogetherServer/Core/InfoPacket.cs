@@ -11,13 +11,13 @@ namespace PaintTogetherServer.Core
     /// <param name="_OwnerID">The ID of this client found in <see cref="Program.Clients"/></param>
     /// <param name="_Type">What type of packet this is</param>
     /// <param name="_Data">The actual data inside of this packet</param>
-    public sealed class InfoPacket(uint _OwnerID, byte _Type, byte[] _Data)
+    public sealed class InfoPacket(byte _OwnerID, byte _Type, byte[] _Data)
     {
         /// <summary>
         /// The ID in <see cref="Program.Clients"/> of this client. <br/>
         /// Because this comes from the server's list of who is who, this value is always authoratitvley true.
         /// </summary>
-        public readonly uint OwnerID = _OwnerID;
+        public readonly byte OwnerID = _OwnerID;
 
         /// <summary>
         /// The type of operation the data in this packet represents. <br/>

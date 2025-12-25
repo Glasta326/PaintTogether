@@ -28,7 +28,7 @@ namespace PaintTogetherServer
         /// <summary>
         /// Dictionary of activley connected users
         /// </summary>
-        public static ConcurrentDictionary<uint, PaintClient> Clients = new ConcurrentDictionary<uint, PaintClient>();
+        public static ConcurrentDictionary<byte, PaintClient> Clients = new ConcurrentDictionary<byte, PaintClient>();
 
         private static byte ClientCounter = 0;
 
@@ -188,7 +188,6 @@ namespace PaintTogetherServer
                 {
                     SvLogger.LogWarning($"Could not create new PaintClient from new PaintUser");
                 }
-
             }
 
 

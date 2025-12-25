@@ -12,7 +12,7 @@ namespace PaintTogetherServer.Core.ActionHistory
     /// <param name="_TimeStamp">timestamp for when this action was logged by the server</param>
     /// <param name="_Packet">the InfoPacket this is based on</param>
     /// <param name="_Owner">the ID of the user who performed this action</param>
-    public class LoggedAction(ulong _EntryNum, DateTime _TimeStamp, InfoPacket _Packet, PaintClient _Owner)
+    public class LoggedAction(ulong _EntryNum, DateTime _TimeStamp, InfoPacket _Packet, byte _Owner)
     {
         readonly ulong EntryNum = _EntryNum;
 
@@ -20,6 +20,6 @@ namespace PaintTogetherServer.Core.ActionHistory
 
         readonly InfoPacket Packet = _Packet;
 
-        readonly PaintClient? Owner = _Owner;
+        readonly byte Owner = _Owner;
     }
 }
