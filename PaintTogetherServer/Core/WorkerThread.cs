@@ -80,6 +80,8 @@ namespace PaintTogetherServer.Core
                     // The lock here ensures no other threads can try to send data to this client while we catch them up
                     lock (target.Connection.streamLock)
                     {
+                        target.DoNotSend = true; // The stream is locked already, but this prevents threads from wasting time getting stuck on the streamlock hopefully
+
                         // First specify how many Logged actions there are to catch up on
                         // otherwise the client has no way to know when we've stopped sending catchup packets and have started sending normal ones
                         int length = EventReplay.ActionHistory.Count;
@@ -93,14 +95,24 @@ namespace PaintTogetherServer.Core
                             target.Connection.Writer.Write(data.Length);
                             target.Connection.Writer.Write(data.Data.Span);
                         }
+
+                        target.DoNotSend = false;
                     }
 #pragma warning restore CS8602
                 }
 
+                // TODO:
+                // Eventually i want to full redo this system, having it so each PaintUser has it's own send loop
+                // So the clientConnection will have its own blockingCollection of packets, and it's own networkstream
+                // and every user also get's its own task that sends packets
+                // worker threads will just enqueue the packets from the main queue into the right user
+                // so instead of dequeing from the WorkQueue, writing and sending
+                // THey now take the dequeued packet, and add that packet to every user's queue (except the sender)
+                // then the user's sending task will dequeue packets from the blockingCOllection and send them
                 foreach (PaintUser user in Program.RegisteredUsers._UsersById.Values)
                 {
                     // Dont send packets to anyone not connected or back to the person who sent this packet lol
-                    if (!user.IsConnected || task.OwnerID == user.ClientID)
+                    if (user.DoNotSend || !user.IsConnected || task.OwnerID == user.ClientID)
                     {
                         continue;
                     }

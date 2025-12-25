@@ -32,5 +32,10 @@ namespace PaintTogetherServer.Core.UserRegistry
         public PaintConnection? Connection = null;
 
         public bool IsConnected => Connection != null && Connection.tcp.Connected; 
+
+        /// <summary>
+        /// When true, threads will not attempt to send data to this user.
+        /// </summary>
+        public bool DoNotSend = false;
     }
 }
