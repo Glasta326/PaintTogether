@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using PaintTogetherServer.Core;
 using PaintTogetherServer.Common.SvLogger;
+using PaintTogetherServer.Core.UserRegistry;
 
 namespace PaintTogetherServer.Common.Utilities
 {
@@ -21,9 +22,14 @@ namespace PaintTogetherServer.Common.Utilities
         /// <summary>
         /// Sends a packet created by the server to a specified client
         /// </summary>
-        public static void SendServerPacket(CommonKeys.ServerPacketTypes _packetType, PaintClient _target, byte[] _data)
+        public static void SendServerPacket(CommonKeys.ServerPacketTypes _packetType, PaintUser _target, byte[] _data)
         {
-            BinaryWriter writer = new BinaryWriter(_target.Stream, System.Text.Encoding.UTF8, true);
+            if (_target.Connection is null)
+            {
+                SvLogger.SvLogger.LogWarning($"Attempted to send server packet to disconnected user: [ClientID: {_target.ClientID}, UserID: {_target.UserID}]");
+                return;
+            }
+            BinaryWriter writer = new BinaryWriter(_target.Connection.Stream, System.Text.Encoding.UTF8, true);
 
             writer.Write(CommonKeys.ServerPacketID);
             writer.Write((byte)_packetType);
@@ -31,7 +37,7 @@ namespace PaintTogetherServer.Common.Utilities
             writer.Write(_data);
             writer.Flush();
 
-            SvLogger.SvLogger.LogInfo($"Server packet [{_packetType}] was sent to [{_target.ID}]", true);
+            SvLogger.SvLogger.LogInfo($"Server packet [{_packetType}] was sent to [ClientID: {_target.ClientID}, UserID: {_target.UserID}]", true);
         }
     }
 }

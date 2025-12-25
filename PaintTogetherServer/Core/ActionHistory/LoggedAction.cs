@@ -14,12 +14,12 @@ namespace PaintTogetherServer.Core.ActionHistory
     /// <param name="_Owner">the ID of the user who performed this action</param>
     public class LoggedAction(ulong _EntryNum, DateTime _TimeStamp, InfoPacket _Packet, byte _Owner)
     {
-        readonly ulong EntryNum = _EntryNum;
+        public readonly ulong EntryNum = _EntryNum;
 
-        readonly DateTime TimeStamp = _TimeStamp;
+        public readonly DateTime TimeStamp = _TimeStamp;
 
-        readonly InfoPacket Packet = _Packet;
+        public readonly InfoPacket Packet = _Packet;
 
-        readonly byte Owner = _Owner;
+        public readonly byte Owner = _Owner;
     }
 }

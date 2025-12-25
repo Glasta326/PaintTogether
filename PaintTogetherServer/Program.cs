@@ -9,6 +9,7 @@ using PaintTogetherServer.Common.Utilities;
 using PaintTogetherServer.Common.SvLogger;
 using PaintTogetherServer.Core;
 using PaintTogetherServer.Core.ActionHistory;
+using PaintTogetherServer.Core.UserRegistry;
 namespace PaintTogetherServer
 {
     public static partial class Program
@@ -23,14 +24,17 @@ namespace PaintTogetherServer
         /// When a client connects and sends an already existing GUID (implying this client re-connected and was here before), <br/>
         /// We create a new entry in the Clients dict with that GUID's associated byte ID.<br/>
         /// </summary>
-        public static ConcurrentDictionary<Guid, PaintUser> Users = new ConcurrentDictionary<Guid, PaintUser>();
+       // public static ConcurrentDictionary<Guid, PaintUser> Users = new ConcurrentDictionary<Guid, PaintUser>();
 
         /// <summary>
         /// Dictionary of activley connected users
         /// </summary>
-        public static ConcurrentDictionary<byte, PaintClient> Clients = new ConcurrentDictionary<byte, PaintClient>();
+        //public static ConcurrentDictionary<byte, PaintClient> Clients = new ConcurrentDictionary<byte, PaintClient>();
 
-        private static byte ClientCounter = 0;
+        public static byte UserCounter = 0;
+        public static object CounterLock = new();
+
+        public static PaintUsers RegisteredUsers = new PaintUsers();
 
         static async Task Main(string[] args)
         {
@@ -71,16 +75,8 @@ namespace PaintTogetherServer
                 {
                     TcpClient incoming = await Listener.AcceptTcpClientAsync();
                     SvLogger.LogInfo($"New incoming connection on: [{((IPEndPoint)incoming.Client.RemoteEndPoint).Address}]");
-                    _ = HandleClient(incoming, ClientCounter);
+                    _ = HandleClient(incoming);
 
-                    if (ClientCounter < byte.MaxValue)
-                    {
-                        ClientCounter++;
-                    }
-                    else
-                    {
-                        SvLogger.LogWarning($"SERVER HAS REACHED MAXIMUM USERS. RUNNING IN SUSPENDED MODE");
-                    }
                 }
             }
             // This triggers when the listener is stopped, and hopefully, also when the loop ends
@@ -118,18 +114,20 @@ namespace PaintTogetherServer
         /// <summary>
         /// Read incoming data from each client and enqueue the client's actions to the <see cref="WorkerThread.WorkQueue"/>
         /// </summary>
-        public static async Task HandleClient(TcpClient client, byte ID)
+        public static async Task HandleClient(TcpClient client)
         {
-            PaintClient pc = new PaintClient(client, ID);
+            PaintConnection pc = new PaintConnection(client);
 
             using var reader = new BinaryReader(pc.Stream, System.Text.Encoding.UTF8, leaveOpen: true);
             using var writer = new BinaryWriter(pc.Stream, System.Text.Encoding.UTF8, leaveOpen: true);
 
+            # region User checks
+
             // Ok first check we even have room for this guy
-            if (ClientCounter >= MaxUsers)
+            if (RegisteredUsers.Count >= MaxUsers)
             {
-                SvLogger.LogWarning($"Client [{pc.ip}] was rejected due to maxmimum connection count reached: {ClientCounter}");
-                writer.Write((short)CommonKeys.ServerPacketTypes.ServerConnectionLimitReached);
+                SvLogger.LogWarning($"Client [{pc.ip}] was rejected due to maxmimum connection count reached: {RegisteredUsers.Count}");
+                writer.Write((short)CommonKeys.ServerPacketTypes.RejectServerConnectionLimitReached);
                 pc.tcp.Close();
                 return;
             }
@@ -141,7 +139,7 @@ namespace PaintTogetherServer
             if (clVersion != VERSION)
             {
                 SvLogger.LogWarning($"Client [{pc.ip}] was rejected due to a version mismatch: Server = [{VERSION}], Client = [{clVersion}]");
-                writer.Write((short)CommonKeys.ServerPacketTypes.VersionMismatch);
+                writer.Write((short)CommonKeys.ServerPacketTypes.RejectVersionMismatch);
                 pc.tcp.Close();
                 return;
             }
@@ -156,22 +154,30 @@ namespace PaintTogetherServer
             catch (FormatException)
             {
                 SvLogger.LogWarning($"Client [{pc.ip}] was rejected due to a bad GUID: [{_}]");
-                writer.Write((short)CommonKeys.ServerPacketTypes.BadUID);
+                writer.Write((short)CommonKeys.ServerPacketTypes.RejectBadGUID);
                 pc.tcp.Close();
                 return;
             }
 
+
+            byte thisUserID;
+
             // If we've seen this GUID before, that means this client is attempting to log in as an already existing user
             // We assign this new client connection the id's this user has and broadcast the id of the rejoining user
-            if (Users.TryGetValue(clGuid, out PaintUser userInfo))
+            if (RegisteredUsers.TryGetValue(clGuid, out PaintUser? user))
             {
-                pc = new PaintClient(pc.tcp, userInfo.ClientID);
-                if (!Clients.TryAdd(userInfo.ClientID, pc))
+                // This means whoever is trying to join is username that already exists
+                // Reject them and tell them that user is already connected
+                if (user.IsConnected)
                 {
-                    SvLogger.LogWarning($"Could not create new PaintClient from existing PaintUser");
+                    SvLogger.LogWarning($"Client [{pc.ip}] was rejected due to trying to log on on a GUID that is already connected: [{clGuid}]");
+                    writer.Write((short)CommonKeys.ServerPacketTypes.RejectUserAlreadyConnected);
+                    pc.tcp.Close();
+                    return;
                 }
 
-                NetUtils.BroadcastServerPacket(CommonKeys.ServerPacketTypes.ExistingUserConnecting, [userInfo.ClientID]);
+                // Set the user who we've now recognised's conection to be the one we're handling now
+                user.Connection = pc;
             }
             // If we've never seen this GUID before, this means this is a new user and we need to asign them a new user slot
             else
@@ -180,58 +186,67 @@ namespace PaintTogetherServer
                 //NetUtils.SendServerPacket(CommonKeys.ServerPacketTypes.RequestUsername, pc, []);
                 string userName = clGuid.ToString();
 
-                if (!Users.TryAdd(clGuid, new PaintUser(clGuid, ID, userName)))
+                lock (CounterLock)
                 {
-                    SvLogger.LogWarning($"Could not create new PaintUser");
+                    thisUserID = UserCounter;
+                    UserCounter++;
                 }
-                if (!Clients.TryAdd(ID, pc))
+
+                PaintUser toAdd = new PaintUser(clGuid, thisUserID, userName);
+                toAdd.Connection = pc;
+                if (!RegisteredUsers.TryAdd(toAdd))
                 {
-                    SvLogger.LogWarning($"Could not create new PaintClient from new PaintUser");
+                    SvLogger.LogWarning($"Something went wrong. Could not add user: [GUID: {toAdd.UserID}, ID: {toAdd.ClientID}, UserCounter: {UserCounter}]");
+                    writer.Write((short)CommonKeys.ServerPacketTypes.RejectUserUnknown);
+                    pc.tcp.Close();
                 }
             }
 
+            #endregion
 
-            SvLogger.LogInfo($"Client [IP: {pc.ip}, ID: {pc.ID}, GUID: {clGuid}] has joined with username: {Users[clGuid].UserName}");
+            // Reference to the user this task looks after
+            PaintUser thisUser = RegisteredUsers[clGuid];
+
+
+            SvLogger.LogInfo($"Client [IP: {thisUser.Connection.ip}, ID: {thisUser.ClientID}, GUID: {thisUser.UserID}] has joined with username: {thisUser.UserName}");
 
             try
             {
-                while (pc.tcp.Connected)
+                while (thisUser.IsConnected)
                 {
-                    byte packetType = reader.ReadByte();
-                    int length = reader.ReadInt32();
-                    byte[] data = reader.ReadBytes(length);
+                    // Read the type of packet we've recieived (byte)
+                    byte[] msgType = new byte[1];
+                    await thisUser.Connection.Stream.ReadExactlyAsync(msgType);
+
+                    // Read the length of the data in this packet (int32)
+                    byte[] msgLengthBytes = new byte[4];
+                    await thisUser.Connection.Stream.ReadExactlyAsync(msgLengthBytes);
+                    int msgLength = BitConverter.ToInt32(msgLengthBytes);
+                    
+                    // Read the byte array data
+                    byte[] msgData = new byte[msgLength];
+                    await thisUser.Connection.Stream.ReadExactlyAsync(msgData);
+
+                    SvLogger.LogInfo($"Recived packet: [Type: {msgType[0]}, Length: {msgLength}]");
 
                     WorkerThread.WorkQueue.Add
                     (
-                        new InfoPacket(ID, packetType, data)
+                        new InfoPacket(thisUser.ClientID, msgType[0], msgData)
                     );
-
-                    await Task.Delay(1); // what the fuck???
-                    // I'm assuming this is some kind of compiler optimisation.
-                    // if you have an async task, but don't actually write await anywhere, then it wont be async??????????/
-                    // im just doing this await task delay for zero purpose other than to force the compiler to realise its async
                 }
             }
             catch (EndOfStreamException)
             {
-                if (Clients.TryRemove(ID, out PaintClient? _))
-                {
-                    SvLogger.LogInfo($"Client [IP: {pc.ip}, ID: {pc.ID}, Username: {Users[clGuid].UserName}] has disconnected ");
-                }
-                else
-                {
-                    throw new Exception($"Could not remove client [IP: {pc.ip}, ID: {pc.ID}, Username: {Users[clGuid].UserName}]");
-                }
+                SvLogger.LogInfo($"Client [IP: {thisUser.Connection.ip}, ID: {thisUser.ClientID}, Username: {thisUser.UserName}] has disconnected ");
+                thisUser.Connection.tcp.Close();
+                thisUser.Connection = null;
             }
         }
 
         static void Unload()
         {
             WorkerThread.Workers.Clear();
-            foreach (var ky in Clients.Keys)
-            {
-                Clients[ky].tcp.Close();
-            }
+            RegisteredUsers.Unload();
         }
 
         /// <summary>

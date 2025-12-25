@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace PaintTogetherServer.Core
+namespace PaintTogetherServer.Core.UserRegistry
 {
     /// <summary>
     /// Represents a long-term user
@@ -25,5 +25,12 @@ namespace PaintTogetherServer.Core
         /// For the clients, so they can display in english the name of this User. Only used for frontend, never actually in routing or identification really
         /// </summary>
         public string UserName = _UserName;
+
+        /// <summary>
+        /// Tcp connection for this user. Null when this user is not connected to the server
+        /// </summary>
+        public PaintConnection? Connection = null;
+
+        public bool IsConnected => Connection != null && Connection.tcp.Connected; 
     }
 }

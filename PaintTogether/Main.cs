@@ -77,7 +77,7 @@ namespace PaintTogether
         private void ConnectToServer(TcpClient t)
         {
             uint num = 0;
-            Point[] msHistory = new Point[10];
+            Point mousePos = Point.Zero;
 
             BinaryWriter wStream = new BinaryWriter(t.GetStream(), System.Text.Encoding.UTF8, true);
             clLogger.LogInfo($"Started writer!");
@@ -86,10 +86,10 @@ namespace PaintTogether
             wStream.Flush();
 
             // Get guid
-            string path = Path.Combine(CommonKeys.MainDirectory,"GUID.txt");
+            string path = Path.Combine(CommonKeys.MainDirectory, "GUID.txt");
             if (!File.Exists(path))
             {
-                File.WriteAllText(path,Guid.NewGuid().ToString());
+                File.WriteAllText(path, Guid.NewGuid().ToString());
             }
             Guid myGuid = new Guid(File.ReadAllText(path));
 
@@ -101,25 +101,21 @@ namespace PaintTogether
             wStream.Write(myGuid.ToString());
             wStream.Flush();
 
-            
+
 
             while (t.Connected)
             {
-                for (int i = 0; i < msHistory.Length; i++)
-                {
-                    msHistory[i] = MouseData.MousePosPoint();
-                    Thread.Sleep(16);
-                }
+                mousePos = MouseData.MousePosPoint();
+                Thread.Sleep(100);
+
 
                 using var ms = new MemoryStream();
                 using var w = new BinaryWriter(ms);
 
-                // Write each mouse pos into the stream
-                for (int i = 0; i < msHistory.Length; i++)
-                {
-                    w.Write(msHistory[i].X);
-                    w.Write(msHistory[i].Y);
-                }
+
+                w.Write(mousePos.X);
+                w.Write(mousePos.Y);
+
                 byte[] data = ms.ToArray();
                 byte packetType = 8;
 
@@ -171,17 +167,15 @@ namespace PaintTogether
             clLogger.LogInfo($"Started reader!");
             while (t.Connected)
             {
-                uint dataOwner = r.ReadUInt32();
+                byte dataOwner = r.ReadByte();
                 byte dataType = r.ReadByte();
                 int dataLen = r.ReadInt32();
-                for (int i = 0; i < (dataLen / 8); i++) // divide by 8 because its the number of BYTES and we want number of INTS which are 4 BYTES
-                {
-                    int _x = r.ReadInt32();
-                    int _y = r.ReadInt32();
-                    // Reset drawing index
-                    historyIndex = 0;
-                    otherMousePos[i] = new Point(_x, _y);
-                }
+                int _x = r.ReadInt32();
+                int _y = r.ReadInt32();
+
+                // Reset drawing index
+                mouseLerp = 0f;
+                otherMousePos.Push(new Point(_x, _y));                
                 num++;
                 clLogger.LogInfo($"Recieved packet: [type: {dataType}, len: {dataLen}, owner: {dataOwner}, no: {num}]");
             }
@@ -189,9 +183,10 @@ namespace PaintTogether
         }
 
         public static Point MousePos = new Point(100, 100);
-        public static Point[] otherMousePos = new Point[10];
 
-        public static int historyIndex = 0;
+        public static ShiftRegister<Point> otherMousePos = new ShiftRegister<Point>(2);
+
+        public static float mouseLerp = 0;
 
 
         public static Thread clientThread;
@@ -321,11 +316,7 @@ namespace PaintTogether
 
 
             Canvas.Layers.ActiveLayer.GetData<Color>(0, region, c, 0, 4);
-
-            if (historyIndex < otherMousePos.Length - 1)
-            {
-                historyIndex++;
-            }
+            mouseLerp += 1/6f;
         }
 
         private void Update_Inner(GameTime gameTime)
@@ -413,7 +404,9 @@ namespace PaintTogether
 
             _spriteBatch.Begin(SpriteSortMode.Immediate, BlendState.AlphaBlend);
             _spriteBatch.Draw(CommonKeys.WhitePixel, MouseData.MousePosPoint().ToVector2(), null, Color.White, 0f, CommonKeys.WhitePixel.Size() * 0.5f, 10f, SpriteEffects.None, 0f);
-            _spriteBatch.Draw(CommonKeys.WhitePixel, otherMousePos[historyIndex].ToVector2(), null, Color.Red, 0f, CommonKeys.WhitePixel.Size() * 0.5f, 10f, SpriteEffects.None, 0f);
+
+            Vector2 mousepos = Vector2.Lerp(otherMousePos[1].ToVector2(),otherMousePos[0].ToVector2(),mouseLerp);
+            _spriteBatch.Draw(CommonKeys.WhitePixel, mousepos, null, Color.Red, 0f, CommonKeys.WhitePixel.Size() * 0.5f, 10f, SpriteEffects.None, 0f);
 
 
             _spriteBatch.End();

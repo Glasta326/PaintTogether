@@ -6,6 +6,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using PaintTogetherServer.Common.SvLogger;
 using PaintTogetherServer.Core.ActionHistory;
+using PaintTogetherServer.Core.UserRegistry;
 
 namespace PaintTogetherServer.Core
 {
@@ -64,13 +65,50 @@ namespace PaintTogetherServer.Core
                     EventReplay.AddAction(task);
                 }
 
-                foreach (PaintClient pc in Program.Clients.Values)
+                // TODO: untested!
+                // Type 255 is the catchup request
+                // A client will send a packet of type 255 when joining,
+                // and when this thread sees the packet it will write every entry in the EventReplay log to the packet's sender
+                if (task.Type == 255)
                 {
-                    // Obviously dont send data back to the sender
-                    if (pc.ID == task.OwnerID)
+                    PaintUser target = Program.RegisteredUsers[task.OwnerID];
+                    if (!target.IsConnected)
                     {
                         continue;
                     }
+#pragma warning disable CS8602
+                    // The lock here ensures no other threads can try to send data to this client while we catch them up
+                    lock (target.Connection.streamLock)
+                    {
+                        // First specify how many Logged actions there are to catch up on
+                        // otherwise the client has no way to know when we've stopped sending catchup packets and have started sending normal ones
+                        int length = EventReplay.ActionHistory.Count;
+                        target.Connection.Writer.Write(length);
+                        
+                        foreach (LoggedAction item in EventReplay.ActionHistory)
+                        {
+                            InfoPacket data = item.Packet;
+                            target.Connection.Writer.Write(data.OwnerID);
+                            target.Connection.Writer.Write(data.Type);
+                            target.Connection.Writer.Write(data.Length);
+                            target.Connection.Writer.Write(data.Data.Span);
+                        }
+                    }
+#pragma warning restore CS8602
+                }
+
+                foreach (PaintUser user in Program.RegisteredUsers._UsersById.Values)
+                {
+                    // Dont send packets to anyone not connected or back to the person who sent this packet lol
+                    if (!user.IsConnected || task.OwnerID == user.ClientID)
+                    {
+                        continue;
+                    }
+                    if (task.OwnerID != 0) // testing. Just makes it so every instance i open looks only at the first instance's sent data
+                    {
+                        continue;
+                    }
+#pragma warning disable CS8602 // <- User must be considered "connected", so the pc connection cannot be null
 
                     // It hurts, but otherwise two threads can write to the same stream at the same time and garble all the data
                     // We are still geting multithreading performance though, just less
@@ -80,22 +118,18 @@ namespace PaintTogetherServer.Core
                     // thread 1 is done, thread 2 now orks on client a while thread1 works on client b
                     // thread 2 is finished with client a, but at roughly the same time, thread 1 just finishes on client b and moves on
                     // so we still kind of align our threads and get performance gains
-                    lock (pc.streamLock)
+                    lock (user.Connection.streamLock)
                     {
-                        using var clientWriter = new BinaryWriter(pc.Stream, System.Text.Encoding.UTF8, leaveOpen: true);
-
-                        clientWriter.Write(task.OwnerID);
-                        clientWriter.Write(task.Type);
-                        clientWriter.Write(task.Length);
-                        clientWriter.Write(task.Data.Span);
+                        user.Connection.Writer.Write(task.OwnerID);
+                        user.Connection.Writer.Write(task.Type);
+                        user.Connection.Writer.Write(task.Length);
+                        user.Connection.Writer.Write(task.Data.Span);
                     }
 
 
-                    SvLogger.LogInfo($"Thread: [{myID}] Sent packet from [{task.OwnerID}] to [{pc.ID}] Containing [{task.Length}] bytes of data", true);
+                    SvLogger.LogInfo($"Thread: [{myID}] Sent packet from [{task.OwnerID}] to [{user.ClientID}] Containing [{task.Length}] bytes of data", true);
                 }
-
-
-                Thread.Sleep(1);
+#pragma warning restore CS8602
             }
         }
 

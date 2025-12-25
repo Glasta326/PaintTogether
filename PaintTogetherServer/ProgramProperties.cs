@@ -46,8 +46,8 @@ namespace PaintTogetherServer
         public static ushort ListenerPort = 12504;
 
         /// <summary>
-        /// The maximum amount of times connection attempts can happen to the server
+        /// Maximum amount of users that can be registered on this server
         /// </summary>
-        public static uint MaxUsers = byte.MaxValue;
+        public static int MaxUsers = byte.MaxValue;
     }   
 }

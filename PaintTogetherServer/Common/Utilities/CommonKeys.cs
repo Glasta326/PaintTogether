@@ -10,25 +10,72 @@ namespace PaintTogetherServer.Common.Utilities
         /// <summary>
         /// Directory most files will go to. Log files, ect
         /// </summary>
-        public static readonly String MainDirectory = "/home/Glasta/Projects/PaintTogether/PaintTogetherServer";
+        public static readonly string MainDirectory = "/home/Glasta/Projects/PaintTogether/PaintTogetherServer";
         //public static readonly String MainDirectory = Directory.GetCurrentDirectory();
 
+        /// <summary>
+        /// Registry for all the different types of packet the server can directly send to clients that does not originate from a relay <br/>
+        /// The ID's here do not conflict with relay packet id types, because clients will handle messages from the server differently to relay packets
+        /// </summary>
         public enum ServerPacketTypes
         {
-            // Forced user disconnect reasons
-            ServerConnectionLimitReached = 1,
-            BadUID = 2,
-            VersionMismatch = 3,
+            #region Forced user disconnect reasons
 
-            // Server requests
+            /// <summary>
+            /// There are too many users registered on this server.
+            /// </summary>
+            RejectServerConnectionLimitReached = 1,
+
+            /// <summary>
+            /// The GUID sent by the client was badly formatted somehow
+            /// </summary>
+            RejectBadGUID = 2,
+
+            /// <summary>
+            /// The version information sent by the client is not the same version as the server is running on
+            /// </summary>
+            RejectVersionMismatch = 3,
+
+            /// <summary>
+            /// The client tried to join on a user GUID that is already currently connected
+            /// </summary>
+            RejectUserAlreadyConnected = 4,
+
+            /// <summary>
+            /// Something unknown went wrong and the user could not be registered
+            /// </summary>
+            RejectUserUnknown = 5,
+
+            #endregion
+
+            #region Server requests
+
+            /// <summary>
+            /// The server is asking the client to send the username string it wants to use
+            /// </summary>
             RequestUsername = 11,
 
-            // Server broadcasts
-            NewUserConnecting = 21,
-            ExistingUserConnecting = 22,
-            UserDisconnecting = 23
-        }
+            #endregion
 
+            #region Server broadcasts
+
+            /// <summary>
+            /// A user who the server has never seen before just connected for the first time
+            /// </summary>
+            AnnounceNewUserConnecting = 21,
+
+            /// <summary>
+            /// A user who the server is already aware of just re-connected
+            /// </summary>
+            AnnounceExistingUserConnecting = 22,
+
+            /// <summary>
+            /// A user who is currently connected has just disconnected
+            /// </summary>
+            AnnounceUserDisconnecting = 23
+
+            #endregion
+        }
 
         /// <summary>
         /// All packets created by the server and sent out will have a user ID of 255
