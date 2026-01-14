@@ -10,6 +10,8 @@ using System.Linq;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
 using PaintTogether.Common.PaintLogger;
+using PaintTogether.Core.Networking;
+using PaintTogether.Core.Networking.Registry;
 
 namespace PaintTogether.Core
 {
@@ -20,15 +22,13 @@ namespace PaintTogether.Core
     {
         public static List<Element> ProgramElements = new List<Element>();
 
-        public static Dictionary<String, byte> NetRegistry = new Dictionary<string, byte>();
-
         public static void InitaliseRegistry()
         {
             Main.stopWatch.Restart();
             var elementTypes = typeof(Element).Assembly.GetTypes()
                 .Where(t => t.IsSubclassOf(typeof(Element)) && !t.IsAbstract);
 
-            byte netIncr = 0;
+
             foreach (var type in elementTypes)
             {
                 if (Activator.CreateInstance(type) is Element instance)
@@ -36,9 +36,10 @@ namespace PaintTogether.Core
                     ProgramElements.Add(instance);
                     clLogger.LogInfo($"Registered program element : {instance.ToString()}", true);
 
-
-                    NetRegistry.Add(instance.ToString(), netIncr);
-                    netIncr++;
+                    if (instance is INetApplicable i)
+                    {
+                        NetRegistry.Register(i);
+                    }
                 }
             }
             Main.stopWatch.Stop();

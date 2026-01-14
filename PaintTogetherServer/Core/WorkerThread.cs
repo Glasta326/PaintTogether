@@ -86,7 +86,7 @@ namespace PaintTogetherServer.Core
                         // otherwise the client has no way to know when we've stopped sending catchup packets and have started sending normal ones
                         int length = EventReplay.ActionHistory.Count;
                         target.Connection.Writer.Write(length);
-                        
+
                         foreach (LoggedAction item in EventReplay.ActionHistory)
                         {
                             InfoPacket data = item.Packet;
@@ -112,11 +112,7 @@ namespace PaintTogetherServer.Core
                 foreach (PaintUser user in Program.RegisteredUsers._UsersById.Values)
                 {
                     // Dont send packets to anyone not connected or back to the person who sent this packet lol
-                    if (user.DoNotSend || !user.IsConnected || task.OwnerID == user.ClientID)
-                    {
-                        continue;
-                    }
-                    if (task.OwnerID != 0) // testing. Just makes it so every instance i open looks only at the first instance's sent data
+                    if (user.DoNotSend || !user.IsConnected)//|| task.OwnerID == user.ClientID)
                     {
                         continue;
                     }

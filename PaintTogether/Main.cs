@@ -24,6 +24,7 @@ using PaintTogether.Content.Applicators.ClickTools;
 using System.Threading.Tasks;
 using System.Net.Sockets;
 using System.Net;
+using PaintTogether.Core.Networking;
 
 namespace PaintTogether
 {
@@ -48,6 +49,8 @@ namespace PaintTogether
             Element.InitaliseRegistry();
             Element.LoadAll();
 
+            NetSorter.Init();
+            /*
             try
             {
                 TcpClient t = new TcpClient();
@@ -67,13 +70,22 @@ namespace PaintTogether
             {
                 clLogger.LogWarning($"Could not connect to server");
             }
+            */
 
 
 
             base.Initialize();
         }
 
+        /*
+        ok so how we need to do it is having the seperate network threads for sending and recieiving,
+        and then the recieve thread reads oncoming shit into a blocking queue which update() can consume any oncoming data and handle it accordingly
+        so the reciever thread recives some packet from the server maybe like [255,5,2,[222,233]], and then this is just put directly into a packet class which is then fed into a blockingCollection of these packets
+        then main thread goes through each packet and is like "oh this packet is type 23 which is the line draw tool" and feeds the packet data into line draw tool or smth idk
+        you get it
 
+        and then reverse for outgoing thread the tool usage enquees something to the outgo list which the sender thread reads consumes from and sends out
+        */
         private void ConnectToServer(TcpClient t)
         {
             uint num = 0;
@@ -102,7 +114,6 @@ namespace PaintTogether
             wStream.Flush();
 
 
-
             while (t.Connected)
             {
                 mousePos = MouseData.MousePosPoint();
@@ -125,7 +136,6 @@ namespace PaintTogether
                 wStream.Write(data);
                 wStream.Flush();
                 num++;
-                Console.WriteLine($"Sent packet no: {num}");
             }
 
             clLogger.LogInfo($"Server disconnected.");
@@ -170,14 +180,21 @@ namespace PaintTogether
                 byte dataOwner = r.ReadByte();
                 byte dataType = r.ReadByte();
                 int dataLen = r.ReadInt32();
+
+                if (dataOwner == 255)
+                {
+                    clLogger.LogInfo($"Recieved packet from SERVER: [type: {dataType}, len: {dataLen}, data: {r.ReadByte()}]");
+                    continue;
+                }
+
                 int _x = r.ReadInt32();
                 int _y = r.ReadInt32();
 
                 // Reset drawing index
                 mouseLerp = 0f;
-                otherMousePos.Push(new Point(_x, _y));                
+                otherMousePos.Push(new Point(_x, _y));
                 num++;
-                clLogger.LogInfo($"Recieved packet: [type: {dataType}, len: {dataLen}, owner: {dataOwner}, no: {num}]");
+                clLogger.LogInfo($"Recieved packet: [type: {dataType}, len: {dataLen}, owner: {dataOwner}, no: {num}]", true);
             }
             clLogger.LogInfo($"Server disconnected.");
         }
@@ -316,7 +333,7 @@ namespace PaintTogether
 
 
             Canvas.Layers.ActiveLayer.GetData<Color>(0, region, c, 0, 4);
-            mouseLerp += 1/6f;
+            mouseLerp += 1 / 6f;
         }
 
         private void Update_Inner(GameTime gameTime)
@@ -405,7 +422,7 @@ namespace PaintTogether
             _spriteBatch.Begin(SpriteSortMode.Immediate, BlendState.AlphaBlend);
             _spriteBatch.Draw(CommonKeys.WhitePixel, MouseData.MousePosPoint().ToVector2(), null, Color.White, 0f, CommonKeys.WhitePixel.Size() * 0.5f, 10f, SpriteEffects.None, 0f);
 
-            Vector2 mousepos = Vector2.Lerp(otherMousePos[1].ToVector2(),otherMousePos[0].ToVector2(),mouseLerp);
+            Vector2 mousepos = Vector2.Lerp(otherMousePos[1].ToVector2(), otherMousePos[0].ToVector2(), mouseLerp);
             _spriteBatch.Draw(CommonKeys.WhitePixel, mousepos, null, Color.Red, 0f, CommonKeys.WhitePixel.Size() * 0.5f, 10f, SpriteEffects.None, 0f);
 
 

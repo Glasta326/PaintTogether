@@ -191,6 +191,8 @@ namespace PaintTogether.Content.Applicators.Tools
                 return;
             }
 
+
+
             // Create a new rendertaget using the exact same formatting as the active canvas layer's rendertarget
             // Then draw the affected area of the active canvas layer into this new rendertarget
             // Essentially copying the region into the new rendertarget

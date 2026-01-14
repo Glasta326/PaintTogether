@@ -57,11 +57,23 @@ namespace PaintTogetherServer
                     Console.WriteLine($"Enter here: ");
                     string r = Console.ReadLine();
                     r ??= "_";
-                    string[] types = ["end", "End", "END"];
-                    if (types.Contains(r.ToLower()))
+
+                    string[] endStrings = ["end", "stop", "terminate"];
+                    if (endStrings.Contains(r.ToLower()))
                     {
                         cts.Cancel();
                         Listener.Stop();
+                    }
+
+                    string[] listUsersStrings = ["listUsers", "list users", "userlist", "ls"];
+                    if (listUsersStrings.Contains(r.ToLower()))
+                    {
+                        Console.WriteLine($"[ID] [GUID] [IP] [Username] [Connected]");
+                        foreach (var usr in RegisteredUsers._UsersById.Values)
+                        {
+                            string ip = usr.IsConnected ? usr.Connection.ip : "NULL";
+                            Console.WriteLine($"[{usr.ClientID}, {usr.UserID}, {ip}, {usr.UserName}, {usr.IsConnected}]");
+                        }
                     }
                 }
             });
@@ -206,9 +218,21 @@ namespace PaintTogetherServer
 
             // Reference to the user this task looks after
             PaintUser thisUser = RegisteredUsers[clGuid];
-
-
             SvLogger.LogInfo($"Client [IP: {thisUser.Connection.ip}, ID: {thisUser.ClientID}, GUID: {thisUser.UserID}] has joined with username: {thisUser.UserName}");
+
+            // TODO: Might need to do something better? unsure
+            // First, directly inform the user who they are. Client is expecting this so we can just send the single id byte
+            NetUtils.SendServerPacket(CommonKeys.ServerPacketTypes.WhisperInformClientID, thisUser, [thisUser.ClientID]);
+            
+            // AFTER directly telling the client, we can broadcast it to everyone that USER with ID and GUID and USERNAME has joined
+            MemoryStream ms = new MemoryStream();
+            BinaryWriter b = new BinaryWriter(ms);
+            b.Write(thisUser.ClientID);
+            b.Write(thisUser.UserID.ToString());
+            b.Write(thisUser.UserName);
+            byte[] payload = ms.ToArray();
+            NetUtils.BroadcastServerPacket(CommonKeys.ServerPacketTypes.AnnounceUserConnecting, payload);
+
 
             try
             {
@@ -222,12 +246,12 @@ namespace PaintTogetherServer
                     byte[] msgLengthBytes = new byte[4];
                     await thisUser.Connection.Stream.ReadExactlyAsync(msgLengthBytes);
                     int msgLength = BitConverter.ToInt32(msgLengthBytes);
-                    
+
                     // Read the byte array data
                     byte[] msgData = new byte[msgLength];
                     await thisUser.Connection.Stream.ReadExactlyAsync(msgData);
 
-                    SvLogger.LogInfo($"Recived packet: [Type: {msgType[0]}, Length: {msgLength}]");
+                    SvLogger.LogInfo($"Recived packet: [Type: {msgType[0]}, Length: {msgLength}]", true);
 
                     WorkerThread.WorkQueue.Add
                     (

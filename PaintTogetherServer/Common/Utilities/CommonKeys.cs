@@ -60,19 +60,23 @@ namespace PaintTogetherServer.Common.Utilities
             #region Server broadcasts
 
             /// <summary>
-            /// A user who the server has never seen before just connected for the first time
+            /// A user has connected to the server
             /// </summary>
-            AnnounceNewUserConnecting = 21,
-
-            /// <summary>
-            /// A user who the server is already aware of just re-connected
-            /// </summary>
-            AnnounceExistingUserConnecting = 22,
+            AnnounceUserConnecting = 21,
 
             /// <summary>
             /// A user who is currently connected has just disconnected
             /// </summary>
-            AnnounceUserDisconnecting = 23
+            AnnounceUserDisconnecting = 22,
+
+            #endregion
+
+            #region Server whispers
+            
+            /// <summary>
+            /// Informs a newly-joined client what networkID they are
+            /// </summary>
+            WhisperInformClientID = 31,
 
             #endregion
         }

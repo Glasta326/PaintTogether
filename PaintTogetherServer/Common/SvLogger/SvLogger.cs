@@ -37,7 +37,7 @@ namespace PaintTogetherServer.Common.SvLogger
         /// <summary>
         /// Enables extremely detailed logging. Can bloat log file.
         /// </summary>
-        public static bool VerboseLogging = true;
+        public static bool VerboseLogging = false;
         // TODO: disable versbose logging when finished
 
         
