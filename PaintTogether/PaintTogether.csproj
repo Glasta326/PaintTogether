@@ -5,11 +5,12 @@
         <RollForward>Major</RollForward>
         <PublishReadyToRun>false</PublishReadyToRun>
         <TieredCompilation>false</TieredCompilation>
-        <AutoRestoreMGCBTool>false</AutoRestoreMGCBTool>
+        <AutoRestoreMGCBTool>true</AutoRestoreMGCBTool>
         <AssemblyVersion>0.0.0.0</AssemblyVersion>
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
         <!-- Pre-release development beta versions are 0.0.0.X-->
     </PropertyGroup>
+
     <PropertyGroup>
         <ApplicationManifest>app.manifest</ApplicationManifest>
         <ApplicationIcon>Icon.ico</ApplicationIcon>
