@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using PaintTogether.Common.PaintLogger;
 
 namespace PaintTogether.Core.Networking.Registry
 {
@@ -25,11 +26,11 @@ namespace PaintTogether.Core.Networking.Registry
         public static void Register(INetApplicable element)
         {
             string id = element.GetType().FullName;
-
             if (NetApplicables.ContainsKey(id))
             {
                 throw new Exception($"Duplicate element ID entry: {id}");
             }
+            clLogger.LogInfo($"Registerd NetApplicable: {id}");
             NetApplicables[id] = element;
         }
 

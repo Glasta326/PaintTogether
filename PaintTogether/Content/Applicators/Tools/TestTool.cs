@@ -2,6 +2,7 @@ using System.IO;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
+using PaintTogether.Common.PaintLogger;
 using PaintTogether.Common.Utilities;
 using PaintTogether.Core.Networking;
 
@@ -44,8 +45,17 @@ namespace PaintTogether.Content.Applicators.Tools
             return null;
         }
 
+        // From here, we need to read the correct params, and then somehow queue up the draw command?
+        // unsure how we do that ngl
+        // currently to draw normally the MainDraw() checks if justLetGo = true and then runs ToolDraw()
+        // Perhaps we add something to MainDraw that checks the queue of drawFuncs and executes them all every time its called
+        // Or we do it kind of like the undoSystem does?
+        // where it creates objects with actions that can be done and undone whenever
+        // except in our case instead of can be done whenever its "do it as soon as possible"
         public void RecieveNetCall(byte owner, BinaryReader reader)
         {
+            clLogger.LogInfo($"Hellow from testTool");
+            return;
             int x = reader.ReadInt32();
             int y = reader.ReadInt32();
             Point toolStartPos = new Point(x, y);

@@ -84,7 +84,7 @@ namespace PaintTogether.Core.Networking
                 w.Write(MouseData.MousePosPoint().Y);
 
                 byte[] data = ms.ToArray();
-                string packetType = "test.packet";
+                string packetType = "PaintTogether.Content.Applicators.Tools.TestTool";
                 
                 writer.Write((byte)packetType.Length);
                 writer.Write(packetType);
