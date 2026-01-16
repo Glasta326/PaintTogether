@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net.Sockets;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Xna.Framework;
@@ -83,8 +84,9 @@ namespace PaintTogether.Core.Networking
                 w.Write(MouseData.MousePosPoint().Y);
 
                 byte[] data = ms.ToArray();
-                byte packetType = 8;
-
+                string packetType = "test.packet";
+                
+                writer.Write((byte)packetType.Length);
                 writer.Write(packetType);
                 writer.Write(data.Length);
                 writer.Write(data);
@@ -105,7 +107,8 @@ namespace PaintTogether.Core.Networking
             while (Client.Connected)
             {
                 byte dataOwner = reader.ReadByte();
-                byte dataType = reader.ReadByte();
+                byte typeLength = reader.ReadByte();
+                string packetType = Encoding.UTF8.GetString(reader.ReadBytes(typeLength));
                 int dataLen = reader.ReadInt32();
 
                 // Ideally now, we have WHO owns the data, if its the server we have custom logic, but otherwise we ideally do something like:
@@ -114,7 +117,7 @@ namespace PaintTogether.Core.Networking
 
                 if (dataOwner == 255)
                 {
-                    clLogger.LogInfo($"Recieved packet from SERVER: [type: {dataType}, len: {dataLen}, data: {reader.ReadBytes(dataLen)[0]}]");
+                    clLogger.LogInfo($"Recieved packet from SERVER: [type: {2}, len: {dataLen}, data: {reader.ReadBytes(dataLen)[0]}]");
                     continue;
                 }
 
@@ -125,10 +128,10 @@ namespace PaintTogether.Core.Networking
                 Main.mouseLerp = 0f;
                 Main.otherMousePos.Push(new Point(_x, _y));
                 packetCount++;
-                clLogger.LogInfo($"Recieved packet: [type: {dataType}, len: {dataLen}, owner: {dataOwner}, no: {packetCount}]", true);
+                clLogger.LogInfo($"Recieved packet: [type: {packetType}, len: {dataLen}, owner: {dataOwner}, no: {packetCount}]", true);
 
                 // This is the future plan. Have it handled dynamically
-                if (NetRegistry.TryGet(dataType, out var e))
+                if (NetRegistry.TryGet(packetType, out var e))
                 {
                     e.RecieveNetCall(dataOwner, reader);
                 }

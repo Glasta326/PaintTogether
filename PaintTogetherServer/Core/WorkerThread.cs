@@ -5,6 +5,7 @@ using System.Drawing;
 using System.Linq;
 using System.Threading.Tasks;
 using PaintTogetherServer.Common.SvLogger;
+using PaintTogetherServer.Common.Utilities;
 using PaintTogetherServer.Core.ActionHistory;
 using PaintTogetherServer.Core.UserRegistry;
 
@@ -59,8 +60,8 @@ namespace PaintTogetherServer.Core
             foreach (var task in WorkQueue.GetConsumingEnumerable())
             {
                 // Log the event before doing anything else
-                // Type 0 is registered to mouse movement, which we ignore as its super spammy and not worth storing
-                if (task.Type != 0)
+                // Do not log mouse movements because that's useless and super spammy
+                if (task.Type != CommonKeys.SpecialPacketTypes.MouseMovement)
                 {
                     EventReplay.AddAction(task);
                 }
@@ -69,7 +70,7 @@ namespace PaintTogetherServer.Core
                 // Type 255 is the catchup request
                 // A client will send a packet of type 255 when joining,
                 // and when this thread sees the packet it will write every entry in the EventReplay log to the packet's sender
-                if (task.Type == 255)
+                if (task.Type == CommonKeys.SpecialPacketTypes.CatchupRequest)
                 {
                     PaintUser target = Program.RegisteredUsers[task.OwnerID];
                     if (!target.IsConnected)
@@ -89,8 +90,12 @@ namespace PaintTogetherServer.Core
 
                         foreach (LoggedAction item in EventReplay.ActionHistory)
                         {
+                            // Packet format:
+                            // [byte],  [byte],      [byte[]],[byte],      [byte[]]
+                            // [Owner], [TypeLength],[Type],  [Datalength],[Data]
                             InfoPacket data = item.Packet;
                             target.Connection.Writer.Write(data.OwnerID);
+                            target.Connection.Writer.Write((byte)data.Type.Length);
                             target.Connection.Writer.Write(data.Type);
                             target.Connection.Writer.Write(data.Length);
                             target.Connection.Writer.Write(data.Data.Span);
@@ -126,9 +131,14 @@ namespace PaintTogetherServer.Core
                     // thread 1 is done, thread 2 now orks on client a while thread1 works on client b
                     // thread 2 is finished with client a, but at roughly the same time, thread 1 just finishes on client b and moves on
                     // so we still kind of align our threads and get performance gains
+
+                    // Packet format:
+                    // [byte],  [byte],      [byte[]],[byte],      [byte[]]
+                    // [Owner], [TypeLength],[Type],  [Datalength],[Data]
                     lock (user.Connection.streamLock)
                     {
                         user.Connection.Writer.Write(task.OwnerID);
+                        user.Connection.Writer.Write((byte)task.Type.Length);
                         user.Connection.Writer.Write(task.Type);
                         user.Connection.Writer.Write(task.Length);
                         user.Connection.Writer.Write(task.Data.Span);

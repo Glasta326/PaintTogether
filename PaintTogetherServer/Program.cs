@@ -139,7 +139,7 @@ namespace PaintTogetherServer
             if (RegisteredUsers.Count >= MaxUsers)
             {
                 SvLogger.LogWarning($"Client [{pc.ip}] was rejected due to maxmimum connection count reached: {RegisteredUsers.Count}");
-                writer.Write((short)CommonKeys.ServerPacketTypes.RejectServerConnectionLimitReached);
+                writer.SendServerPacket(CommonKeys.ServerPacketTypes.RejectServerConnectionLimitReached);
                 pc.tcp.Close();
                 return;
             }
@@ -151,7 +151,7 @@ namespace PaintTogetherServer
             if (clVersion != VERSION)
             {
                 SvLogger.LogWarning($"Client [{pc.ip}] was rejected due to a version mismatch: Server = [{VERSION}], Client = [{clVersion}]");
-                writer.Write((short)CommonKeys.ServerPacketTypes.RejectVersionMismatch);
+                writer.SendServerPacket(CommonKeys.ServerPacketTypes.RejectVersionMismatch);
                 pc.tcp.Close();
                 return;
             }
@@ -166,7 +166,7 @@ namespace PaintTogetherServer
             catch (FormatException)
             {
                 SvLogger.LogWarning($"Client [{pc.ip}] was rejected due to a bad GUID: [{_}]");
-                writer.Write((short)CommonKeys.ServerPacketTypes.RejectBadGUID);
+                writer.SendServerPacket(CommonKeys.ServerPacketTypes.RejectBadGUID);
                 pc.tcp.Close();
                 return;
             }
@@ -183,7 +183,7 @@ namespace PaintTogetherServer
                 if (user.IsConnected)
                 {
                     SvLogger.LogWarning($"Client [{pc.ip}] was rejected due to trying to log on on a GUID that is already connected: [{clGuid}]");
-                    writer.Write((short)CommonKeys.ServerPacketTypes.RejectUserAlreadyConnected);
+                    writer.SendServerPacket(CommonKeys.ServerPacketTypes.RejectUserAlreadyConnected);
                     pc.tcp.Close();
                     return;
                 }
@@ -209,7 +209,7 @@ namespace PaintTogetherServer
                 if (!RegisteredUsers.TryAdd(toAdd))
                 {
                     SvLogger.LogWarning($"Something went wrong. Could not add user: [GUID: {toAdd.UserID}, ID: {toAdd.ClientID}, UserCounter: {UserCounter}]");
-                    writer.Write((short)CommonKeys.ServerPacketTypes.RejectUserUnknown);
+                    writer.SendServerPacket(CommonKeys.ServerPacketTypes.RejectUserUnknown);
                     pc.tcp.Close();
                 }
             }
@@ -223,7 +223,7 @@ namespace PaintTogetherServer
             // TODO: Might need to do something better? unsure
             // First, directly inform the user who they are. Client is expecting this so we can just send the single id byte
             NetUtils.SendServerPacket(CommonKeys.ServerPacketTypes.WhisperInformClientID, thisUser, [thisUser.ClientID]);
-            
+
             // AFTER directly telling the client, we can broadcast it to everyone that USER with ID and GUID and USERNAME has joined
             MemoryStream ms = new MemoryStream();
             BinaryWriter b = new BinaryWriter(ms);
@@ -238,8 +238,15 @@ namespace PaintTogetherServer
             {
                 while (thisUser.IsConnected)
                 {
-                    // Read the type of packet we've recieived (byte)
-                    byte[] msgType = new byte[1];
+                    // Read the length of the packet type string
+                    // New byte[2] because we have the length we manually write, and the length auto-encoded with the string format.
+                    // For consistency reasons im keeping the manual written one, so we just ignore the one at the start of the string
+                    byte[] msgTypeLen = new byte[2];
+                    await thisUser.Connection.Stream.ReadExactlyAsync(msgTypeLen);
+
+                    // Read the packet type bytes
+                    // (Its a string but we have no reason to actually bother converting the bytes to a string at any point so we leave it as a byte array)
+                    byte[] msgType = new byte[msgTypeLen[0]];
                     await thisUser.Connection.Stream.ReadExactlyAsync(msgType);
 
                     // Read the length of the data in this packet (int32)
@@ -251,11 +258,16 @@ namespace PaintTogetherServer
                     byte[] msgData = new byte[msgLength];
                     await thisUser.Connection.Stream.ReadExactlyAsync(msgData);
 
-                    SvLogger.LogInfo($"Recived packet: [Type: {msgType[0]}, Length: {msgLength}]", true);
+                    // Purely for debug purposes
+                    if (SvLogger.VerboseLogging)
+                    {
+                        string msgTypeStr = System.Text.Encoding.UTF8.GetString(msgType);
+                        SvLogger.LogInfo($"Recived packet: [Type: {msgTypeStr}, Length: {msgLength}]", true);
+                    }
 
                     WorkerThread.WorkQueue.Add
                     (
-                        new InfoPacket(thisUser.ClientID, msgType[0], msgData)
+                        new InfoPacket(thisUser.ClientID, msgType, msgData)
                     );
                 }
             }

@@ -11,7 +11,7 @@ namespace PaintTogetherServer.Core
     /// <param name="_OwnerID">The ID of this client found in <see cref="Program.Clients"/></param>
     /// <param name="_Type">What type of packet this is</param>
     /// <param name="_Data">The actual data inside of this packet</param>
-    public sealed class InfoPacket(byte _OwnerID, byte _Type, byte[] _Data)
+    public sealed class InfoPacket(byte _OwnerID, byte[] _Type, byte[] _Data)
     {
         /// <summary>
         /// The ID in <see cref="Program.Clients"/> of this client. <br/>
@@ -20,10 +20,10 @@ namespace PaintTogetherServer.Core
         public readonly byte OwnerID = _OwnerID;
 
         /// <summary>
-        /// The type of operation the data in this packet represents. <br/>
-        /// Type = 8 might be a brush stroke tool, type 1 could indicate this is a new layer operation.
+        /// What this packet actually is. Ex: Painttogether.tools.lineTool, PaintTogether.undosytem.undoAction, ect
+        /// Stored as a byte array for networking purposes but is really a string
         /// </summary>
-        public readonly byte Type = _Type;
+        public readonly byte[] Type = _Type;
 
         /// <summary>
         /// How long the <see cref="Data"/> array is.

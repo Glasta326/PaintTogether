@@ -15,8 +15,7 @@ namespace PaintTogether.Core.Networking.Registry
     // oh well
     public static class NetRegistry
     {
-        private static Dictionary<ushort, INetApplicable> NetApplicables = new Dictionary<ushort, INetApplicable>();
-
+        private static Dictionary<string, INetApplicable> NetApplicables = new Dictionary<string, INetApplicable>();
 
         /// <summary>
         /// Registers an element which implements the INetApplicable interface into the registry
@@ -25,29 +24,16 @@ namespace PaintTogether.Core.Networking.Registry
         /// <exception cref="Exception"></exception>
         public static void Register(INetApplicable element)
         {
-            ushort id = GetNetID(element.GetType());
+            string id = element.GetType().FullName;
 
             if (NetApplicables.ContainsKey(id))
             {
                 throw new Exception($"Duplicate element ID entry: {id}");
             }
             NetApplicables[id] = element;
-
-            id++;
         }
 
-        public static bool TryGet(byte id, out INetApplicable element) => NetApplicables.TryGetValue(id, out element);
+        public static bool TryGet(string id, out INetApplicable element) => NetApplicables.TryGetValue(id, out element);
 
-
-        private static ushort GetNetID(Type type)
-        {
-            unchecked
-            {
-                ushort hash = 0;
-                foreach (char c in type.FullName)
-                    hash = (ushort)(hash * 31 + c);
-                return hash;
-            }
-        }
     }
 }

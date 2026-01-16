@@ -15,7 +15,9 @@ namespace PaintTogetherServer.Common.Utilities
 
         /// <summary>
         /// Registry for all the different types of packet the server can directly send to clients that does not originate from a relay <br/>
-        /// The ID's here do not conflict with relay packet id types, because clients will handle messages from the server differently to relay packets
+        /// The ID's here do not conflict with relay packet id types, because clients will handle messages from the server differently to relay packets <br/>
+        /// Packets sent from the server don't need to worry about having dynamically-generated packetTypes,
+        /// So we just hardcode bytes and create arrays of 1 byte when sending from server
         /// </summary>
         public enum ServerPacketTypes
         {
@@ -79,6 +81,17 @@ namespace PaintTogetherServer.Common.Utilities
             WhisperInformClientID = 31,
 
             #endregion
+        }
+        
+        /// <summary>
+        /// Specific packet types clients can send which require special logic and handling <br/>
+        /// Only ranges from 0-255 but still in an array to match the standard packet format
+        /// </summary>
+        public static class SpecialPacketTypes
+        {
+            public static byte[] MouseMovement = [0];
+
+            public static byte[] CatchupRequest = [255];
         }
 
         /// <summary>
