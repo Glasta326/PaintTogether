@@ -25,6 +25,7 @@ namespace PaintTogether.Core.UndoSystem
         {
             _apply = apply;
             _undo = Undo;
+            return;
 
             // Automatically push this action to the undo history
             HistoryManager.CommandHistory.Push(this);

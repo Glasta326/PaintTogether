@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using System.IO;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
@@ -22,7 +23,7 @@ namespace PaintTogether.Content.Applicators.Tools
         //ToolDraw(Main.spriteBatch, Main.instance.GraphicsDevice, data[0],data[1],data[2],data[3]);
         //}
 
-        public override Color? ToolDraw(SpriteBatch spriteBatch, GraphicsDevice graphicsDevice, Point toolStartPos, Point toolEndPos, Color toolColor, int toolSize)
+        public override Color? ToolDraw(SpriteBatch spriteBatch, GraphicsDevice graphicsDevice, Point toolStartPos, Point toolEndPos, Rectangle affectedArea, Color toolColor, int toolSize)
         {
             Point _start = toolStartPos;
             Point _mouse = toolEndPos;
@@ -52,23 +53,12 @@ namespace PaintTogether.Content.Applicators.Tools
         // Or we do it kind of like the undoSystem does?
         // where it creates objects with actions that can be done and undone whenever
         // except in our case instead of can be done whenever its "do it as soon as possible"
-        public void RecieveNetCall(byte owner, BinaryReader reader)
+        public void RecieveNetCall(RecievePacket dataPacket)
         {
-            clLogger.LogInfo($"Hellow from testTool");
+            var ourQueue = IncomingRequestQueues.GetOrAdd(dataPacket.Type, _ => new ConcurrentQueue<RecievePacket>());
+            ourQueue.Enqueue(dataPacket);
             return;
-            int x = reader.ReadInt32();
-            int y = reader.ReadInt32();
-            Point toolStartPos = new Point(x, y);
 
-            x = reader.ReadInt32();
-            y = reader.ReadInt32();
-            Point toolEndPos = new Point(x, y);
-
-            byte[] colorData = reader.ReadBytes(4);
-            Color toolColor = new Color(colorData[0], colorData[1], colorData[2], colorData[3]);
-
-            int toolSize = reader.ReadInt32();
-            
 
             //Element.Get<TestTool>().ApplyTool()
 
@@ -76,9 +66,5 @@ namespace PaintTogether.Content.Applicators.Tools
             //Element.Get<TestTool>().OnRecieve(22,new BinaryReader(null));
         }
 
-        public void SendNetCall(BinaryWriter writer)
-        {
-            
-        }
     }
 }

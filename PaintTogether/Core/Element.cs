@@ -149,6 +149,21 @@ namespace PaintTogether.Core
         }
 
         /// <summary>
+        /// Drawing method that always runs regardless of context. <br/>
+        /// Should be only reserved for background logic that is always running on a given element
+        /// </summary>
+        /// <param name="spriteBatch"></param>
+        /// <param name="graphicsDevice"></param>
+        public virtual void BackgroundDraw(SpriteBatch spriteBatch, GraphicsDevice graphicsDevice){}
+        public static void BackgroundDrawAll(SpriteBatch sb, GraphicsDevice gd)
+        {
+            foreach (var e in ProgramElements)
+            {
+                e.BackgroundDraw(sb,gd);
+            }
+        }
+
+        /// <summary>
         /// Used to draw things infront of this element
         /// </summary>
         public virtual void PostDraw(SpriteBatch spriteBatch, GraphicsDevice graphicsDevice) { }

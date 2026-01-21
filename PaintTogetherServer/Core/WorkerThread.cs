@@ -117,7 +117,7 @@ namespace PaintTogetherServer.Core
                 foreach (PaintUser user in Program.RegisteredUsers._UsersById.Values)
                 {
                     // Dont send packets to anyone not connected or back to the person who sent this packet lol
-                    if (user.DoNotSend || !user.IsConnected)//|| task.OwnerID == user.ClientID)
+                    if (user.DoNotSend || !user.IsConnected || task.OwnerID == user.ClientID)
                     {
                         continue;
                     }

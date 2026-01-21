@@ -157,20 +157,22 @@ namespace PaintTogetherServer
             }
 
             // Next we get the client's """username""", really its just the guid so we can identify if we've seen them before
-            string _ = reader.ReadString();
+            string recievedGUID = reader.ReadString();
             Guid clGuid = Guid.Empty;
             try
             {
-                clGuid = new Guid(_);
+                clGuid = new Guid(recievedGUID);
             }
             catch (FormatException)
             {
-                SvLogger.LogWarning($"Client [{pc.ip}] was rejected due to a bad GUID: [{_}]");
+                SvLogger.LogWarning($"Client [{pc.ip}] was rejected due to a bad GUID: [{recievedGUID}]");
                 writer.SendServerPacket(CommonKeys.ServerPacketTypes.RejectBadGUID);
                 pc.tcp.Close();
                 return;
             }
 
+            // Next get the client's actual username. This is entirely cosmetic and doesn't matter or need any validation checks ect
+            string recievedUsername = reader.ReadString();
 
             byte thisUserID;
 
@@ -194,9 +196,6 @@ namespace PaintTogetherServer
             // If we've never seen this GUID before, this means this is a new user and we need to asign them a new user slot
             else
             {
-                // First we need the username, Request the client to send it to us
-                //NetUtils.SendServerPacket(CommonKeys.ServerPacketTypes.RequestUsername, pc, []);
-                string userName = clGuid.ToString();
 
                 lock (CounterLock)
                 {
@@ -204,7 +203,7 @@ namespace PaintTogetherServer
                     UserCounter++;
                 }
 
-                PaintUser toAdd = new PaintUser(clGuid, thisUserID, userName);
+                PaintUser toAdd = new PaintUser(clGuid, thisUserID, recievedUsername);
                 toAdd.Connection = pc;
                 if (!RegisteredUsers.TryAdd(toAdd))
                 {
@@ -274,6 +273,7 @@ namespace PaintTogetherServer
             catch (EndOfStreamException)
             {
                 SvLogger.LogInfo($"Client [IP: {thisUser.Connection.ip}, ID: {thisUser.ClientID}, Username: {thisUser.UserName}] has disconnected ");
+                NetUtils.BroadcastServerPacket(CommonKeys.ServerPacketTypes.AnnounceUserDisconnecting,[thisUser.ClientID]);
                 thisUser.Connection.tcp.Close();
                 thisUser.Connection = null;
             }
@@ -281,6 +281,7 @@ namespace PaintTogetherServer
 
         static void Unload()
         {
+            NetUtils.BroadcastServerPacket(CommonKeys.ServerPacketTypes.AnnounceServerClosing, []);
             WorkerThread.Workers.Clear();
             RegisteredUsers.Unload();
         }

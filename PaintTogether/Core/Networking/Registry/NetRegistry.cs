@@ -30,7 +30,7 @@ namespace PaintTogether.Core.Networking.Registry
             {
                 throw new Exception($"Duplicate element ID entry: {id}");
             }
-            clLogger.LogInfo($"Registerd NetApplicable: {id}");
+            clLogger.LogInfo($"Registered NetApplicable: {id}");
             NetApplicables[id] = element;
         }
 

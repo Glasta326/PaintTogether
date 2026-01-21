@@ -71,6 +71,11 @@ namespace PaintTogetherServer.Common.Utilities
             /// </summary>
             AnnounceUserDisconnecting = 22,
 
+            /// <summary>
+            /// The server has been shut down and all users need to disconnect.
+            /// </summary>
+            AnnounceServerClosing = 23,
+
             #endregion
 
             #region Server whispers

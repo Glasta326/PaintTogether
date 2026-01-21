@@ -1,4 +1,7 @@
 using System;
+using System.Collections.Concurrent;
+using System.Collections.Generic;
+using System.IO;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
@@ -8,7 +11,9 @@ using PaintTogether.Common.Utilities;
 using PaintTogether.Content.PaintCanvas;
 using PaintTogether.Content.UI;
 using PaintTogether.Core;
+using PaintTogether.Core.Networking;
 using PaintTogether.Core.UndoSystem;
+using PaintTogether.Core.Users;
 
 namespace PaintTogether.Content.Applicators.Tools
 {
@@ -150,40 +155,48 @@ namespace PaintTogether.Content.Applicators.Tools
 
         #region Drawing
 
+        public override void BackgroundDraw(SpriteBatch spriteBatch, GraphicsDevice graphicsDevice)
+        {
+            HandleIncomingDrawRequests(spriteBatch, graphicsDevice);
+        }
+
         /// <summary>
         /// Draw logic for this tool. Should always be run from Main's Draw() <br/>
         /// </summary>
         public void MainDraw(SpriteBatch spriteBatch, GraphicsDevice graphicsDevice)
         {
+            // Everything below here is our local drawing calling and logic
             if (!Active)
             {
                 return;
             }
 
-            // We need to pre-process the applied region for networking and undo history and all that when the tool is actually used
+            // Apply our tool with us as the owner.
             if (MouseData.JustLetGo)
             {
-                ApplyTool(spriteBatch, graphicsDevice, ToolStartPos, MouseData.MousePosCanvasSpace());
+                ApplyTool(spriteBatch, graphicsDevice, ToolStartPos, MouseData.MousePosCanvasSpace(), Canvas.Layers.ActiveLayerIndex, ColorSelector.GetColor(), ToolSize, NetSorter.Myself.ClientID);
                 return;
             }
 
             // When the user is just aligning it though, we simply just call the tool's draw method on the preview layer
             else
             {
+                Point toolEndPos = MouseData.MousePosCanvasSpace();
+                Color drawColor = ColorSelector.GetColor();
+                Rectangle affectedArea = getAffectedArea(ToolStartPos, toolEndPos, ToolSize);
+
                 graphicsDevice.SetRenderTarget(Canvas.PreviewLayer);
-                Color? res = ToolDraw(spriteBatch, graphicsDevice, ToolStartPos, MouseData.MousePosCanvasSpace(), ColorSelector.GetColor(), ToolSize);
+                Color? res = ToolDraw(spriteBatch, graphicsDevice, ToolStartPos, toolEndPos, affectedArea, drawColor, ToolSize);
                 if (res is null) { return; }
 
                 // If we just got a color value back, then the tool wants to use the default draw logic with it's toolShader
-                DefaultDraw(spriteBatch, graphicsDevice, ToolStartPos, MouseData.MousePosCanvasSpace(), res.Value, ToolSize);
+                DefaultDraw(spriteBatch, graphicsDevice, ToolStartPos, toolEndPos, affectedArea, res.Value, ToolSize);
             }
         }
 
-        public void ApplyTool(SpriteBatch spriteBatch, GraphicsDevice graphicsDevice, Point toolStartPos, Point toolEndPos)
+        public void ApplyTool(SpriteBatch spriteBatch, GraphicsDevice graphicsDevice, Point toolStartPos, Point toolEndPos, int layerIndex, Color drawColor, int toolSize, byte userID = 0)
         {
-            Rectangle affectedArea = MathUtils.RectangleXYXY(toolStartPos, toolEndPos);
-            // Account for things like the line tool which can draw at most half of the brush's width outside the area
-            affectedArea.Inflate(ToolSize * 0.5f + 1f, ToolSize * 0.5f + 1f);  // +1f because if toolsize is at 1 then a single pixel can leak outside sometimes
+            Rectangle affectedArea = getAffectedArea(toolStartPos, toolEndPos, toolSize);
 
             // No point doing anything if the affected area was zero
             if (affectedArea.Width == 0 || affectedArea.Height == 0)
@@ -191,61 +204,88 @@ namespace PaintTogether.Content.Applicators.Tools
                 return;
             }
 
+            // This will be a new class, not an undaoableAction
+            // it will be likea  "dualaction" class or something
+            // actually maybe we just reprupose undoable action idk yet
+            Action[] DoUndo = ApplyToolAndGetAction(spriteBatch, graphicsDevice, toolStartPos, toolEndPos, affectedArea, layerIndex, drawColor, toolSize);
+            _ = new UserAction(DoUndo[0], DoUndo[1], userID);
 
+            if (userID == NetSorter.Myself.ClientID && NetSorter.IsConnected)
+            {
+                SendDrawRequest(spriteBatch, graphicsDevice, toolStartPos, toolEndPos, layerIndex, drawColor, toolSize, userID);
+            }
+        }
 
+        private Rectangle getAffectedArea(Point toolStartPos, Point toolEndPos, int toolSize)
+        {
+            //-----------------------Calculate the rectangle bounds for the region actually changed by this tool being used
+            Rectangle affectedArea = MathUtils.RectangleXYXY(toolStartPos, toolEndPos);
+            // Account for things like the line tool which can draw at most half of the brush's width outside the area
+            affectedArea.Inflate(toolSize * 0.5f + 1f, toolSize * 0.5f + 1f);  // +1f because if toolsize is at 1 then a single pixel can leak outside sometimes
+            return affectedArea;
+        }
+
+        /// <summary>
+        /// Draws the tool to the given canvas layer using the given parameters.
+        /// </summary>
+        /// <returns>[An action representing the tool application to the specified canvas layer,<br/>
+        /// An action that restores the layer back to the state before the tool was applied]</returns>
+        private Action[] ApplyToolAndGetAction(SpriteBatch spriteBatch, GraphicsDevice graphicsDevice, Point toolStartPos, Point toolEndPos, Rectangle affectedArea, int layerIndex, Color drawColor, int toolSize)
+        {
             // Create a new rendertaget using the exact same formatting as the active canvas layer's rendertarget
             // Then draw the affected area of the active canvas layer into this new rendertarget
             // Essentially copying the region into the new rendertarget
-            RenderTarget2D regionPreAffect = new RenderTarget2D(graphicsDevice, affectedArea.Width, affectedArea.Height, false, Canvas.Layers.ActiveLayer.Format, Canvas.Layers.ActiveLayer.DepthStencilFormat);
+            RenderTarget2D regionPreAffect = new RenderTarget2D(graphicsDevice, affectedArea.Width, affectedArea.Height, false, Canvas.Layers[layerIndex].Format, Canvas.Layers[layerIndex].DepthStencilFormat);
             graphicsDevice.SetRenderTarget(regionPreAffect);
             graphicsDevice.Clear(Color.Transparent);
             spriteBatch.Begin(SpriteSortMode.Immediate);
-            spriteBatch.Draw(Canvas.Layers.ActiveLayer, new Rectangle(0, 0, affectedArea.Width, affectedArea.Height), affectedArea, Color.White);
+            spriteBatch.Draw(Canvas.Layers[layerIndex], new Rectangle(0, 0, affectedArea.Width, affectedArea.Height), affectedArea, Color.White);
             spriteBatch.End();
 
-            graphicsDevice.SetRenderTarget(Canvas.Layers.ActiveLayer);
+            graphicsDevice.SetRenderTarget(Canvas.Layers[layerIndex]);
 
             // This attempts to actually draw the tool to the currently active canvas layer, and set the draw func to be the overriden draw call
             // but if overriden draw call returns us a color value, we instead use the default draw call for the draw func with that defined color value
-            Func<SpriteBatch, GraphicsDevice, Point, Point, Color, int, Color?> toolDrawFunc = DefaultDraw;
-            Color? res = ToolDraw(spriteBatch, graphicsDevice, ToolStartPos, MouseData.MousePosCanvasSpace(), ColorSelector.GetColor(), ToolSize);
+            Func<SpriteBatch, GraphicsDevice, Point, Point, Rectangle, Color, int, Color?> toolDrawFunc = DefaultDraw;
+            Color? res = ToolDraw(spriteBatch, graphicsDevice, toolStartPos, toolEndPos, affectedArea, drawColor, toolSize);
             if (res is null)
             {
                 toolDrawFunc = ToolDraw;
             }
             else
             {
-                DefaultDraw(spriteBatch, graphicsDevice, ToolStartPos, MouseData.MousePosCanvasSpace(), ColorSelector.GetColor(), ToolSize);
+                DefaultDraw(spriteBatch, graphicsDevice, toolStartPos, toolEndPos, affectedArea, drawColor, toolSize);
                 toolDrawFunc = DefaultDraw;
             }
 
             // Once the draw func has been decided, we capture an instance of every single value that gets used by the draw call,
             // and then pass those captured values in instead.
             // Without this, there'd be issue with trying to use references to things which have changed since this ApplyBrush() was initally called
-            int _activeLayer = Canvas.Layers.ActiveLayerIndex;
-            Point _ToolEndPos = MouseData.MousePosCanvasSpace();
-            Point _ToolStartPos = ToolStartPos;
-            Color _toolColor = ColorSelector.GetColor();
+            int _activeLayer = layerIndex;
+            Point _ToolEndPos = toolEndPos;
+            Point _ToolStartPos = toolStartPos;
+            Color _toolColor = drawColor;
             RenderTarget2D _regionPreAffect = regionPreAffect;
             Rectangle _affectedArea = affectedArea;
-            int _toolSize = ToolSize;
-            Func<SpriteBatch, GraphicsDevice, Point, Point, Color, int, Color?> _toolDrawFunc = toolDrawFunc;
+            int _toolSize = toolSize;
+            Func<SpriteBatch, GraphicsDevice, Point, Point, Rectangle, Color, int, Color?> _toolDrawFunc = toolDrawFunc;
 
             // There should never be a change in the graphics device, so using the reference to the main instance is ok
             // Create the new undoable action (This is automatically pushed to the undo history upon creation)
-            UndoableAction toolAction = new UndoableAction(
+            Action apply =
             () =>
             {
                 // Apply action. This applies our draw call and draws the tool over the stored area on the stored canvas layer
                 using (SpriteBatch sb = new SpriteBatch(Main.instance.GraphicsDevice))
                 {
                     Main.instance.GraphicsDevice.SetRenderTarget(Canvas.Layers[_activeLayer]);
-                    _toolDrawFunc(sb, Main.instance.GraphicsDevice, _ToolStartPos, _ToolEndPos, _toolColor, _toolSize);
+                    _toolDrawFunc(sb, Main.instance.GraphicsDevice, _ToolStartPos, _ToolEndPos, _affectedArea, _toolColor, _toolSize);
                 }
-            },
+            };
+            Action undo =
             () =>
             {
-                // Undo action. This re-draws whatever was underneat the affected area before this tool was drawn
+                // Undo action. This re-draws whatever was underneath the affected area before this tool was drawn
                 using (SpriteBatch sb = new SpriteBatch(Main.instance.GraphicsDevice))
                 {
                     Main.instance.GraphicsDevice.SetRenderTarget(Canvas.Layers[_activeLayer]);
@@ -254,12 +294,9 @@ namespace PaintTogether.Content.Applicators.Tools
                     sb.End();
                 }
                 return;
-            });
+            };
 
-            if (clLogger.VerboseLogging)
-            {
-                clLogger.LogInfo($"New tool usage over area: {affectedArea}");
-            }
+            return [apply, undo];
         }
 
 
@@ -267,7 +304,7 @@ namespace PaintTogether.Content.Applicators.Tools
         /// Most tools essentially just create a rectangle between the start and end point, and then run some sort of shader that draws a circle or something
         /// As such, the default logic will be to draw a rectangle between start and end, and then apply whatever the tool shader is to it
         /// </summary>
-        private Color? DefaultDraw(SpriteBatch spriteBatch, GraphicsDevice graphicsDevice, Point toolStartPos, Point toolEndPos, Color toolColor, int toolSize)
+        private Color? DefaultDraw(SpriteBatch spriteBatch, GraphicsDevice graphicsDevice, Point toolStartPos, Point toolEndPos, Rectangle affectedArea, Color toolColor, int toolSize)
         {
             Point _start = toolStartPos;
             Point _mouse = toolEndPos;
@@ -294,7 +331,99 @@ namespace PaintTogether.Content.Applicators.Tools
         /// Return null to cancel the default logic. <br/>
         /// Returns <see cref="Color.White"/> by default.
         /// </summary>
-        public virtual Color? ToolDraw(SpriteBatch spriteBatch, GraphicsDevice graphicsDevice, Point toolStartPos, Point toolEndPos, Color toolColor, int toolSize) { return Color.White; }
+        public virtual Color? ToolDraw(SpriteBatch spriteBatch, GraphicsDevice graphicsDevice, Point toolStartPos, Point toolEndPos, Rectangle affectedArea, Color toolColor, int toolSize) { return Color.White; }
+
+        #endregion
+
+        #region Networking
+
+        /// <summary>
+        /// Networking threads will enque packets to the appropriate tool's queue, and main thread will come along "occaisonally" and consume everything inside that queue.
+        /// </summary>
+        public static ConcurrentDictionary<string, ConcurrentQueue<RecievePacket>> IncomingRequestQueues = new ConcurrentDictionary<string, ConcurrentQueue<RecievePacket>>();
+
+        // Just for future reference, the current idea is to have it so i consume the packet from the queue, and binaryRead the data out in the correct format
+        // Then call ApplyTool with the user set to whoever sent this.
+        // Then, applytool creates the undoable action with the user id of the person who sent it, and the action is queued to THAT USER's undo stack
+        // I might need to re-shuffle the current ApplyTool() to make it good here but you see the vision
+        // TODO: hi hello
+        // please re-organise ApplyTool() to be modular or something 
+        // Like so we can pass in user ids and its not jank as fuck i believe in you
+        public void HandleIncomingDrawRequests(SpriteBatch spriteBatch, GraphicsDevice graphicsDevice)
+        {
+            if (!IncomingRequestQueues.TryGetValue(GetType().FullName, out ConcurrentQueue<RecievePacket> queue))
+            {
+                return;
+            }
+
+            // we need to only dequeue the requests that have a type equal to our GetType()
+            while (queue.TryDequeue(out RecievePacket request))
+            {
+                // Not the biggest fan of all this *not drawing* math and logic inside of the drawing area but shrug
+                BinaryReader reader = new BinaryReader(request.GetStream());
+
+
+
+
+                int layerIndex = reader.ReadInt32();
+
+                int startX = reader.ReadInt32();
+                int startY = reader.ReadInt32();
+                int endX = reader.ReadInt32();
+                int endY = reader.ReadInt32();
+
+                byte r = reader.ReadByte();
+                byte g = reader.ReadByte();
+                byte b = reader.ReadByte();
+                byte a = reader.ReadByte();
+
+                int toolSize = reader.ReadInt32();
+
+                Point toolStartPos = new Point(startX, startY);
+                Point toolEndPos = new Point(endX, endY);
+                Color toolColor = new Color(r, g, b, a);
+
+                ApplyTool(spriteBatch, graphicsDevice, toolStartPos, toolEndPos, layerIndex, toolColor, toolSize, request.Owner);
+
+                clLogger.LogInfo($"Draw packet recieved for {GetType().Name}. Packet type: {request.Type}");
+                /*
+                    int _activeLayer = Canvas.Layers.ActiveLayerIndex;
+                    Point _ToolEndPos = MouseData.MousePosCanvasSpace();
+                    Point _ToolStartPos = ToolStartPos;
+                    Color _toolColor = ColorSelector.GetColor();
+                    RenderTarget2D _regionPreAffect = regionPreAffect;
+                    Rectangle _affectedArea = affectedArea;
+                    int _toolSize = ToolSize;
+                */
+
+                //ApplyTool(spriteBatch, Main.instance.GraphicsDevice,,);
+            }
+        }
+
+        private void SendDrawRequest(SpriteBatch spriteBatch, GraphicsDevice graphicsDevice, Point toolStartPos, Point toolEndPos, int layerIndex, Color drawColor, int toolSize, byte userID)
+        {
+            // GetType().FullName gets the overriding class, so if LineTool's ToolDraw() method is the one being used, this will return LineTool
+            SendPacket packet = new SendPacket(userID, GetType().FullName);
+            BinaryWriter writer = new BinaryWriter(packet.GetStream());
+
+            writer.Write(layerIndex);
+
+            writer.Write(toolStartPos.X);
+            writer.Write(toolStartPos.Y);
+            writer.Write(toolEndPos.X);
+            writer.Write(toolEndPos.Y);
+
+            writer.Write(drawColor.R);
+            writer.Write(drawColor.G);
+            writer.Write(drawColor.B);
+            writer.Write(drawColor.A);
+
+            writer.Write(toolSize);
+
+            NetSorter.OutgoingPackets.Add(packet);
+
+            clLogger.LogInfo($"Draw packet sent for {GetType().Name}");
+        }
 
         #endregion
     }

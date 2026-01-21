@@ -25,6 +25,7 @@ namespace PaintTogether.Common
         private static readonly string DefaultSavePath = Path.Combine(CommonKeys.MainDirectory, "Saves");
         private static readonly bool DefaultVerboseLogging = true;
         private static readonly Guid DefaultGuid = Guid.NewGuid();
+        private static readonly string DefaultUsername = "USER";
 
         #endregion
 
@@ -48,6 +49,7 @@ namespace PaintTogether.Common
             SetSavePath(root);
             SetLogState(root);
             SetGUID(root);
+            SetUsername(root);
         }
 
         private static void SetResolution(JsonElement root)
@@ -106,11 +108,17 @@ namespace PaintTogether.Common
         private static void SetGUID(JsonElement root)
         {
             string x = root.GetProperty("GUID").GetString();
-            Guid guid = new Guid(x);
+            Guid guid = Guid.NewGuid();
             NetSorter.MyGuid = guid;
             clLogger.LogInfo($"Set GUID as {guid}");
         }
 
+        private static void SetUsername(JsonElement root)
+        {
+            string x = root.GetProperty("Username").GetString();
+            NetSorter.MyUsername = x;
+            clLogger.LogInfo($"Set username as {x}");
+        }
 
         // If a config file can't be found
         private static void MakeDefaultFile()
@@ -119,8 +127,9 @@ namespace PaintTogether.Common
             {
                 ["Resolution"] = $"{DefaultResolution.X}:{DefaultResolution.Y}",
                 ["SaveFolderPath"] = DefaultSavePath,
-                ["VerboseLogging"] = DefaultVerboseLogging,
-                ["GUID"] = DefaultGuid.ToString()
+                ["VerboseLogging"] = DefaultVerboseLogging.ToString().ToLower(),
+                ["GUID"] = DefaultGuid.ToString(),
+                ["Username"] = DefaultUsername
             };
 
             File.WriteAllText(CommonKeys.LaunchSettingsFilePath, json.ToJsonString(new JsonSerializerOptions { WriteIndented = true }));

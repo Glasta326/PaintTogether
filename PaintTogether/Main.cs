@@ -25,6 +25,7 @@ using System.Threading.Tasks;
 using System.Net.Sockets;
 using System.Net;
 using PaintTogether.Core.Networking;
+using PaintTogether.Core.Users;
 
 namespace PaintTogether
 {
@@ -71,7 +72,6 @@ namespace PaintTogether
                 clLogger.LogWarning($"Could not connect to server");
             }
             */
-
 
 
             base.Initialize();
@@ -412,6 +412,8 @@ namespace PaintTogether
             {
                 c.MainDraw(_spriteBatch, GraphicsDevice);
             }
+
+            Element.BackgroundDrawAll(_spriteBatch, GraphicsDevice);
 
             GraphicsDevice.SetRenderTarget(UITarget);
             GraphicsDevice.Clear(Color.Transparent);
