@@ -3,12 +3,14 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text.Json;
+using System.Text.Json.Nodes;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Microsoft.Xna.Framework;
 using PaintTogether.Common.PaintLogger;
 using PaintTogether.Common.Utilities;
 using PaintTogether.Content.PaintCanvas;
+using PaintTogether.Core.Networking;
 
 namespace PaintTogether.Common
 {
@@ -17,6 +19,15 @@ namespace PaintTogether.Common
     /// </summary>
     public static class LaunchSettings
     {
+        #region  Defaults
+
+        private static readonly Point DefaultResolution = new(1200, 720);
+        private static readonly string DefaultSavePath = Path.Combine(CommonKeys.MainDirectory, "Saves");
+        private static readonly bool DefaultVerboseLogging = true;
+        private static readonly Guid DefaultGuid = Guid.NewGuid();
+
+        #endregion
+
         /// <summary>
         /// Initalises Main.cs launch properties such as <see cref="Main.CanvasResolution"/>
         /// </summary>
@@ -24,7 +35,8 @@ namespace PaintTogether.Common
         {
             if (!File.Exists(CommonKeys.LaunchSettingsFilePath))
             {
-                throw new FileNotFoundException($"Could not find {CommonKeys.LaunchSettingsFilePath}");
+                clLogger.LogWarning($"Could not find {CommonKeys.LaunchSettingsFilePath}. Creating default file in it's place.");
+                MakeDefaultFile();
             }
             clLogger.LogInfo($"Reading launch settings file from {CommonKeys.LaunchSettingsFilePath}");
 
@@ -35,6 +47,7 @@ namespace PaintTogether.Common
             SetResolution(root);
             SetSavePath(root);
             SetLogState(root);
+            SetGUID(root);
         }
 
         private static void SetResolution(JsonElement root)
@@ -59,7 +72,12 @@ namespace PaintTogether.Common
         private static void SetSavePath(JsonElement root)
         {
             Main.SaveFolderPath = root.GetProperty("SaveFolderPath").GetString();
-            clLogger.LogInfo($"Set saved files output file path to {Main.SaveFolderPath}");
+            clLogger.LogInfo($"Saved file output will be at {Main.SaveFolderPath}");
+            if (!Directory.Exists(Main.SaveFolderPath))
+            {
+                Directory.CreateDirectory(Main.SaveFolderPath);
+                clLogger.LogWarning($"Save file directory did not exist! Created save folder directory at {Main.SaveFolderPath}");
+            }
         }
 
         private static void SetLogState(JsonElement root)
@@ -81,8 +99,33 @@ namespace PaintTogether.Common
                 clLogger.LogWarning("Could not parse VerboseLogging setting.");
 
                 // If something goes so wrong that the setting isnt misspelt or something silly, then we probably want this enabled
-                clLogger.VerboseLogging = true; 
+                clLogger.VerboseLogging = true;
             }
+        }
+
+        private static void SetGUID(JsonElement root)
+        {
+            string x = root.GetProperty("GUID").GetString();
+            Guid guid = new Guid(x);
+            NetSorter.MyGuid = guid;
+            clLogger.LogInfo($"Set GUID as {guid}");
+        }
+
+
+        // If a config file can't be found
+        private static void MakeDefaultFile()
+        {
+            var json = new JsonObject
+            {
+                ["Resolution"] = $"{DefaultResolution.X}:{DefaultResolution.Y}",
+                ["SaveFolderPath"] = DefaultSavePath,
+                ["VerboseLogging"] = DefaultVerboseLogging,
+                ["GUID"] = DefaultGuid.ToString()
+            };
+
+            File.WriteAllText(CommonKeys.LaunchSettingsFilePath, json.ToJsonString(new JsonSerializerOptions { WriteIndented = true }));
+
+            clLogger.LogInfo($"Created new default settings file at {CommonKeys.LaunchSettingsFilePath}");
         }
     }
 }
