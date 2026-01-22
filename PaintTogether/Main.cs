@@ -26,6 +26,7 @@ using System.Net.Sockets;
 using System.Net;
 using PaintTogether.Core.Networking;
 using PaintTogether.Core.Users;
+using System.Text;
 
 namespace PaintTogether
 {
@@ -233,8 +234,6 @@ namespace PaintTogether
 
             // TODO : remove this this is just for demonstrating the layers working
             Canvas.Layers.AddBasicLayer();
-
-
         }
 
         protected override void OnExiting(object sender, ExitingEventArgs args)
@@ -418,7 +417,19 @@ namespace PaintTogether
             GraphicsDevice.SetRenderTarget(UITarget);
             GraphicsDevice.Clear(Color.Transparent);
             _spriteBatch.Begin(SpriteSortMode.Immediate, BlendState.AlphaBlend);
-            _spriteBatch.DrawString(font, $"Brush size : {Canvas.Camera.Position}", Vector2.Zero, Color.White);
+
+            Vector2 start = Vector2.Zero;
+            foreach (var user in PaintUser.UserRegistry.Values)
+            {
+                string res = $"{user.UserName}:";
+                foreach (var item in user.UndoHistory)
+                {
+                    res += $"{item.Descriptor} |";
+                }
+                _spriteBatch.DrawString(font, $"{res}", start, Color.White with { G = (byte)(user.IsConnected ? 255 : 0) }, 0f, Vector2.Zero, 0.7f, SpriteEffects.None, 0f);
+                start += new Vector2(0, 100);
+            }
+
             _spriteBatch.End();
 
             _spriteBatch.Begin(SpriteSortMode.Immediate, BlendState.AlphaBlend);

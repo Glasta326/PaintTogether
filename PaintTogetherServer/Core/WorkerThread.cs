@@ -3,6 +3,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
 using PaintTogetherServer.Common.SvLogger;
 using PaintTogetherServer.Common.Utilities;
@@ -61,7 +62,9 @@ namespace PaintTogetherServer.Core
             {
                 // Log the event before doing anything else
                 // Do not log mouse movements because that's useless and super spammy
-                if (task.Type != CommonKeys.SpecialPacketTypes.MouseMovement)
+                // TODO: Also do not log catchupRequests
+                string taskTypeStr = Encoding.UTF8.GetString(task.Type);
+                if (taskTypeStr != CommonKeys.SpecialPacketTypes.MouseMovement)
                 {
                     EventReplay.AddAction(task);
                 }
@@ -70,23 +73,33 @@ namespace PaintTogetherServer.Core
                 // Type 255 is the catchup request
                 // A client will send a packet of type 255 when joining,
                 // and when this thread sees the packet it will write every entry in the EventReplay log to the packet's sender
-                if (task.Type == CommonKeys.SpecialPacketTypes.CatchupRequest)
+                if (taskTypeStr == CommonKeys.SpecialPacketTypes.CatchupRequest)
                 {
                     PaintUser target = Program.RegisteredUsers[task.OwnerID];
+                    SvLogger.LogInfo($"User: [ClientID: {target.ClientID}, GUID: {target.UserID}, Username: {target.UserName}] is catching up");
                     if (!target.IsConnected)
                     {
+                        SvLogger.LogWarning($"User: [ClientID: {target.ClientID}, GUID: {target.UserID}, Username: {target.UserName}] was not connected! Catchup aborted");
                         continue;
                     }
 #pragma warning disable CS8602
                     // The lock here ensures no other threads can try to send data to this client while we catch them up
                     lock (target.Connection.streamLock)
                     {
-                        target.DoNotSend = true; // The stream is locked already, but this prevents threads from wasting time getting stuck on the streamlock hopefully
-
+                        //target.DoNotSend = true; // The stream is locked already, but this prevents threads from wasting time getting stuck on the streamlock hopefully
+                        //22/01/2026 Glasta326: Actually other threads should wait or else there's potential desync problems if DoNotSend is flagged, meaning they will lose that packet entirely
+                        
                         // First specify how many Logged actions there are to catch up on
                         // otherwise the client has no way to know when we've stopped sending catchup packets and have started sending normal ones
                         int length = EventReplay.ActionHistory.Count;
-                        target.Connection.Writer.Write(length);
+
+                        // Can only send byte arrays so convert int to byte[]
+                        MemoryStream ms = new MemoryStream();
+                        BinaryWriter writer = new BinaryWriter(ms);
+                        writer.Write(length);
+                        byte[] payload = ms.ToArray();
+
+                        NetUtils.SendServerPacket(CommonKeys.ServerPacketTypes.WhisperInformCatchupBegin, target, payload);
 
                         foreach (LoggedAction item in EventReplay.ActionHistory)
                         {
@@ -101,7 +114,9 @@ namespace PaintTogetherServer.Core
                             target.Connection.Writer.Write(data.Data.Span);
                         }
 
-                        target.DoNotSend = false;
+                        //target.DoNotSend = false;
+
+                        SvLogger.LogInfo($"Catchup complete after {length} packets");
                     }
 #pragma warning restore CS8602
                 }

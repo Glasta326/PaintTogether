@@ -116,6 +116,11 @@ namespace PaintTogether.Common.Utilities
             /// </summary>
             WhisperInformClientID = 31,
 
+            /// <summary>
+            /// Informs a client that catchuping up is about to begin, and how many packets there will be to catch up with
+            /// </summary>
+            WhisperInformCatchupBegin = 32
+
             #endregion
         }
 
@@ -125,9 +130,9 @@ namespace PaintTogether.Common.Utilities
         /// </summary>
         public static class SpecialPacketTypes
         {
-            public static byte[] MouseMovement = [0];
+            public static string MouseMovement = "MouseMovement";
 
-            public static byte[] CatchupRequest = [255];
+            public static string CatchupRequest = "CatchupRequest";
         }
 
         /// <summary>

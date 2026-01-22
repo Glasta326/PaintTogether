@@ -131,7 +131,7 @@ namespace PaintTogether.Content.Applicators.Tools
             }
             // NOTE: i think this is bad?, like, we check if we're clicking and were clicking last frame, and then seperatly check if we just clicked now?
             // Isnt it better to just check if we're clicking at all and return true on that?
-            if (MouseData.JustClicked && !ColorSelector.isHovering)
+            if (MouseData.JustClicked && !ColorSelector.isHovering && Canvas.InBounds(MouseData.MousePosCanvasSpace())) // ALso inbounds check on first click
             {
                 return true;
             }
@@ -208,7 +208,7 @@ namespace PaintTogether.Content.Applicators.Tools
             // it will be likea  "dualaction" class or something
             // actually maybe we just reprupose undoable action idk yet
             Action[] DoUndo = ApplyToolAndGetAction(spriteBatch, graphicsDevice, toolStartPos, toolEndPos, affectedArea, layerIndex, drawColor, toolSize);
-            _ = new UserAction(DoUndo[0], DoUndo[1], userID);
+            _ = new UserAction(DoUndo[0], DoUndo[1], userID, Descriptor: GetType().Name);
 
             if (userID == NetSorter.Myself.ClientID && NetSorter.IsConnected)
             {

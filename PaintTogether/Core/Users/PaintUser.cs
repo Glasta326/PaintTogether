@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -13,7 +14,7 @@ namespace PaintTogether.Core.Users
         /// <summary>
         /// Dictionary of all registered users. Indexed by ClientID
         /// </summary>
-        public static Dictionary<byte, PaintUser> UserRegistry = new Dictionary<byte, PaintUser>();
+        public static ConcurrentDictionary<byte, PaintUser> UserRegistry = new ConcurrentDictionary<byte, PaintUser>();
 
         /// <summary>
         /// Big long special number unique to this account. Essentially acts as the username
@@ -42,6 +43,7 @@ namespace PaintTogether.Core.Users
             UserID = _UserID;
             ClientID = _ClientID;
             UserName = _UserName;
+            IsConnected = true;
 
             UserRegistry[ClientID] = this;
 
@@ -54,6 +56,12 @@ namespace PaintTogether.Core.Users
         public void UpdateClientID(byte _ClientID)
         {
             ClientID = _ClientID;
+        }
+
+        public void UpdateUsername(string _NewUsername)
+        {
+            clLogger.LogInfo($"User: [ClientId: {ClientID}, GUID: {UserID}] Changed username from {UserName} to {_NewUsername}");
+            UserName = _NewUsername;
         }
 
         // TODO: actually a way to undo and redo these actions as currently hitting ctrlz just triggers the old (nowunused) system

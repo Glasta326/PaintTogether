@@ -35,6 +35,8 @@ namespace PaintTogether.Core.Networking
 
         private static CancellationTokenSource cts = new CancellationTokenSource();
 
+        private static int PacketsToCatchupOn = 0;
+
         /// <summary>
         /// True when this client is activley connected to a server.
         /// </summary>
@@ -99,6 +101,11 @@ namespace PaintTogether.Core.Networking
                 writer.Write(packet.ByteData.Length);
                 writer.Write(packet.ByteData);
                 writer.Flush();
+
+                if (packet.Type.Length > 1)
+                {
+                    clLogger.LogInfo($"Sent packet [Type: {packet.Type}]");
+                }
             }
 
             clLogger.LogInfo($"Server disconnected.");
@@ -134,6 +141,19 @@ namespace PaintTogether.Core.Networking
                 else
                 {
                     clLogger.LogWarning($"Recieved unknown packet: [Type: {thisPacket.Type}, Owner: {thisPacket.Owner}, Data length: {thisPacket.ByteData.Length}]");
+                }
+
+                if (PacketsToCatchupOn > 0)
+                {
+                    PacketsToCatchupOn--;
+                    if (PacketsToCatchupOn > 0)
+                    {
+                        clLogger.LogInfo($"Catching up. {PacketsToCatchupOn} Packets left.", true);
+                    }
+                    else
+                    {
+                        clLogger.LogInfo($"Catchup complete.", true);
+                    }
                 }
 
 
@@ -206,15 +226,36 @@ namespace PaintTogether.Core.Networking
                     Guid userGuid = new Guid(readGuid);
                     string username = reader.ReadString();
 
-                    PaintUser newUser = new PaintUser(userGuid, clientID, username);
-                    clLogger.LogInfo($"Created new user: [ID: {clientID}, GUID: {userGuid}, Username: {username}]");
+                    // ignore us
+                    if (clientID == Myself.ClientID)
+                    {
+                        break;
+                    }
+
+                    // Server announces a user we've seen before so we can just re-flag the "IsConnected" bool
+                    if (PaintUser.UserRegistry.TryGetValue(clientID, out PaintUser existingUser))
+                    {
+                        existingUser.IsConnected = true;
+
+                        // Update username if changed.
+                        if (username != existingUser.UserName)
+                        {
+                            existingUser.UpdateUsername(username);
+                        }
+                    }
+                    // Brand new user
+                    else
+                    {
+                        _ = new PaintUser(userGuid, clientID, username);
+                        clLogger.LogInfo($"Created new user: [ID: {clientID}, GUID: {userGuid}, Username: {username}]");
+                    }
                     break;
 
                 case CommonKeys.ServerPacketTypes.AnnounceUserDisconnecting:
                     clientID = reader.ReadByte();
-                    if (PaintUser.UserRegistry.TryGetValue(clientID, out PaintUser value))
+                    if (PaintUser.UserRegistry.TryGetValue(clientID, out PaintUser leavingUser))
                     {
-                        value.IsConnected = false;
+                        leavingUser.IsConnected = false;
                     }
                     break;
 
@@ -226,6 +267,16 @@ namespace PaintTogether.Core.Networking
                     clientID = reader.ReadByte();
                     Myself = new PaintUser(MyGuid, clientID, MyUsername);
                     clLogger.LogInfo($"Created myself as: [ID: {clientID}, GUID: {MyGuid}, Username: {MyUsername}]");
+
+                    // Create catchup request now we've logged in
+                    SendPacket catchup = NetUtils.CreateSpecialPacket(CommonKeys.SpecialPacketTypes.CatchupRequest, []);
+                    OutgoingPackets.Add(catchup);
+                    break;
+
+                case CommonKeys.ServerPacketTypes.WhisperInformCatchupBegin:
+                    int packets = reader.ReadInt32();
+                    clLogger.LogInfo($"Catching up with server. {packets} Packets to catch up on.");
+                    PacketsToCatchupOn = packets;
                     break;
 
                 default:

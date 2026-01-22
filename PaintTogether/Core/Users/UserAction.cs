@@ -13,6 +13,10 @@ namespace PaintTogether.Core.Users
 
         private byte _ownerID;
 
+        private string _descriptor;
+
+        public string Descriptor => _descriptor;
+
         /// <summary>
         /// The <see cref="PaintUser"/> who performed this action.
         /// </summary>
@@ -35,11 +39,12 @@ namespace PaintTogether.Core.Users
         /// <param name="Undo">The action that undoes the Apply action</param>
         /// <param name="OwnerID">The clientID of who performed this action</param>
         /// <param name="auto">Whether to automatically push into the appropriate user's <see cref="PaintUser.UndoHistory"/></param>
-        public UserAction(Action Apply, Action Undo, byte OwnerID, bool auto = true)
+        public UserAction(Action Apply, Action Undo, byte OwnerID, bool auto = true, string Descriptor = "")
         {
             _apply = Apply;
             _undo = Undo;
             _ownerID = OwnerID;
+            _descriptor = Descriptor;
 
             // Automatically insert to the undo stack for the user
             if (auto)
