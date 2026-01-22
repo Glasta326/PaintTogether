@@ -19,6 +19,7 @@ namespace PaintTogether.Core.UndoSystem
 
         public static void Update()
         {
+            return;
             ActionToInvoke = null;
             if (KeyboardData.state.IsKeyDown(Keys.LeftControl) && KeyboardData.KeyJustPressed(Keys.Z))
             {

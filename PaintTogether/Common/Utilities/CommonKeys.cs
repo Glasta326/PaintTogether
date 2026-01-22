@@ -125,14 +125,21 @@ namespace PaintTogether.Common.Utilities
         }
 
         /// <summary>
-        /// Specific packet types clients can send which require special logic and handling <br/>
-        /// Only ranges from 0-255 but still in an array to match the standard packet format
+        /// Specific packet types clients can send which require special logic and handling
         /// </summary>
         public static class SpecialPacketTypes
         {
-            public static string MouseMovement = "MouseMovement";
+            public const string MouseMovement = "MouseMovement";
 
-            public static string CatchupRequest = "CatchupRequest";
+            public const string CatchupRequest = "CatchupRequest";
+
+            public const string UndoAction = "UndoAction";
+
+            public const string RedoAction = "RedoAction";
+
+            public const string LayerDelete = "LayerDelete";
+
+            public const string LayerAdd = "LayerAdd";
         }
 
         /// <summary>

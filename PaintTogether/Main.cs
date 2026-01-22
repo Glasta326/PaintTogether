@@ -346,6 +346,10 @@ namespace PaintTogether
             GlobalTimeWrappedHourly = (float)(gameTime.TotalGameTime.TotalSeconds % 3600.0);
             GlobalFramesWrappedSecond = (byte)((gameTime.TotalGameTime.TotalSeconds * 60) % 60);
 
+
+            // Should be called BEFORE anything is done with input states, but AFTER input states are read
+            NetSorter.DequeueMostRecentPacket();
+
             if (MouseData.RightClick == ButtonState.Pressed)
             {
                 // we do -MoveDelta,
@@ -367,6 +371,27 @@ namespace PaintTogether
             {
                 // dividing by cameraZoom makes it so the movement is always 1 pixel on the actual physical screen
                 PaintTogether.Content.PaintCanvas.Canvas.Camera.Position += new Vector2(-1, 0) / PaintTogether.Content.PaintCanvas.Canvas.Camera.Zoom;
+            }
+            if (KeyboardData.state.IsKeyDown(Keys.LeftControl) && KeyboardData.KeyJustPressed(Keys.Z))
+            {
+                if (clLogger.VerboseLogging)
+                {
+                    clLogger.LogInfo($"CTRL+Z just pressed");
+                }
+                NetSorter.Myself.ActionBuffer.Enqueue(NetSorter.Myself.UndoMostRecent);
+            }
+            if (KeyboardData.state.IsKeyDown(Keys.LeftControl) && KeyboardData.KeyJustPressed(Keys.Y))
+            {
+                if (clLogger.VerboseLogging)
+                {
+                    clLogger.LogInfo($"CTRL+Y just pressed");
+                }
+                NetSorter.Myself.ActionBuffer.Enqueue(NetSorter.Myself.RedoMostRecent);
+            }
+
+            foreach (var user in PaintUser.UserRegistry.Values)
+            {
+                user.Update();
             }
 
             HistoryManager.Update();
@@ -413,6 +438,16 @@ namespace PaintTogether
             }
 
             Element.BackgroundDrawAll(_spriteBatch, GraphicsDevice);
+
+            // Draws the CTRL-Z / CTRL-Y actions a user performed this frame (If any)
+            // Note: Due to the Action having all the related info encapsulated inside it, current GraphicsDevice.SetRenderTarget() is irellevent.
+            // it is only placed here for organisation purposes with the other methods that draw to canvas layers
+            // Note Note: This is done AFTER the backgroundDraw() call. Basically when catching up what would happen is the
+            // CTRLZ undo packets would trigger BEFORE the Draw() packets could draw anything
+            foreach (PaintUser user in PaintUser.UserRegistry.Values)
+            {
+                user.DrawHistory();
+            }
 
             GraphicsDevice.SetRenderTarget(UITarget);
             GraphicsDevice.Clear(Color.Transparent);

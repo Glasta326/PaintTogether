@@ -94,14 +94,17 @@ namespace PaintTogetherServer.Common.Utilities
         }
         
         /// <summary>
-        /// Specific packet types clients can send which require special logic and handling <br/>
-        /// Only ranges from 0-255 but still in an array to match the standard packet format
+        /// Specific packet types clients can send which require special logic and handling
         /// </summary>
         public static class SpecialPacketTypes
         {
             public static string MouseMovement = "MouseMovement";
 
             public static string CatchupRequest = "CatchupRequest";
+
+            public static string UndoAction = "UndoAction";
+
+            public static string RedoAction = "RedoAction";
         }
 
         /// <summary>

@@ -17,5 +17,22 @@ namespace PaintTogether.Common.Utilities
             writer.Write(data);
             return packet;
         }
+
+        /// <summary>
+        /// Creates a <see cref="SendPacket"/> and automatically pushes it to <see cref="NetSorter.OutgoingPackets"/>
+        /// </summary>
+        /// <param name="owner"></param>
+        /// <param name="type"></param>
+        /// <param name="data"></param>
+        public static void QuickSendPacket(byte owner, string type, byte[] data = null)
+        {
+            SendPacket packet = new SendPacket(owner, type);
+            if (data is not null)
+            {
+                BinaryWriter writer = new BinaryWriter(packet.GetStream());
+                writer.Write(data);
+            }
+            NetSorter.OutgoingPackets.Add(packet);
+        }
     }
 }

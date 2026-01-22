@@ -64,7 +64,7 @@ namespace PaintTogetherServer.Core
                 // Do not log mouse movements because that's useless and super spammy
                 // TODO: Also do not log catchupRequests
                 string taskTypeStr = Encoding.UTF8.GetString(task.Type);
-                if (taskTypeStr != CommonKeys.SpecialPacketTypes.MouseMovement)
+                if (taskTypeStr != CommonKeys.SpecialPacketTypes.MouseMovement && taskTypeStr != CommonKeys.SpecialPacketTypes.CatchupRequest)
                 {
                     EventReplay.AddAction(task);
                 }
@@ -112,6 +112,9 @@ namespace PaintTogetherServer.Core
                             target.Connection.Writer.Write(data.Type);
                             target.Connection.Writer.Write(data.Length);
                             target.Connection.Writer.Write(data.Data.Span);
+
+                            string packetTypeStr = Encoding.UTF8.GetString(data.Type);
+                            SvLogger.LogInfo($"Thread: [{myID}] Sent catchup packet [{packetTypeStr}] originating from [{data.OwnerID}] to [{target.ClientID}] Containing [{data.Length}] bytes of data", true);
                         }
 
                         //target.DoNotSend = false;

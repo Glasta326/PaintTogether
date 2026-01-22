@@ -27,7 +27,7 @@ namespace PaintTogether.Core.Networking
 
         public static Guid MyGuid { get; set; }
 
-        public static String MyUsername { get; set; }
+        public static string MyUsername { get; set; }
 
         private static Thread SenderThread;
 
@@ -112,6 +112,7 @@ namespace PaintTogether.Core.Networking
             return;
         }
 
+        public static ConcurrentQueue<RecievePacket> IncomingPackets = new ConcurrentQueue<RecievePacket>();
         public static void ReadFromServer()
         {
             clLogger.LogInfo($"Reader thread started");
@@ -125,66 +126,59 @@ namespace PaintTogether.Core.Networking
                 int dataLen = reader.ReadInt32();
                 byte[] data = reader.ReadBytes(dataLen);
                 RecievePacket thisPacket = new RecievePacket(dataOwner, packetType, data);
-
-                // Handle server-sourced packets seperately
-                if (thisPacket.Owner == CommonKeys.ServerPacketID)
-                {
-                    ReadServerPacket(thisPacket);
-                }
-
-                // Attempt to find the tool or other class for this packet type and invoke it's method
-                else if (NetRegistry.TryGet(thisPacket.Type, out INetApplicable e))
-                {
-                    e.RecieveNetCall(thisPacket);
-                }
-
-                else
-                {
-                    clLogger.LogWarning($"Recieved unknown packet: [Type: {thisPacket.Type}, Owner: {thisPacket.Owner}, Data length: {thisPacket.ByteData.Length}]");
-                }
-
-                if (PacketsToCatchupOn > 0)
-                {
-                    PacketsToCatchupOn--;
-                    if (PacketsToCatchupOn > 0)
-                    {
-                        clLogger.LogInfo($"Catching up. {PacketsToCatchupOn} Packets left.", true);
-                    }
-                    else
-                    {
-                        clLogger.LogInfo($"Catchup complete.", true);
-                    }
-                }
-
-
-                continue;
-
-
-                // Ideally now, we have WHO owns the data, if its the server we have custom logic, but otherwise we ideally do something like:
-                // NetapplicableRegistry[dataType].InvokeTool(reader)
-                // and we dont have to worry about any of the logic, we simply tell the registry to get the right id class and call InvokeTool(), which has logic to handle the expected data format and apply it
-
-                if (dataOwner == 255)
-                {
-                    clLogger.LogInfo($"Recieved packet from SERVER: [type: {2}, len: {dataLen}, data: {reader.ReadBytes(dataLen)[0]}]");
-                    continue;
-                }
-
-                int _x = reader.ReadInt32();
-                int _y = reader.ReadInt32();
-
-                // Reset drawing index
-                Main.mouseLerp = 0f;
-                Main.otherMousePos.Push(new Point(_x, _y));
-                packetCount++;
-                clLogger.LogInfo($"Recieved packet: [type: {packetType}, len: {dataLen}, owner: {dataOwner}, no: {packetCount}]", true);
-
-
+                IncomingPackets.Enqueue(thisPacket);
             }
             clLogger.LogInfo($"Server was disconnected.");
             return;
         }
 
+        // Deque 1 packet per frame.
+        // This SUCKS but is the only real option because Undo() packets rely on having already drawn something.
+        // Basically, what can happen is the program recieves a draw() packet, and then an undo() packet
+        // however, it's impossible to know what to undo() untill the drawpacket has been actually drawn
+        // also what can happen is the draw() is applied, but isnt actually drawn untill the next frame, where in that time the undo() packet was executed on the thread
+
+        // Potentially this could be fixed by simply just deleting the previous undoable packet if it hasn't already been drawn somehow
+        // But otheriwse this is the only option
+        public static void DequeueMostRecentPacket()
+        {
+            if (!IncomingPackets.TryDequeue(out var thisPacket))
+            {
+                return;
+            }
+            // Handle server-sourced packets seperately
+            if (thisPacket.Owner == CommonKeys.ServerPacketID)
+            {
+                ReadServerPacket(thisPacket);
+            }
+
+            // Attempt to find the tool or other class for this packet type and invoke it's method
+            else if (NetRegistry.TryGet(thisPacket.Type, out INetApplicable e))
+            {
+                e.RecieveNetCall(thisPacket);
+            }
+
+            else
+            {
+                if (!ReadSpecialPacket(thisPacket))
+                {
+                    clLogger.LogWarning($"Recieved unknown packet: [Type: {thisPacket.Type}, Owner: {thisPacket.Owner}, Data length: {thisPacket.ByteData.Length}]");
+                }
+            }
+
+            if (PacketsToCatchupOn > 0)
+            {
+                if (PacketsToCatchupOn > 0)
+                {
+                    clLogger.LogInfo($"Catching up. {PacketsToCatchupOn} Packets left.", true);
+                }
+                else
+                {
+                    clLogger.LogInfo($"Catchup complete.", true);
+                }
+                PacketsToCatchupOn--;
+            }
+        }
 
         public static void ReadServerPacket(RecievePacket thisPacket)
         {
@@ -287,11 +281,38 @@ namespace PaintTogether.Core.Networking
 
         }
 
-        public static void Update()
+        public static bool ReadSpecialPacket(RecievePacket thisPacket)
         {
+            BinaryReader reader = new BinaryReader(thisPacket.GetStream());
+            PaintUser owner = PaintUser.UserRegistry[thisPacket.Owner];
 
+            switch (thisPacket.Type)
+            {
+                case CommonKeys.SpecialPacketTypes.UndoAction:
+                    owner.ActionBuffer.Enqueue(owner.UndoMostRecent);
+                    clLogger.LogInfo($"Recieved UNDO packet for: [ClientID: {thisPacket.Owner}, Username: {owner.UserName}]");
+                    return true;
+
+                case CommonKeys.SpecialPacketTypes.RedoAction:
+                    owner.ActionBuffer.Enqueue(owner.RedoMostRecent);
+                    clLogger.LogInfo($"Recieved REDO packet for: [ClientID: {thisPacket.Owner}, Username: {owner.UserName}]");
+                    return true;
+
+                case CommonKeys.SpecialPacketTypes.LayerAdd:
+
+                    return true;
+
+                case CommonKeys.SpecialPacketTypes.LayerDelete:
+
+                    return true;
+
+                default:
+                    clLogger.LogInfo($"Failed to read special packet: {thisPacket.Type}");
+                    return false;
+            }
+
+            return false;
         }
-
 
 
 

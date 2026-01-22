@@ -5,6 +5,8 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.Xna.Framework;
 using PaintTogether.Common.PaintLogger;
+using PaintTogether.Common.Utilities;
+using PaintTogether.Core.Networking;
 using PaintTogether.Core.UndoSystem;
 
 namespace PaintTogether.Core.Users
@@ -50,6 +52,16 @@ namespace PaintTogether.Core.Users
             clLogger.LogInfo($"Created new PaintUser: [UserID: {UserID}, ClientID: {ClientID}, Username: {UserName}]", true);
         }
 
+        public void Update()
+        {
+            // Executre all buffered actions and clear buffer
+            foreach (var item in ActionBuffer)
+            {
+                item.Invoke();
+            }
+            ActionBuffer.Clear();
+        }
+
         /// <summary>
         /// Overrides the current ClientID with a new one
         /// </summary>
@@ -67,6 +79,80 @@ namespace PaintTogether.Core.Users
         // TODO: actually a way to undo and redo these actions as currently hitting ctrlz just triggers the old (nowunused) system
         public Stack<UserAction> UndoHistory = new Stack<UserAction>();
         public Stack<UserAction> RedoHistory = new Stack<UserAction>();
+
+        /// <summary>
+        /// Used by external threads to queue up actions for this user
+        /// </summary>
+        public ConcurrentQueue<Action> ActionBuffer = new ConcurrentQueue<Action>();
+
+        private List<Action> _DrawActionsToInvoke = new List<Action>();
+
+        /// <summary>
+        /// Undoes the most recently done action for this user
+        /// </summary>
+        /// <returns>True if any action occured</returns>
+        public void UndoMostRecent()
+        {
+            if (UndoHistory.TryPop(out UserAction action))
+            {
+                RedoHistory.Push(action);
+                _DrawActionsToInvoke.Add(action.Undo);
+
+                clLogger.LogInfo($"Performed UNDO for [ClientID: {this.ClientID}, Username: {this.UserName}]");
+
+                // Only broadcast undo action if we're the one calling it
+                if (action.Owner.ClientID == NetSorter.Myself.ClientID)
+                {
+                    NetUtils.QuickSendPacket(this.ClientID, CommonKeys.SpecialPacketTypes.UndoAction);
+                }
+
+                return;
+            }
+            return;
+        }
+
+        /// <summary>
+        /// Re-Applies the most recently undone action for this user
+        /// </summary>
+        /// <returns>True if any action occured</returns>
+        public void RedoMostRecent()
+        {
+            if (RedoHistory.TryPop(out UserAction action))
+            {
+                UndoHistory.Push(action);
+                _DrawActionsToInvoke.Add(action.Apply);
+
+                clLogger.LogInfo($"Performed REDO for [ClientID: {this.ClientID}, Username: {this.UserName}]");
+
+                // Only broadcast undo action if we're the one calling it
+                if (action.Owner.ClientID == NetSorter.Myself.ClientID)
+                {
+                    NetUtils.QuickSendPacket(this.ClientID, CommonKeys.SpecialPacketTypes.RedoAction);
+                }
+
+                return;
+            }
+            return;
+        }
+
+        /// <summary>
+        /// Draws the Action this user has set to undo/redo whatever was invoked
+        /// </summary>
+        public void DrawHistory()
+        {
+            // Dont do anything if there's no undo/redo action this frame
+            if (_DrawActionsToInvoke.Count == 0)
+            {
+                return;
+            }
+
+            // Apply each action in the list and then clear the list
+            foreach (Action action in _DrawActionsToInvoke)
+            {
+                action();
+            }
+            _DrawActionsToInvoke.Clear();
+        }
 
         public Vector2 MousePosition = Vector2.Zero;
 
