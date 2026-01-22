@@ -1,11 +1,13 @@
+using System.Collections.Concurrent;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
 using PaintTogether.Common.Utilities;
+using PaintTogether.Core.Networking;
 
 namespace PaintTogether.Content.Applicators.Tools
 {
-    public class TestLineTool : DragTool
+    public class TestLineTool : DragTool, INetApplicable
     {
         protected override void LoadToolAssets(GraphicsDevice graphicsDevice, ContentManager contentManager)
         {
@@ -16,11 +18,18 @@ namespace PaintTogether.Content.Applicators.Tools
         {
             ToolShader.Parameters["BrushColor"].SetValue(toolColor.ToVector4());
             spriteBatch.Begin(effect: ToolShader);
-            
-            spriteBatch.DrawLine(toolStartPos, toolEndPos, ToolShader, toolSize); 
+
+            spriteBatch.DrawLine(toolStartPos, toolEndPos, ToolShader, toolSize);
 
             spriteBatch.End();
             return null;
+        }
+
+        public void RecieveNetCall(RecievePacket dataPacket)
+        {
+            var ourQueue = IncomingRequestQueues.GetOrAdd(dataPacket.Type, _ => new ConcurrentQueue<RecievePacket>());
+            ourQueue.Enqueue(dataPacket);
+            return;
         }
     }
 }
