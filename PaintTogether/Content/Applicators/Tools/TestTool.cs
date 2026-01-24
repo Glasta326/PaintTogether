@@ -58,12 +58,6 @@ namespace PaintTogether.Content.Applicators.Tools
             var ourQueue = IncomingRequestQueues.GetOrAdd(dataPacket.Type, _ => new ConcurrentQueue<RecievePacket>());
             ourQueue.Enqueue(dataPacket);
             return;
-
-
-            //Element.Get<TestTool>().ApplyTool()
-
-
-            //Element.Get<TestTool>().OnRecieve(22,new BinaryReader(null));
         }
 
     }

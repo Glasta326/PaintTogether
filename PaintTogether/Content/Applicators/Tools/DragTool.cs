@@ -184,35 +184,14 @@ namespace PaintTogether.Content.Applicators.Tools
                 Point toolEndPos = MouseData.MousePosCanvasSpace();
                 Color drawColor = ColorSelector.GetColor();
                 Rectangle affectedArea = getAffectedArea(ToolStartPos, toolEndPos, ToolSize);
+                int toolSize = ToolSize;
 
                 graphicsDevice.SetRenderTarget(Canvas.PreviewLayer);
-                Color? res = ToolDraw(spriteBatch, graphicsDevice, ToolStartPos, toolEndPos, affectedArea, drawColor, ToolSize);
+                Color? res = ToolDraw(spriteBatch, graphicsDevice, ToolStartPos, toolEndPos, affectedArea, drawColor, toolSize);
                 if (res is null) { return; }
 
                 // If we just got a color value back, then the tool wants to use the default draw logic with it's toolShader
-                DefaultDraw(spriteBatch, graphicsDevice, ToolStartPos, toolEndPos, affectedArea, res.Value, ToolSize);
-            }
-        }
-
-        public void ApplyTool(SpriteBatch spriteBatch, GraphicsDevice graphicsDevice, Point toolStartPos, Point toolEndPos, int layerIndex, Color drawColor, int toolSize, byte userID = 0)
-        {
-            Rectangle affectedArea = getAffectedArea(toolStartPos, toolEndPos, toolSize);
-
-            // No point doing anything if the affected area was zero
-            if (affectedArea.Width == 0 || affectedArea.Height == 0)
-            {
-                return;
-            }
-
-            // This will be a new class, not an undaoableAction
-            // it will be likea  "dualaction" class or something
-            // actually maybe we just reprupose undoable action idk yet
-            Action[] DoUndo = ApplyToolAndGetAction(spriteBatch, graphicsDevice, toolStartPos, toolEndPos, affectedArea, layerIndex, drawColor, toolSize);
-            _ = new UserAction(DoUndo[0], DoUndo[1], userID, Descriptor: GetType().Name);
-
-            if (userID == NetSorter.Myself.ClientID && NetSorter.IsConnected)
-            {
-                SendDrawRequest(spriteBatch, graphicsDevice, toolStartPos, toolEndPos, layerIndex, drawColor, toolSize, userID);
+                DefaultDraw(spriteBatch, graphicsDevice, ToolStartPos, toolEndPos, affectedArea, res.Value, toolSize);
             }
         }
 
@@ -225,12 +204,40 @@ namespace PaintTogether.Content.Applicators.Tools
             return affectedArea;
         }
 
+        public void ApplyTool(SpriteBatch spriteBatch, GraphicsDevice graphicsDevice, Point toolStartPos, Point toolEndPos, int layerIndex, Color drawColor, int toolSize, byte userID = 0)
+        {
+            Rectangle affectedArea = getAffectedArea(toolStartPos, toolEndPos, toolSize);
+
+            // No point doing anything if the affected area was zero
+            if (affectedArea.Width == 0 || affectedArea.Height == 0)
+            {
+                return;
+            }
+            // Something went real bad if we have negative area 
+            if (affectedArea.Width < 0 || affectedArea.Height < 0)
+            {
+                clLogger.LogWarning($"Attempted to draw brush over bad area! Width: {affectedArea.Width}, Height: {affectedArea.Height}");
+                return;
+            }
+
+            // This will be a new class, not an undaoableAction
+            // it will be likea  "dualaction" class or something
+            // actually maybe we just reprupose undoable action idk yet
+            Action[] DoUndo = ApplyToolAndGetActions(spriteBatch, graphicsDevice, toolStartPos, toolEndPos, affectedArea, layerIndex, drawColor, toolSize);
+            _ = new UserAction(DoUndo[0], DoUndo[1], userID, Descriptor: GetType().Name);
+
+            if (userID == NetSorter.Myself.ClientID && NetSorter.IsConnected)
+            {
+                SendDrawRequest(spriteBatch, graphicsDevice, toolStartPos, toolEndPos, layerIndex, drawColor, toolSize, userID);
+            }
+        }
+
         /// <summary>
         /// Draws the tool to the given canvas layer using the given parameters.
         /// </summary>
         /// <returns>[An action representing the tool application to the specified canvas layer,<br/>
         /// An action that restores the layer back to the state before the tool was applied]</returns>
-        private Action[] ApplyToolAndGetAction(SpriteBatch spriteBatch, GraphicsDevice graphicsDevice, Point toolStartPos, Point toolEndPos, Rectangle affectedArea, int layerIndex, Color drawColor, int toolSize)
+        private Action[] ApplyToolAndGetActions(SpriteBatch spriteBatch, GraphicsDevice graphicsDevice, Point toolStartPos, Point toolEndPos, Rectangle affectedArea, int layerIndex, Color drawColor, int toolSize)
         {
             // Create a new rendertaget using the exact same formatting as the active canvas layer's rendertarget
             // Then draw the affected area of the active canvas layer into this new rendertarget
@@ -386,17 +393,6 @@ namespace PaintTogether.Content.Applicators.Tools
                 ApplyTool(spriteBatch, graphicsDevice, toolStartPos, toolEndPos, layerIndex, toolColor, toolSize, request.Owner);
 
                 clLogger.LogInfo($"Draw packet recieved for {GetType().Name}. Packet type: {request.Type}");
-                /*
-                    int _activeLayer = Canvas.Layers.ActiveLayerIndex;
-                    Point _ToolEndPos = MouseData.MousePosCanvasSpace();
-                    Point _ToolStartPos = ToolStartPos;
-                    Color _toolColor = ColorSelector.GetColor();
-                    RenderTarget2D _regionPreAffect = regionPreAffect;
-                    Rectangle _affectedArea = affectedArea;
-                    int _toolSize = ToolSize;
-                */
-
-                //ApplyTool(spriteBatch, Main.instance.GraphicsDevice,,);
             }
         }
 
