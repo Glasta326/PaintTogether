@@ -10,6 +10,7 @@ using PaintTogetherServer.Common.SvLogger;
 using PaintTogetherServer.Core;
 using PaintTogetherServer.Core.ActionHistory;
 using PaintTogetherServer.Core.UserRegistry;
+using System.Text;
 namespace PaintTogetherServer
 {
     public static partial class Program
@@ -73,6 +74,18 @@ namespace PaintTogetherServer
                         {
                             string ip = usr.IsConnected ? usr.Connection.ip : "NULL";
                             Console.WriteLine($"[{usr.ClientID}, {usr.UserID}, {ip}, {usr.UserName}, {usr.IsConnected}]");
+                        }
+                    }
+
+                    string[] listActionsStrings = ["actions", "listactions", "actionlist", "history", "actionhistory"];
+                    if (listActionsStrings.Contains(r.ToLower()))
+                    {   
+                        Console.WriteLine($"[Index] [Owner] [Timestamp] : [PacketType]");
+                        foreach (var item in EventReplay.ActionHistory)
+                        {
+                            string typeString = Encoding.UTF8.GetString(item.Packet.Type);
+                            
+                            Console.WriteLine($"[{item.EntryNum}, {item.Owner}, {item.TimeStamp}] : {typeString}");
                         }
                     }
                 }
@@ -273,7 +286,7 @@ namespace PaintTogetherServer
             catch (EndOfStreamException)
             {
                 SvLogger.LogInfo($"Client [IP: {thisUser.Connection.ip}, ID: {thisUser.ClientID}, Username: {thisUser.UserName}] has disconnected ");
-                NetUtils.BroadcastServerPacket(CommonKeys.ServerPacketTypes.AnnounceUserDisconnecting,[thisUser.ClientID]);
+                NetUtils.BroadcastServerPacket(CommonKeys.ServerPacketTypes.AnnounceUserDisconnecting, [thisUser.ClientID], [thisUser.ClientID]);
                 thisUser.Connection.tcp.Close();
                 thisUser.Connection = null;
             }

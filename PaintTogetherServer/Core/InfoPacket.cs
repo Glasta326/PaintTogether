@@ -4,14 +4,14 @@ using System.Linq;
 using System.Threading.Tasks;
 
 namespace PaintTogetherServer.Core
-{   
+{
     /// <summary>
     /// Represents an operation or information sent by a connected client.
     /// </summary>
     /// <param name="_OwnerID">The ID of this client found in <see cref="Program.Clients"/></param>
     /// <param name="_Type">What type of packet this is</param>
     /// <param name="_Data">The actual data inside of this packet</param>
-    public sealed class InfoPacket(byte _OwnerID, byte[] _Type, byte[] _Data)
+    public sealed class InfoPacket(byte _OwnerID, byte[] _Type, byte[] _Data, byte[]? _Blacklist = null)
     {
         /// <summary>
         /// The ID in <see cref="Program.Clients"/> of this client. <br/>
@@ -34,5 +34,15 @@ namespace PaintTogetherServer.Core
         /// The actual data inside of this packet. Tool parameters, mouse positions, ect
         /// </summary>
         public readonly ReadOnlyMemory<byte> Data = new ReadOnlyMemory<byte>(_Data);
+
+        /// <summary>
+        /// List of ClientID's to NOT SEND this packet to.
+        /// </summary>
+        public readonly List<byte> ClientBlacklist = new List<byte>(_Blacklist ??= []);
+
+        /// <summary>
+        /// Blacklist a user so they DO NOT recieve this packet
+        /// </summary>
+        public void BlacklistUser(byte ClientID) => ClientBlacklist.Add(ClientID);
     }
 }

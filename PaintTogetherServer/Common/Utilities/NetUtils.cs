@@ -13,9 +13,9 @@ namespace PaintTogetherServer.Common.Utilities
         /// <summary>
         /// Broadcasts a packet created by the server to every client
         /// </summary>
-        public static void BroadcastServerPacket(CommonKeys.ServerPacketTypes _packetType, byte[] _data)
+        public static void BroadcastServerPacket(CommonKeys.ServerPacketTypes _packetType, byte[] _data, byte[] _blacklist = null)
         {
-            WorkerThread.WorkQueue.Add(new InfoPacket(CommonKeys.ServerPacketID, [(byte)_packetType], _data));
+            WorkerThread.WorkQueue.Add(new InfoPacket(CommonKeys.ServerPacketID, [(byte)_packetType], _data, _blacklist));
             SvLogger.SvLogger.LogInfo($"Server packet was broadcast: [{_packetType}]", true);
         }
 

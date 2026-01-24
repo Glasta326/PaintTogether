@@ -76,6 +76,28 @@ namespace PaintTogether.Content.PaintCanvas
         }
 
         /// <summary>
+        /// Draws all layers of the canvas without transformations
+        /// </summary>
+        /// <param name="target">null by default. The rendertarget the canvas will be drawn to</param>
+        public static void DrawRaw(GraphicsDevice graphicsDevice, SpriteBatch spriteBatch, RenderTarget2D target = null)
+        {
+            graphicsDevice.SetRenderTarget(target);
+
+            spriteBatch.Begin(SpriteSortMode.Immediate, BlendState.AlphaBlend, samplerState: SamplerState.PointClamp);
+
+            // Draw each layer ontop of eachother. Layer 0 is bottom layer
+            for (int i = 0; i < Layers.Count; i++)
+            {
+                spriteBatch.Draw(Layers[i], Vector2.Zero, Color.White);
+            }
+
+            // Draw the tool preview layer ontop of everything
+            spriteBatch.Draw(PreviewLayer, Vector2.Zero, Color.White);
+
+            spriteBatch.End();
+        }
+
+        /// <summary>
         /// Manually clears <see cref="Canvas.PreviewLayer"/>
         /// </summary>
         public static void ResetPreviewLayer(GraphicsDevice graphicsDevice)

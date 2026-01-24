@@ -37,10 +37,12 @@ namespace PaintTogether.Core.Networking
 
         private static int PacketsToCatchupOn = 0;
 
+        public static bool IsCatchingUp => PacketsToCatchupOn > 0;
+
         /// <summary>
-        /// True when this client is activley connected to a server.
+        /// True when this client is activley connected to a server and ready to send packets.
         /// </summary>
-        public static bool IsConnected => !cts.IsCancellationRequested;
+        public static bool IsConnected => !cts.IsCancellationRequested && !IsCatchingUp;
 
         // Create our tcp client and initalise both network threads
         public static bool Init()
@@ -118,17 +120,24 @@ namespace PaintTogether.Core.Networking
             clLogger.LogInfo($"Reader thread started");
             BinaryReader reader = new BinaryReader(Client.GetStream(), System.Text.Encoding.UTF8, true);
             int packetCount = 0;
-            while (Client.Connected && !cts.IsCancellationRequested)
+            try
             {
-                byte dataOwner = reader.ReadByte();
-                byte typeLength = reader.ReadByte();
-                string packetType = Encoding.UTF8.GetString(reader.ReadBytes(typeLength));
-                int dataLen = reader.ReadInt32();
-                byte[] data = reader.ReadBytes(dataLen);
-                RecievePacket thisPacket = new RecievePacket(dataOwner, packetType, data);
-                IncomingPackets.Enqueue(thisPacket);
+                while (Client.Connected && !cts.IsCancellationRequested)
+                {
+                    byte dataOwner = reader.ReadByte();
+                    byte typeLength = reader.ReadByte();
+                    string packetType = Encoding.UTF8.GetString(reader.ReadBytes(typeLength));
+                    int dataLen = reader.ReadInt32();
+                    byte[] data = reader.ReadBytes(dataLen);
+                    RecievePacket thisPacket = new RecievePacket(dataOwner, packetType, data);
+                    IncomingPackets.Enqueue(thisPacket);
+                }
             }
-            clLogger.LogInfo($"Server was disconnected.");
+            catch (System.IO.EndOfStreamException)
+            {
+                clLogger.LogInfo($"Disconnected from server.");
+            }
+
             return;
         }
 
@@ -218,9 +227,10 @@ namespace PaintTogether.Core.Networking
                     clientID = reader.ReadByte();
                     string readGuid = reader.ReadString();
                     Guid userGuid = new Guid(readGuid);
-                    string username = reader.ReadString();
+                    string readUsername = reader.ReadString();
 
                     // ignore us
+                    // TODO: this might be why we arent getting the reconnected flah
                     if (clientID == Myself.ClientID)
                     {
                         break;
@@ -230,34 +240,46 @@ namespace PaintTogether.Core.Networking
                     if (PaintUser.UserRegistry.TryGetValue(clientID, out PaintUser existingUser))
                     {
                         existingUser.IsConnected = true;
+                        clLogger.LogInfo($"[ID: {existingUser.ClientID}, GUID: {existingUser.UserID}, Username: {existingUser.UserName}] has joined.");
 
                         // Update username if changed.
-                        if (username != existingUser.UserName)
+                        if (readUsername != existingUser.UserName)
                         {
-                            existingUser.UpdateUsername(username);
+                            clLogger.LogInfo($"[ID: {existingUser.ClientID}, GUID: {existingUser.UserID}, Username: {existingUser.UserName}] Changed username to {readUsername}");
+                            existingUser.UpdateUsername(readUsername);
                         }
                     }
                     // Brand new user
                     else
                     {
-                        _ = new PaintUser(userGuid, clientID, username);
-                        clLogger.LogInfo($"Created new user: [ID: {clientID}, GUID: {userGuid}, Username: {username}]");
+                        _ = new PaintUser(userGuid, clientID, readUsername);
+                        clLogger.LogInfo($"Created new user: [ID: {clientID}, GUID: {userGuid}, Username: {readUsername}]");
                     }
                     break;
 
                 case CommonKeys.ServerPacketTypes.AnnounceUserDisconnecting:
                     clientID = reader.ReadByte();
+
+                    // This was causing issues when catching up as we'd read the part where the sever logged that we disconnected 
+                    if (clientID == Myself.ClientID)
+                    {
+                        break;
+                    }
                     if (PaintUser.UserRegistry.TryGetValue(clientID, out PaintUser leavingUser))
                     {
                         leavingUser.IsConnected = false;
+                        clLogger.LogInfo($"[ID: {leavingUser.ClientID}, GUID: {leavingUser.UserID}, Username: {leavingUser.UserName}] has left.");
                     }
                     break;
 
                 case CommonKeys.ServerPacketTypes.AnnounceServerClosing:
                     cts.Cancel();
+                    clLogger.LogInfo("Server closed.");
                     break;
 
                 case CommonKeys.ServerPacketTypes.WhisperInformClientID:
+                    // this might be resetting history!!!
+                    // TODO : look into this
                     clientID = reader.ReadByte();
                     Myself = new PaintUser(MyGuid, clientID, MyUsername);
                     clLogger.LogInfo($"Created myself as: [ID: {clientID}, GUID: {MyGuid}, Username: {MyUsername}]");

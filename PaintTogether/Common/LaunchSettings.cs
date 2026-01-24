@@ -108,7 +108,7 @@ namespace PaintTogether.Common
         private static void SetGUID(JsonElement root)
         {
             string x = root.GetProperty("GUID").GetString();
-            Guid guid = Guid.NewGuid();
+            Guid guid = new Guid(x);
             NetSorter.MyGuid = guid;
             clLogger.LogInfo($"Set GUID as {guid}");
         }

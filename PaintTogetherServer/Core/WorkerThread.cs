@@ -88,7 +88,7 @@ namespace PaintTogetherServer.Core
                     {
                         //target.DoNotSend = true; // The stream is locked already, but this prevents threads from wasting time getting stuck on the streamlock hopefully
                         //22/01/2026 Glasta326: Actually other threads should wait or else there's potential desync problems if DoNotSend is flagged, meaning they will lose that packet entirely
-                        
+
                         // First specify how many Logged actions there are to catch up on
                         // otherwise the client has no way to know when we've stopped sending catchup packets and have started sending normal ones
                         int length = EventReplay.ActionHistory.Count;
@@ -134,8 +134,12 @@ namespace PaintTogetherServer.Core
                 // then the user's sending task will dequeue packets from the blockingCOllection and send them
                 foreach (PaintUser user in Program.RegisteredUsers._UsersById.Values)
                 {
-                    // Dont send packets to anyone not connected or back to the person who sent this packet lol
-                    if (user.DoNotSend || !user.IsConnected || task.OwnerID == user.ClientID)
+                    // Do not send if:
+                    // Flagged for DoNotSend
+                    // If they aren't connected
+                    // If the packet was initally sent by this user
+                    // If the packet has this user blacklisted
+                    if (user.DoNotSend || !user.IsConnected || task.OwnerID == user.ClientID || task.ClientBlacklist.Contains(user.ClientID))
                     {
                         continue;
                     }

@@ -214,6 +214,8 @@ namespace PaintTogether
 
         public static RenderTarget2D UITarget;
 
+        private static RenderTarget2D canvasTarget;
+
 
         public static RenderTarget2D final;
         public static Texture2D logo;
@@ -229,6 +231,7 @@ namespace PaintTogether
             logoTarget = new RenderTarget2D(GraphicsDevice, Canvas.Resolution.X, Canvas.Resolution.Y, false, SurfaceFormat.Color, DepthFormat.None, 0, RenderTargetUsage.DiscardContents);
             UITarget = new RenderTarget2D(GraphicsDevice, Canvas.Resolution.X, Canvas.Resolution.Y, false, SurfaceFormat.Color, DepthFormat.None, 0, RenderTargetUsage.PreserveContents);
             final = new RenderTarget2D(GraphicsDevice, Canvas.Resolution.X, Canvas.Resolution.Y);
+            canvasTarget = new RenderTarget2D(GraphicsDevice, Canvas.Resolution.X, Canvas.Resolution.Y, false, SurfaceFormat.Color, DepthFormat.None, 0, RenderTargetUsage.PreserveContents);
             logo = Content.Load<Texture2D>("Textures/proxy-image");
             font = Content.Load<SpriteFont>("Fonts/TestFont");
 
@@ -388,6 +391,13 @@ namespace PaintTogether
                 }
                 NetSorter.Myself.ActionBuffer.Enqueue(NetSorter.Myself.RedoMostRecent);
             }
+            if (KeyboardData.state.IsKeyDown(Keys.LeftControl) && KeyboardData.KeyJustPressed(Keys.P))
+            {
+                clLogger.LogInfo($"Saving canvas to: {SaveFolderPath}");
+
+                FileStream fs = File.OpenWrite(Path.Combine(SaveFolderPath, $"{clLogger.LogTime}.png"));
+                canvasTarget.SaveAsPng(fs, canvasTarget.Width, canvasTarget.Height);
+            }
 
             foreach (var user in PaintUser.UserRegistry.Values)
             {
@@ -396,6 +406,8 @@ namespace PaintTogether
 
             HistoryManager.Update();
         }
+
+        private bool Saving = false;
 
         public static DragTool t;
         public static Brush _b;
@@ -462,9 +474,11 @@ namespace PaintTogether
                     res += $"{item.Descriptor} |";
                 }
                 _spriteBatch.DrawString(font, $"{res}", start, Color.White with { G = (byte)(user.IsConnected ? 255 : 0) }, 0f, Vector2.Zero, 0.7f, SpriteEffects.None, 0f);
-                start += new Vector2(0, 100);
+                start += new Vector2(0, 50);
             }
-
+            Vector2 topRight = new Vector2(WindowData.WindowSize.X, 0);
+            _spriteBatch.DrawString(font, NetSorter.IsConnected ? "Connected" : "Disconnected", topRight - new Vector2(200, 0), NetSorter.IsConnected ? Color.White : Color.Red);
+            _spriteBatch.DrawString(font, $"layer: {Canvas.Layers.ActiveLayerIndex}", topRight - new Vector2(100, -100), Color.White);
             _spriteBatch.End();
 
             _spriteBatch.Begin(SpriteSortMode.Immediate, BlendState.AlphaBlend);
@@ -513,15 +527,32 @@ namespace PaintTogether
             */
             #region Actually drawing stuff to the output
 
-            GraphicsDevice.SetRenderTarget(null);
 
-            Canvas.Draw(GraphicsDevice, _spriteBatch, null);
+            GraphicsDevice.SetRenderTarget(canvasTarget);
+            GraphicsDevice.Clear(Color.Black);
+            Canvas.DrawRaw(GraphicsDevice, _spriteBatch, canvasTarget);
+
+
+            GraphicsDevice.SetRenderTarget(final);
+            GraphicsDevice.Clear(new Color(20, 20, 20));
+
+            _spriteBatch.Begin(SpriteSortMode.Immediate, BlendState.AlphaBlend, transformMatrix: Canvas.CanvasTransform(), samplerState: SamplerState.PointClamp);
+            _spriteBatch.Draw(canvasTarget, Vector2.Zero, Color.White);
+            _spriteBatch.End();
 
             _spriteBatch.Begin(SpriteSortMode.Immediate, BlendState.AlphaBlend);
             _spriteBatch.Draw(UITarget, Vector2.Zero, Color.White);
             _spriteBatch.End();
 
+
+            GraphicsDevice.SetRenderTarget(null);
+
+            _spriteBatch.Begin();
+            _spriteBatch.Draw(final, Vector2.Zero, Color.White);
+            _spriteBatch.End();
+
             #endregion
+
 
             /*
             GraphicsDevice.SetRenderTarget(logoTarget);
