@@ -1,7 +1,3 @@
-
-
-
-
 client sends [byte toolType][byte[] toolData]
 
 server recieves, preprends a [packetSenderID] to the start
