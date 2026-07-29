@@ -12,7 +12,7 @@ With the hindsight of working on it for just under a year, It's quite easy to se
 In the client, organizing files like it's a terraria mod, creating the whole program and while forgetting undo/redo needs to be designed around, and similar mistakes are all obvious and i had to bodge my way around into a solution for them.
 In the server, assigning each user a separate task handler but then using an entirely different collection of threads to actually process the packets, makes it fairly obvious this is my first ever attempt at any kind of multithreaded relay server.
 
-...Overall though, for my first ever attempt at making a painting program, and first ever server program at the same time, I'm quite proud of it.
+For a first and completely uneducated attempt at both of these, i'm still quite proud i managed to make it mostly work.
 
 ## Folder info
 
