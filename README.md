@@ -3,7 +3,7 @@
 ### Please note, this program is not intended to be used by anyone and is quite buggy!
 (If you insist on attempting to build the project yourself, on linux atleast, you will need to install WINE and Winetricks, and set a specific enviroment variable in your .bashrc file)
 
-This project was a multiplayer painting program i built with the goal of seeing just how much i could make with essentially zero external tutorials or researching. Just going off what i knew about painting programs and server designs.
+This project was a heavily bodged and messy multiplayer painting program i built with the goal of seeing just how much i could make with essentially zero external tutorials or researching. Just going off what i knew about painting programs and server designs.
 
 The client uses a small game engine, monogame (Essentially just XNA framework), to handle the display and shader loading.
 The server is made entirely from scratch using only builtin system libraries.
