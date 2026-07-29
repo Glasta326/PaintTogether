@@ -1,7 +1,7 @@
 # PaintTogether
 
-### Please note, this program is not intended to be used by anyone and is quite buggy!
-(If you insist on attempting to build the project yourself, on linux atleast, you will need to install WINE and Winetricks, and set a specific enviroment variable in your .bashrc file)
+### Please note, this project is not intended to be used by anyone and is *very* messy!
+(If you insist on attempting to build the project yourself, on linux atleast, you will need to install WINE and Winetricks, set a specific enviroment variable in your .bashrc file, and pray to a deity of your choice)
 
 This project was a heavily bodged and messy multiplayer painting program i built with the goal of seeing just how much i could make with essentially zero external tutorials or researching. Just going off what i knew about painting programs and server designs.
 
